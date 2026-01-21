@@ -7,8 +7,8 @@ import "./styles/theme/themeColor.css"
 // import Login from './pages/auth/Login/Login.jsx'
 // import Register from './pages/auth/Register/Register.jsx'
 // import ForgotPassword from './pages/auth/ForgotPassword/ForgotPassword'
-// import ChangePassword from './pages/auth/ChangePassword/ChangePassword.jsx'
-import Header from './components/layout/Header/Header'
+import ChangePassword from './pages/auth/ChangePassword/ChangePassword.jsx'
+// import Header from './components/layout/Header/Header'
 
 const savedTheme = localStorage.getItem("theme");
 
@@ -22,11 +22,11 @@ createRoot(document.getElementById('root')).render(
   
   <StrictMode>
     <div className="bg-background-light dark:bg-background-dark font-sans transition-colors duration-200 h-screen">
-        {/* <Login /> */}
-        {/* <Register /> */}
-        {/* <ForgotPassword /> */}
-        {/* <ChangePassword /> */}
-        <Header />
+         {/*<Login />*/}
+         {/*<Register /> */}
+         {/*<ForgotPassword /> */}
+         <ChangePassword />
+        {/*<Header />*/}
     </div>
     {/* <App /> */}
    
