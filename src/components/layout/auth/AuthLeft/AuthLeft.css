@@ -1,0 +1,18 @@
+@reference "../../../../index.css";
+.auth-left {
+  flex: 1.1;
+  @apply bg-navy-light dark:bg-navy-dark;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+@media (max-width: 1024px) {
+  .auth-left {
+    display: none;
+  }
+}
