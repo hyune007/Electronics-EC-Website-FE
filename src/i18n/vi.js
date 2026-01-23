@@ -16,7 +16,7 @@ const vi = {
     register: {
       title: "Đăng ký tài khoản",
       description:
-        "Trở thành thành viên của UBrain Tech để nhận những ưu đãi hấp dẫn nhất.",
+        "Trở thành thành viên của UBrainTech để nhận những ưu đãi hấp dẫn nhất.",
       fullName: "Họ và tên",
       email: "Email của bạn",
       phone: "Số điện thoại",
