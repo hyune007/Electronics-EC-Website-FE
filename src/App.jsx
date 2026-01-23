@@ -12,12 +12,12 @@ function App() {
     return (
         <AdminLayout>
             <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/customers" element={<CustomerManage />} />
-                <Route path="/orders" element={<OrderManage />} />
-                <Route path="/products" element={<ProductManage />} />
-                <Route path="/brands" element={<BrandManage />} />
-                <Route path="/staff" element={<EmployeeManage />} />
+                <Route path="/admin/dashboard" element={<Dashboard />} />
+                <Route path="/admin/customers" element={<CustomerManage />} />
+                <Route path="/admin/orders" element={<OrderManage />} />
+                <Route path="/admin/products" element={<ProductManage />} />
+                <Route path="/admin/brands" element={<BrandManage />} />
+                <Route path="/admin/staff" element={<EmployeeManage />} />
             </Routes>
         </AdminLayout>
     );
