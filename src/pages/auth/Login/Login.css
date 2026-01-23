@@ -41,4 +41,8 @@ button{
     flex: 1;
     padding: 40px 24px;
   }
+  .title-center{
+    display: flex;
+    justify-content: center;
+  }
 }

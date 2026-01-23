@@ -7,7 +7,7 @@
 }
 .auth-left {
   flex: 1.1;
-    @apply bg-navy-light dark:bg-navy-dark;
+  @apply bg-navy-light dark:bg-navy-dark;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -19,12 +19,12 @@
 }
 .auth-right {
   flex: 0.9;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: block;
+  justify-content: unset !important;
+  flex-direction: unset !important;
   padding: 60px;
-   overflow-y: auto;
-     justify-content: flex-start; /* ✅ BẮT BUỘC */
+  overflow-y: auto;
+  /* justify-content: flex-start; */
 }
 .decorative-circle {
   position: absolute;
@@ -35,11 +35,11 @@
     rgba(2, 21, 38, 0) 70%
   );
 }
-.irish-font{
-    font-family: "Irish Grover", cursive;
+.irish-font {
+  font-family: "Irish Grover", cursive;
 }
-button{
-    cursor: pointer;
+button {
+  cursor: pointer;
 }
 @media (max-width: 1024px) {
   .auth-left {
@@ -48,5 +48,9 @@ button{
   .auth-right {
     flex: 1;
     padding: 40px 24px;
+  }
+  .title-center {
+    display: flex;
+    justify-content: center;
   }
 }

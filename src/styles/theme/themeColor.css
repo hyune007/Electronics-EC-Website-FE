@@ -8,11 +8,21 @@
   --color-primary: #0f3d69;
   --color-background-light: #f8fafc;
   --color-background-dark: #05111d;
-   --color-navy-light: #021526;
-  --color-navy-dark: #000;
+  --color-navy-light: #062b4c;
+  --color-navy-dark: #021526;
   --font-display: "Playfair Display", serif;
   --font-sans: "Inter", sans-serif;
-
   --radius-default: 8px;
+}
+@text{
+  --color-hover: #003c75;
+}
+/* dùng để kiểm tra máy màu ở trên */
+test{
+  color : #05111d;
+  --color-primary: #003c75;
+  --color-navy-light: #062b4c;
+    --color-background-light: #f8fafc;
+    /*  */
 }
 

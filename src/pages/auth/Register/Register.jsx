@@ -2,7 +2,7 @@ import "./Register.css";
 import useTheme from "../../../hooks/useTheme";
 import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
 import ThemeToggleButton from "../../../components/layout/common/ThemeToggleButton.jsx";
-
+import vi from "../../../i18n/vi.js";
 export default function Register() {
   const { toggleTheme } = useTheme();
 
@@ -10,28 +10,34 @@ export default function Register() {
     <div className="bg-background-light dark:bg-background-dark font-sans transition-colors duration-200">
       <div className="auth-container h-screen dark:bg-black">
         <AuthLeft />
-        <div className="auth-right dark:bg-background-dark overflow-y-auto">
-          <div className="max-w-[440px] mx-auto w-full py-12">
+        <div
+          className="auth-right dark:bg-background-dark overflow-y-auto items-start"
+          style={{
+            justifyContent: "flex-start",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div className="max-w-[420px] mx-auto w-full py-12">
             <div className="lg:hidden text-center mb-8">
-             <div className=" flex justify-center ">
-              <a href="/" className="block">
-                <div className="w-[190px] h-[40px] overflow-hidden">
-                  <img
-                    src="src/assets/logo/UBrainTech.png"
-                    alt="UBrain Tech"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </a>
-            </div>
+              <div className=" flex justify-center ">
+                <a href="/" className="block">
+                  <div className="w-[190px] h-[40px] overflow-hidden">
+                    <img
+                      src="src/assets/logo/UBrainTech.png"
+                      alt="UBrain Tech"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </a>
+              </div>
             </div>
             <div className="mb-8 text-left">
-              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
-                Đăng ký tài khoản
+              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-3 title-center">
+                {vi.auth.register.title}
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 leading-relaxed max-w-[520px] mx-auto text-xs">
-                Trở thành thành viên của UBrain Tech để nhận những ưu đãi hấp
-                dẫn nhất.
+              <p className="text-gray-500 dark:text-gray-400 leading-relaxed max-w-[520px] mx-auto text-md">
+                {vi.auth.register.description}
               </p>
             </div>
             <form action="#" className="space-y-4" method="POST">
@@ -40,7 +46,7 @@ export default function Register() {
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
                   htmlFor="name"
                 >
-                  Họ và tên
+                  {vi.auth.register.fullName}
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
@@ -61,7 +67,7 @@ export default function Register() {
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
                   htmlFor="email"
                 >
-                  Email
+                  {vi.auth.register.email}
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
@@ -82,7 +88,7 @@ export default function Register() {
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
                   htmlFor="phone"
                 >
-                  Số điện thoại
+                  {vi.auth.register.phone}
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
@@ -103,7 +109,7 @@ export default function Register() {
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
                   htmlFor="password"
                 >
-                  Mật khẩu
+                  {vi.auth.register.password}
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
@@ -124,7 +130,7 @@ export default function Register() {
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
                   htmlFor="confirm_password"
                 >
-                  Xác nhận mật khẩu
+                  {vi.auth.register.confirmPassword}
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
@@ -145,7 +151,7 @@ export default function Register() {
                   className="w-full bg-primary hover:bg-[#0a2d4d] text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2"
                   type="submit"
                 >
-                  <span>Đăng ký ngay</span>
+                  <span>{vi.auth.register.registerNow}</span>
                   <span className="material-symbols-outlined text-xl">
                     person_add
                   </span>
@@ -156,16 +162,13 @@ export default function Register() {
               <div className="relative flex items-center py-2">
                 <div className="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
                 <span className="flex-shrink mx-4 text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-                  Hoặc đăng ký với
+                  {vi.auth.register.orRegisterWith}
                 </span>
                 <div className="flex-grow border-t border-gray-200 dark:border-gray-800"></div>
               </div>
               <div className="mt-6">
                 <button className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold py-3.5 px-6 rounded-xl shadow-sm transition-all flex items-center justify-center gap-3">
-                  <svg
-                    className="w-5 h-5"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path
                       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                       fill="#4285F4"
@@ -183,18 +186,18 @@ export default function Register() {
                       fill="#EA4335"
                     ></path>
                   </svg>
-                  <span>Tiếp tục với Google</span>
+                  <span>{vi.auth.register.continueWithGoogle}</span>
                 </button>
               </div>
             </div>
             <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Đã có tài khoản?
+                {vi.auth.register.haveAccount}
                 <a
                   className="font-bold text-primary dark:text-blue-400 hover:underline transition-colors ml-1"
                   href="/login"
                 >
-                  Đăng nhập
+                  {vi.auth.register.login}
                 </a>
               </p>
             </div>

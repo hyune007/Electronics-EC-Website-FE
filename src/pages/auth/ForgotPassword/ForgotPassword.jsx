@@ -2,7 +2,7 @@ import "./ForgotPassword.css";
 import useTheme from "../../../hooks/useTheme";
 import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
 import ThemeToggleButton from "../../../components/layout/common/ThemeToggleButton.jsx";
-
+import vi from "../../../i18n/vi.js";
 export default function ForgotPassword() {
   const { toggleTheme } = useTheme();
 
@@ -11,7 +11,7 @@ export default function ForgotPassword() {
       <div className="auth-container h-screen dark:bg-black">
         <AuthLeft />
         <div className="auth-right dark:bg-background-dark">
-          <div className="max-w-[400px] mx-auto w-full">
+          <div className="max-w-[420px] mx-auto w-full">
             <div className="lg:hidden text-center mb-8">
              <div className="mt-10 flex justify-center ">
               <a href="/" className="block">
@@ -26,12 +26,11 @@ export default function ForgotPassword() {
             </div>
             </div>
             <div className="mb-10 text-left">
-              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
-                Quên mật khẩu
+              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-3 title-center">
+                {vi.auth.forgotPassword.title}
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-xs">
-                Đừng lo lắng. Nhập địa chỉ email của bạn và chúng tôi sẽ gửi
-                hướng dẫn để đặt lại mật khẩu.
+              <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-md">
+                {vi.auth.forgotPassword.description}
               </p>
             </div>
             <form action="#" className="space-y-6" method="POST">
@@ -40,7 +39,7 @@ export default function ForgotPassword() {
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
                   htmlFor="email"
                 >
-                  Email của bạn
+                  {vi.auth.forgotPassword.email}
                 </label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
@@ -60,19 +59,21 @@ export default function ForgotPassword() {
                 className="w-full bg-primary hover:bg-[#0a2d4d] text-white font-bold py-3 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2"
                 type="submit"
               >
-                <span>Gửi yêu cầu</span>
+                <span>{vi.auth.forgotPassword.sendRequest}</span>
                 <span className="material-symbols-outlined text-xl">send</span>
               </button>
             </form>
             <div className="mt-10 pt-8 border-t border-gray-100 dark:border-gray-800 text-center">
               <a
-                className="inline-flex items-center gap-2 text-sm font-bold text-primary dark:text-blue-400 hover:text-navy-dark transition-colors"
-                href="#"
+                className="inline-flex items-center gap-2 text-sm font-bold text-primary dark:text-blue-400 transition-colors"
+                href="/login"
               >
                 <span className="material-symbols-outlined text-lg">
                   arrow_back
                 </span>
-                Quay lại đăng nhập
+                <p className="hover:underline">
+                {vi.auth.forgotPassword.backToLogin}
+                </p>
               </a>
             </div>
           </div>
