@@ -1,0 +1,195 @@
+/* ===========================
+   DASHBOARD – CSS RIÊNG
+   Không ảnh hưởng global
+=========================== */
+
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    animation: dashboardFade 0.5s ease-out;
+}
+
+/* ===========================
+   STATS GRID
+=========================== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+}
+
+.stat-card {
+    background: linear-gradient(145deg, #ffffff, #f1f5f9);
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow:
+            0 10px 28px rgba(0, 0, 0, 0.08);
+    text-align: left;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow:
+            0 20px 42px rgba(0, 0, 0, 0.14);
+}
+
+.stat-title {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 10px;
+}
+
+.stat-card h2 {
+    font-size: 30px;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* ===========================
+   REVENUE SECTION
+=========================== */
+.revenue-section {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 24px;
+}
+
+@media (max-width: 900px) {
+    .revenue-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ===========================
+   TOTAL REVENUE CARD
+=========================== */
+/* ===== TOTAL REVENUE CARD – FIX CONTRAST ===== */
+.revenue-card {
+    position: relative;
+    background: linear-gradient(135deg, #020617, #1e3a8a, #2563eb);
+    color: #ffffff;
+    border-radius: 28px;
+    padding: 36px;
+    box-shadow: 0 25px 55px rgba(37, 99, 235, 0.45);
+    overflow: hidden;
+}
+
+/* ánh sáng trang trí */
+.revenue-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+            radial-gradient(circle at top left,
+            rgba(255, 255, 255, 0.25),
+            transparent 45%);
+    pointer-events: none;
+}
+
+/* tiêu đề */
+.revenue-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #e0e7ff;
+    letter-spacing: 0.5px;
+}
+
+/* SỐ DOANH THU – NỔI RÕ */
+.revenue-value {
+    margin-top: 16px;
+    font-size: 46px;
+    font-weight: 900;
+    color: #ffffff;
+    text-shadow:
+            0 4px 12px rgba(0, 0, 0, 0.45);
+    letter-spacing: 1px;
+}
+
+/* ghi chú */
+.revenue-note {
+    margin-top: 12px;
+    font-size: 13px;
+    color: #c7d2fe;
+}
+
+/* ===========================
+   MONTHLY REVENUE LIST
+=========================== */
+.revenue-list {
+    background: #ffffff;
+    border-radius: 22px;
+    padding: 24px;
+    box-shadow:
+            0 12px 32px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+}
+
+.revenue-list h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 16px;
+}
+
+.month-scroll {
+    overflow-y: auto;
+    max-height: 260px;
+    padding-right: 6px;
+}
+
+.month-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.month-scroll::-webkit-scrollbar-thumb {
+    background: #c7d2fe;
+    border-radius: 999px;
+}
+
+.month-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 6px;
+    border-bottom: 1px dashed #e5e7eb;
+    font-size: 14px;
+}
+
+.month-item span {
+    color: #475569;
+}
+
+.month-item strong {
+    color: #1e3a8a;
+    font-weight: 700;
+}
+
+/* ===========================
+   ANIMATION
+=========================== */
+.fade-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeUp 0.6s ease forwards;
+}
+
+@keyframes fadeUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes dashboardFade {
+    from {
+        opacity: 0;
+        transform: scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

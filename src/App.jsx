@@ -1,38 +1,26 @@
-// import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
-// import './App.css'
+import { Routes, Route } from "react-router-dom";
+import AdminLayout from "./components/layoutsAdmin/AdminLayout";
 
-// function App() {
-//   const [count, setCount] = useState(0)
+import Dashboard from "./pages/adminDashboard/Dashboard/Dashboard";
+import CustomerManage from "./pages/adminDashboard/Customer/CustomerManage";
+import OrderManage from "./pages/adminDashboard/Order/OrderManage";
+import ProductManage from "./pages/adminDashboard/ProductManage/ProductManage";
+import BrandManage from "./pages/adminDashboard/Brand/BrandManage";
+import EmployeeManage from "./pages/adminDashboard/Staff/EmployeeManage";
 
-//   return (
-//       <>
-//           <div>
-//               <a href="https://vite.dev" target="_blank">
-//                   <img src={viteLogo} className="logo" alt="Vite logo"/>
-//               </a>
-//               <a href="https://react.dev" target="_blank">
-//                   <img src={reactLogo} className="logo react" alt="React logo"/>
-//               </a>
-//           </div>
-//           <h1>Vite + React</h1>
-//           <h1 className="text-3xl font-bold underline">
-//               Test Tailwind CSS
-//           </h1>
-//           <div className="card">
-//               <button onClick={() => setCount((count) => count + 1)}>
-//                   count is {count}
-//               </button>
-//               <p>
-//                   Edit <code>src/App.jsx</code> and save to test HMR
-//               </p>
-//           </div>
-//           <p className="read-the-docs">
-//               Click on the Vite and React logos to learn more
-//           </p>
-//       </>
-//   )
-// }
+function App() {
+    return (
+        <AdminLayout>
+            <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/customers" element={<CustomerManage />} />
+                <Route path="/orders" element={<OrderManage />} />
+                <Route path="/products" element={<ProductManage />} />
+                <Route path="/brands" element={<BrandManage />} />
+                <Route path="/staff" element={<EmployeeManage />} />
+            </Routes>
+        </AdminLayout>
+    );
+}
 
-// export default App
+export default App;
