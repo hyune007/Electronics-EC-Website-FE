@@ -1,4 +1,4 @@
-import BrandLogo from "../common/BrandLogo";
+import BrandLogo from "../../common/BrandLogo.jsx";
 import vi from "../../../i18n/vi";
 export default function Footer() {
   return (

@@ -8,6 +8,8 @@ import NotFound from "../pages/error/NotFound/NotFound.jsx";
 import Header from "../components/layout/Header/Header.jsx";
 import Footer from "../components/layout/Footer/Footer.jsx";
 import Terms from "../pages/other/Terms/Terms.jsx";
+import ProductDetail from "../pages/product/ProductDetail/ProductDetail.jsx";
+// import Profile from "../pages/user/Profile/Profile.jsx";
 
 export default function AppRoutes() {
   return (
@@ -21,6 +23,8 @@ export default function AppRoutes() {
       <Route path="/header" element={<Header />} />
       <Route path="/footer" element={<Footer />} />
       <Route path="/terms" element={<Terms />} />
+      <Route path="/product-detail" element={<ProductDetail />} />
+      {/* <Route path="/profile" element={<Profile />} /> */}
     </Routes>
   );
 }

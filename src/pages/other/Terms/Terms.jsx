@@ -13,7 +13,7 @@ export default function TermsOfService() {
           justify-content: center;
           box-sizing: border-box;
         }
-
+        
         /* Dark mode (nếu có class .dark ở body hoặc html) */
         .dark .tos-page {
           background: #020617;
@@ -92,12 +92,15 @@ export default function TermsOfService() {
         <div className="tos-updated">Cập nhật lần cuối: 2026</div>
 
         <div className="tos-warning">
-          <strong>LƯU Ý QUAN TRỌNG:</strong><br />
-          Đây là <strong>sản phẩm thuộc dự án tốt nghiệp</strong>. Mọi thông tin,
-          nội dung, chức năng và dữ liệu hiển thị trong hệ thống đều mang tính
+          <strong>LƯU Ý QUAN TRỌNG:</strong>
+          <br />
+          Đây là <strong>sản phẩm thuộc dự án tốt nghiệp</strong>. Mọi thông
+          tin, nội dung, chức năng và dữ liệu hiển thị trong hệ thống đều mang
+          tính
           <strong> mô phỏng, tượng trưng</strong>.<br />
           <strong>
-            Nghiêm cấm tin tưởng, sử dụng hoặc dựa vào dưới bất kỳ hình thức nào.
+            Nghiêm cấm tin tưởng, sử dụng hoặc dựa vào dưới bất kỳ hình thức
+            nào.
           </strong>
         </div>
 
@@ -105,8 +108,8 @@ export default function TermsOfService() {
           <h2>1. Mục đích sử dụng</h2>
           <p>
             Hệ thống được xây dựng nhằm phục vụ mục đích học tập, nghiên cứu và
-            trình bày trong khuôn khổ dự án tốt nghiệp. Ứng dụng không được thiết
-            kế để phục vụ hoạt động thương mại hoặc giao dịch thực tế.
+            trình bày trong khuôn khổ dự án tốt nghiệp. Ứng dụng không được
+            thiết kế để phục vụ hoạt động thương mại hoặc giao dịch thực tế.
           </p>
         </div>
 
@@ -134,8 +137,8 @@ export default function TermsOfService() {
         <div className="tos-section">
           <h2>4. Quyền thay đổi</h2>
           <p>
-            Nội dung và chức năng có thể được chỉnh sửa hoặc gỡ bỏ bất kỳ lúc nào
-            mà không cần thông báo trước.
+            Nội dung và chức năng có thể được chỉnh sửa hoặc gỡ bỏ bất kỳ lúc
+            nào mà không cần thông báo trước.
           </p>
         </div>
 

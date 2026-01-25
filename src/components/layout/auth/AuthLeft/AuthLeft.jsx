@@ -22,7 +22,7 @@ export default function AuthLeft() {
             </h1>
             <div className="mb-12 inline-block">
               <div>
-                <h2 className="text-5xl md:text-9xl font-bold tracking-tighter uppercase font-display irish-font">
+                <h2 className="text-3xl md:text-8xl font-bold tracking-tighter uppercase font-display irish-font">
                   UBrain
                   <br />
                   Tech
@@ -30,7 +30,7 @@ export default function AuthLeft() {
               </div>
             </div>
             <br />
-            <h1 className="font-display italic text-2xl md:text-3xl mb-6 text-gray-300">
+            <h1 className="font-display italic text-1xl md:text-2xl mb-6 text-gray-300">
               Nâng tầm trải nghiệm công nghệ
             </h1>
             <p className="text-sm md:text-base text-gray-400 font-light leading-relaxed max-w-md mx-auto">

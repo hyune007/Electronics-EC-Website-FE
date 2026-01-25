@@ -3,8 +3,8 @@ import "./Login.css";
 import vi from "../../../i18n/vi.js";
 import useTheme from "../../../hooks/useTheme";
 import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
-import ThemeToggleButton from "../../../components/layout/common/ThemeToggleButton.jsx";
-
+import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx";
+import BrandLogo from "../../../components/common/BrandLogo.jsx";
 export default function Login() {
   const { toggleTheme } = useTheme();
 
@@ -12,30 +12,34 @@ export default function Login() {
     <div className="bg-background-light dark:bg-background-dark font-sans transition-colors duration-200">
       <div className="auth-container h-screen dark:bg-black">
         <AuthLeft />
-        <div className="auth-right dark:bg-background-dark overflow-y-auto">
-          <div className="max-w-[400px] mx-auto w-full">
+        <div
+          className="auth-right dark:bg-background-dark overflow-y-auto items-center"
+          style={{
+            justifyContent: "center",
+            alignItems: "center",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div className="max-w-[320px] mx-auto w-full my-auto">
             <div className="lg:hidden text-center mb-8">
-              <div className="mt-10 flex justify-center ">
+              <div className="mt-6 flex justify-center ">
                 <a href="/" className="block">
-                  <div className="w-[190px] h-[40px] overflow-hidden">
-                    <img
-                      src="src/assets/logo/UBrainTech.png"
-                      alt="UBrain Tech"
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="w-[170 h-[34px] overflow-hidden">
+                    <BrandLogo />
                   </div>
                 </a>
               </div>
             </div>
             <div className="mb-10 text-left">
-              <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-3 title-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 title-center">
                 {vi.auth.login.title}
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-md">
-                    {vi.auth.login.description}
+              <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-xs">
+                {vi.auth.login.description}
               </p>
             </div>
-            <form action="#" className="space-y-6" method="POST">
+            <form action="#" className="space-y-3" method="POST">
               <div>
                 <label
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
@@ -44,16 +48,11 @@ export default function Login() {
                   {vi.auth.login.email}
                 </label>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base">
                     mail
                   </span>
                   <input
-                    className="w-full pl-12 pr-4 py-2 rounded-xl
-                     border border-gray-200 dark:border-gray-700 
-                     bg-gray-50 dark:bg-gray-800 text-gray-900 
-                     dark:text-white focus:ring-2 focus:ring-primary/20 
-                     focus:border-primary transition-all outline-none
-                      placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="w-full pl-12 pr-4 py-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     id="email"
                     name="email"
                     placeholder="example@ubrain.com"
@@ -78,11 +77,11 @@ export default function Login() {
                   </a>
                 </div>
                 <div className="relative">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-base">
                     lock
                   </span>
                   <input
-                    className="w-full pl-12 pr-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                    className="w-full pl-12 pr-4 py-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     id="password"
                     name="password"
                     placeholder="••••••••"
@@ -92,11 +91,13 @@ export default function Login() {
                 </div>
               </div>
               <button
-                className="w-full bg-primary hover:bg-[#0a2d4d] text-white font-bold py-3 px-6 mt-8 rounded-xl shadow-lg shadow-primary/20 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 "
+                className="w-full bg-primary hover:bg-[#0a2d4d] text-white font-bold py-2 px-3 mt-4 rounded-xl shadow-lg shadow-primary/20 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 "
                 type="submit"
               >
                 <span>{vi.auth.login.login}</span>
-                <span className="material-symbols-outlined text-xl">login</span>
+                <span className="material-symbols-outlined text-base">
+                  login
+                </span>
               </button>
             </form>
             <div className="mt-8 flex items-center gap-4">
@@ -108,7 +109,7 @@ export default function Login() {
             </div>
             <div className="mt-8">
               <button
-                className="w-full flex items-center justify-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold py-3 px-6 rounded-xl shadow-sm transition-all transform active:scale-[0.99]"
+                className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold py-2.5 px-4 rounded-xl shadow-sm transition-all transform active:scale-[0.99]"
                 type="button"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -132,8 +133,8 @@ export default function Login() {
                 <span>{vi.auth.login.continueWithGoogle}</span>
               </button>
             </div>
-            <div className="mt-10 pt-8 border-t border-gray-100 dark:border-gray-800 text-center">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {vi.auth.login.noAccount}
                 <a
                   className="font-bold text-primary dark:text-blue-400 hover:underline transition-colors"

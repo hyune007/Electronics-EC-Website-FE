@@ -12,19 +12,19 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 60px;
+  padding: 48px;
   color: white;
   position: relative;
   overflow: hidden;
 }
 .auth-right {
   flex: 0.9;
-  display: block;
-  justify-content: unset !important;
-  flex-direction: unset !important;
-  padding: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 48px;
   overflow-y: auto;
-  /* justify-content: flex-start; */
 }
 .decorative-circle {
   position: absolute;
@@ -47,7 +47,7 @@ button {
   }
   .auth-right {
     flex: 1;
-    padding: 40px 24px;
+    padding: 30px 20px;
   }
   .title-center {
     display: flex;

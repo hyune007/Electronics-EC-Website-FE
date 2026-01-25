@@ -1,7 +1,7 @@
 import "./Header.css";
 import useTheme from "../../../hooks/useTheme";
-import ThemeToggleButton from "../../layout/common/ThemeToggleButtonHome.jsx";
-import BrandLogo from "../../layout/common/BrandLogo.jsx";
+import ThemeToggleButton from "../../common/ThemeToggleButtonHome.jsx";
+import BrandLogo from "../../common/BrandLogo.jsx";
 import vi from "../../../i18n/vi.js";
 export default function Header() {
   const { toggleTheme } = useTheme();
@@ -52,13 +52,13 @@ export default function Header() {
               className="text-sm font-medium text-gray-600 dark:text-gray-300 nav-link"
               href="#"
             >
-              { vi.layout.header.news}
+              {vi.layout.header.news}
             </a>
             <a
               className="text-sm font-medium text-gray-600 dark:text-gray-300 nav-link"
               href="#"
             >
-              { vi.layout.header.contact}
+              {vi.layout.header.contact}
             </a>
           </nav>
 

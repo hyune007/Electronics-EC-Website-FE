@@ -89,5 +89,40 @@ const vi = {
       privacy: "Bảo mật thông tin",
     },
   },
+  component: {},
+  product: {
+    breadcrumb: {},
+    rating: {},
+    availability: "Còn hàng",
+    addToCart: "THÊM VÀO GIỎ HÀNG",
+    buyNow: "MUA NGAY",
+    shipping: {
+      title: "Miễn phí giao hàng",
+      subtitle: "Cho đơn hàng nội thành",
+    },
+    warranty: {
+      title: "Bảo hành 12 tháng",
+      subtitle: "Chính hãng Samsung",
+    },
+    tabs: {
+      desc: "Mô tả sản phẩm",
+      specs: "Thông số kỹ thuật",
+      reviews: "Đánh giá",
+    },
+    review: {
+      title: "Đánh giá & Nhận xét",
+      basedOn: "Dựa trên {count} đánh giá",
+      writeButton: "VIẾT ĐÁNH GIÁ",
+      seeMore: "Xem thêm tất cả đánh giá",
+      reviewers: {
+        hn: {
+          text: "Sản phẩm tốt, hiệu năng ổn, thiết kế đẹp. Mình rất hài lòng với chất lượng và dịch vụ của shop.",
+        },
+        mt: {
+          text: "Máy mạnh, chơi game rất mượt. Tuy nhiên pin có vẻ tụt nhanh hơn một chút so với kỳ vọng nếu dùng cường độ cao. Shop tư vấn nhiệt tình.",
+        },
+      },
+    },
+  },
 };
 export default vi;
