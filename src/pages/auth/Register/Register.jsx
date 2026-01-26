@@ -38,7 +38,7 @@ export default function Register() {
                 {vi.auth.register.description}
               </p>
             </div>
-            <form action="#" className="space-y-2 pb-48" method="POST">
+            <form action="#" className="space-y-2" method="POST">
               <div>
                 <label
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"

@@ -16,7 +16,7 @@ export default function ForgotPassword() {
             <div className="lg:hidden text-center mb-8">
               <div className="mt-6 flex justify-center ">
                 <a href="/" className="block">
-                  <div className="w-[160px] h-[34px] overflow-hidden">
+                  <div className="w-[170px] h-[34px] overflow-hidden">
                     <BrandLogo />
                   </div>
                 </a>
