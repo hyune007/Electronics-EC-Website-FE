@@ -1,6 +1,4 @@
 import './AuthLeft.css'
-import logoWhite from "../../../../assets/logo/UBrainTech_white.png";
-
 export default function AuthLeft() {
     return(
    <div className="auth-left dark:bg-black">
@@ -11,7 +9,7 @@ export default function AuthLeft() {
               <a href="/" className="block">
                 <div className="w-[190px] h-[100px] overflow-hidden">
                   <img
-                    src={logoWhite}
+                    src="src/assets/logo/UBrainTech_white.png"
                     alt="UBrain Tech"
                     className="w-full h-full object-cover"
                   />

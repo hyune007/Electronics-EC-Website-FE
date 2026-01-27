@@ -1,6 +1,6 @@
 import React from "react";
-import ProductTabs from "../../../components/product/ProductTabs/ProductTabs.jsx";
-import BreadcrumbNav from "../../../components/common/nav/BreadcrumbNav/BreadcrumbNav.jsx";
+import ProductTabs from "../../../components/customer/product/ProductTabs/ProductTabs.jsx";
+import BreadcrumbNav from "../../../components/customer/product/ProductNav/BreadcrumbNav/BreadcrumbNav.jsx";
 import vi from "../../../i18n/vi.js";
 
 export default function ProductDetail() {
