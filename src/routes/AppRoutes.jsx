@@ -9,22 +9,38 @@ import Header from "../components/layout/Header/Header.jsx";
 import Footer from "../components/layout/Footer/Footer.jsx";
 import Terms from "../pages/other/Terms/Terms.jsx";
 import ProductDetail from "../pages/product/ProductDetail/ProductDetail.jsx";
+import AdminLayout from "../components/layoutsAdmin/AdminLayout.jsx";
+import Dashboard from "../pages/adminDashboard/Dashboard/Dashboard.jsx";
+import CustomerManage from "../pages/adminDashboard/Customer/CustomerManage.jsx";
+import OrderManage from "../pages/adminDashboard/Order/OrderManage.jsx";
+import ProductManage from "../pages/adminDashboard/ProductManage/ProductManage.jsx";
+import BrandManage from "../pages/adminDashboard/Brand/BrandManage.jsx";
+import EmployeeManage from "../pages/adminDashboard/Staff/EmployeeManage.jsx";
 // import Profile from "../pages/user/Profile/Profile.jsx";
 
 export default function AppRoutes() {
   return (
     <Routes>
+      {/* Public/auth routes */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/change-password" element={<ChangePassword />} />
-      <Route path="*" element={<NotFound />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/header" element={<Header />} />
-      <Route path="/footer" element={<Footer />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/product-detail" element={<ProductDetail />} />
-      {/* <Route path="/profile" element={<Profile />} /> */}
+
+      {/* Admin routes */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="customers" element={<CustomerManage />} />
+        <Route path="orders" element={<OrderManage />} />
+        <Route path="products" element={<ProductManage />} />
+        <Route path="brands" element={<BrandManage />} />
+        <Route path="staff" element={<EmployeeManage />} />
+      </Route>
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

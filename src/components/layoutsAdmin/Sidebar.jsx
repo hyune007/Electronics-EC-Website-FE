@@ -146,7 +146,7 @@ function SidebarItem({ icon, label, to, onHover, onClick, activePath }) {
         if (activePath === to) {
             onClick(rect());
         }
-    }, [activePath]);
+    }, [activePath, onClick, to]);
 
     return (
         <NavLink

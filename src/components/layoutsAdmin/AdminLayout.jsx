@@ -1,8 +1,9 @@
 import Header from "./Header.jsx";
 import Sidebar from "./Sidebar.jsx";
 import Footer from "./Footer.jsx";
+import { Outlet } from "react-router-dom";
 
-export default function AdminLayout({ children }) {
+export default function AdminLayout() {
     return (
         <div className="h-screen flex overflow-hidden">
             {/* SIDEBAR */}
@@ -15,7 +16,7 @@ export default function AdminLayout({ children }) {
 
                 {/* MAIN (KHÔNG SCROLL) */}
                 <main className="flex-1 bg-gray-50 overflow-hidden p-4">
-                    {children}
+                    <Outlet />
                 </main>
 
                 {/* FOOTER (nếu có, cao cố định) */}

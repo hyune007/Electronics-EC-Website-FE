@@ -1,5 +1,5 @@
 export const ROUTE_MAP = {
-    home: "admin/dashboard",
+    home: "/admin/dashboard",
     customers: "/admin/customers",
     orders: "/admin/orders",
     products: "/admin/products",
