@@ -4,8 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import './index.css'
 import "./styles/theme/themeColor.css"
 
-// import App from './App.jsx'
-import AppRoutes from './routes/AppRoutes.jsx'
+import App from "./App.jsx";
 
 const savedTheme = localStorage.getItem("theme");
 
@@ -16,14 +15,10 @@ if (savedTheme === "dark") {
   document.documentElement.classList.remove("dark");
 }
 
-createRoot(document.getElementById('root')).render(
-  
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-    <div className="bg-background-light dark:bg-background-dark font-sans transition-colors duration-200 h-screen">
-    <AppRoutes />
-    </div>
-    {/* <App /> */}
-   </BrowserRouter>
-  </StrictMode>,
-)
+      <App />
+    </BrowserRouter>
+  </StrictMode>
+);
