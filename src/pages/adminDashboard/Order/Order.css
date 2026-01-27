@@ -1,0 +1,79 @@
+.order-manage {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* TOOLBAR */
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.status-filter {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    font-size: 14px;
+}
+
+/* TABLE */
+.table-wrap {
+    background: #fff;
+    border-radius: 18px;
+    overflow-y: auto;
+    max-height: 420px; /* 👈 chỉ scroll bảng */
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 14px;
+    font-size: 14px;
+    text-align: left;
+}
+
+thead {
+    background: #f8fafc;
+    position: sticky;
+    top: 0;
+}
+
+tbody tr:hover {
+    background: #f1f5f9;
+}
+
+/* STATUS */
+.status {
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status.completed {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status.cancelled {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.empty {
+    text-align: center;
+    color: #6b7280;
+}

@@ -5,31 +5,6 @@
     @apply antialiased;
   }
 }
-/* Hiệu ứng underline */
-@layer components {
-  .nav-link {
-    @apply relative inline-block text-sm font-medium
-           text-gray-600 dark:text-gray-300
-           transition-colors;
-  }
-
-  .nav-link::after {
-    content: "";
-    @apply absolute left-0 -bottom-1 h-[2px] w-full
-           bg-current
-           scale-x-0 origin-left
-           transition-transform duration-300;
-  }
-
-  .nav-link:hover::after {
-    @apply scale-x-100;
-  }
-
-  .nav-link-active {
-    @apply text-primary dark:text-white font-semibold;
-  }
-}
-
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
