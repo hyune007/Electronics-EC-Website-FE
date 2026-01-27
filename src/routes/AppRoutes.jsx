@@ -21,7 +21,6 @@ import EmployeeManage from "../pages/adminDashboard/Staff/EmployeeManage.jsx";
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public/auth routes */}
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -30,7 +29,6 @@ export default function AppRoutes() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/product-detail" element={<ProductDetail />} />
 
-      {/* Admin routes */}
       <Route path="/admin" element={<AdminLayout />}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="customers" element={<CustomerManage />} />
