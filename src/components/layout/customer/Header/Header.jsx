@@ -1,4 +1,5 @@
 import "./Header.css";
+import { Link, NavLink } from "react-router-dom";
 import useTheme from "../../../../hooks/useTheme.js";
 import ThemeToggleButton from "../../../common/ThemeToggleButtonHome.jsx";
 import BrandLogo from "../../../common/BrandLogo.jsx";
@@ -7,7 +8,7 @@ export default function Header() {
   const { toggleTheme } = useTheme();
   return (
     <div>
-      <div className="h-[32px] bg-background-dark dark:bg-navy-light text-white flex items-center px-4 md:px-10 lg:px-20 overflow-hidden relative z-50">
+      <div className="h-[32px] bg-background-dark dark:bg-navy-light text-white flex items-center px-4 md:px-10 lg:px-20 overflow-hidden relative z-40">
         <div className="marquee flex-1 text-[11px] font-medium tracking-wide uppercase">
           <div className="marquee-content">
             <span>
@@ -30,36 +31,33 @@ export default function Header() {
         </div>
       </div>
 
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-background-dark/95 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800">
+      <header className="header sticky top-0 z-50 bg-white/95 dark:bg-background-dark backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-gray-800 dark:shadow-[0_0_10px_0_rgba(255,255,255,0.12)]">
         <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
-          <a href="/">
+          <Link to="/home">
             <BrandLogo />
-          </a>
+          </Link>
           <nav className="hidden lg:flex items-center gap-10 ">
-            <a
+            <NavLink
+              to="/home"
               className="text-sm font-medium text-gray-600 dark:text-gray-300 nav-link"
-              href="#"
             >
               {vi.layout.header.home}
-            </a>
-            <a
-              className="text-sm font-medium text-gray-600 dark:text-gray-300 nav-link"
-              href="#"
-            >
+            </NavLink>
+            <button className="text-sm font-medium text-gray-600 dark:text-gray-300 nav-link">
               {vi.layout.header.products}
-            </a>
-            <a
+            </button>
+            <NavLink
+              to="/news"
               className="text-sm font-medium text-gray-600 dark:text-gray-300 nav-link"
-              href="#"
             >
               {vi.layout.header.news}
-            </a>
-            <a
+            </NavLink>
+            <NavLink
+              to="/contact"
               className="text-sm font-medium text-gray-600 dark:text-gray-300 nav-link"
-              href="#"
             >
               {vi.layout.header.contact}
-            </a>
+            </NavLink>
           </nav>
 
           <div className="flex items-center gap-4">

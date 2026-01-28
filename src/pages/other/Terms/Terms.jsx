@@ -1,10 +1,10 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 export default function TermsOfService() {
   return (
     <div className="tos-page">
       <style>{`
-        /* Wrapper chiếm toàn màn hình – chịu trách nhiệm background */
         .tos-page {
           min-height: 100vh;
           width: 100%;
@@ -150,7 +150,7 @@ export default function TermsOfService() {
           </p>
         </div>
         <div className="tos-section" style={{ color: "#3b82f6" }}>
-          <a href="/home">Quay về trang chủ</a>
+          <Link to="/home">Quay về trang chủ</Link>
         </div>
       </div>
     </div>

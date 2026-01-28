@@ -1,9 +1,10 @@
 import BrandLogo from "../../../common/BrandLogo.jsx";
+import { Link } from "react-router-dom";
 import vi from "../../../../i18n/vi.js";
 export default function Footer() {
   return (
     <div>
-      <footer class="bg-background-dark dark:bg-navy-light text-white py-20">
+      <footer className="bg-background-dark dark:bg-onyx-black text-gray-900 dark:text-white py-20">
         <div class="max-w-[1440px] mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
           <div class="col-span-1 md:col-span-1">
             <div class="flex items-center gap-3 mb-6">
@@ -14,12 +15,14 @@ export default function Footer() {
             </p>
             <div class="flex gap-4">
               <div class="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-                <span class="material-symbols-outlined text-[20px]">
+                <span class="material-symbols-outlined text-[20px] text-white">
                   public
                 </span>
               </div>
               <div class="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-                <span class="material-symbols-outlined text-[20px]">share</span>
+                <span class="material-symbols-outlined text-[20px] text-white">
+                  share
+                </span>
               </div>
               <div className="size-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
                 <i className="fa-brands fa-facebook-f text-[18px] text-white"></i>
@@ -28,68 +31,68 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 class="font-bold text-lg mb-6">
+            <h4 class="font-bold text-lg mb-6 text-white">
               {vi.layout.footer.productTitle}
             </h4>
             <ul class="space-y-4 text-gray-400 text-sm">
               <li>
-                <a class="hover:text-white transition-colors" href="#">
+                <button class="hover:text-white transition-colors text-left w-full">
                   {vi.layout.footer.products.laptop}
-                </a>
+                </button>
               </li>
               <li>
-                <a class="hover:text-white transition-colors" href="#">
+                <button class="hover:text-white transition-colors text-left w-full">
                   {vi.layout.footer.products.phone}
-                </a>
+                </button>
               </li>
               <li>
-                <a class="hover:text-white transition-colors" href="#">
+                <button class="hover:text-white transition-colors text-left w-full">
                   {vi.layout.footer.products.monitor}
-                </a>
+                </button>
               </li>
               <li>
-                <a class="hover:text-white transition-colors" href="#">
+                <button class="hover:text-white transition-colors text-left w-full">
                   {vi.layout.footer.products.headphone}
-                </a>
+                </button>
               </li>
               <li>
-                <a class="hover:text-white transition-colors" href="#">
+                <button class="hover:text-white transition-colors text-left w-full">
                   {vi.layout.footer.products.keyboard_mouse}
-                </a>
+                </button>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 class="font-bold text-lg mb-6">
+            <h4 class="font-bold text-lg mb-6 text-white">
               {vi.layout.footer.policyTitle}
             </h4>
             <ul class="space-y-4 text-gray-400 text-sm">
               <li>
-                <a class="hover:text-white transition-colors" href="#">
+                <button class="hover:text-white transition-colors text-left w-full">
                   {vi.layout.footer.policies.warranty}
-                </a>
+                </button>
               </li>
               <li>
-                <a class="hover:text-white transition-colors" href="#">
+                <button class="hover:text-white transition-colors text-left w-full">
                   {vi.layout.footer.policies.return}
-                </a>
+                </button>
               </li>
               <li>
-                <a class="hover:text-white transition-colors" href="#">
+                <button class="hover:text-white transition-colors text-left w-full">
                   {vi.layout.footer.policies.shipping}
-                </a>
+                </button>
               </li>
               <li>
-                <a class="hover:text-white transition-colors" href="#">
+                <button class="hover:text-white transition-colors text-left w-full">
                   {vi.layout.footer.policies.payment}
-                </a>
+                </button>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 class="font-bold text-lg mb-6">
+            <h4 class="font-bold text-lg mb-6 text-white">
               {vi.layout.footer.contactTitle}
             </h4>
             <div class="space-y-4">
@@ -127,12 +130,12 @@ export default function Footer() {
             )}
           </p>
           <div class="flex gap-8 text-gray-500 text-xs">
-            <a class="hover:text-white transition-colors" href="/terms">
+            <Link class="hover:text-white transition-colors" to="/terms">
               {vi.layout.footer.terms}
-            </a>
-            <a class="hover:text-white transition-colors" href="#">
+            </Link>
+            <button class="hover:text-white transition-colors">
               {vi.layout.footer.privacy}
-            </a>
+            </button>
           </div>
         </div>
       </footer>

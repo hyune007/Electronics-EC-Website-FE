@@ -124,5 +124,23 @@ const vi = {
       },
     },
   },
+  home: {
+    featuredTitle: "Danh mục nổi bật",
+    categories: {
+      phone: "Điện thoại",
+      computer: "Máy tính",
+      monitor: "Màn hình",
+    },
+    exploreNow: "Khám phá ngay",
+    descriptions: {
+      phone: "iPhone, Samsung & Flagship mới nhất.",
+      computer: "Laptop & PC đồ họa, gaming hiệu năng cao.",
+      monitor: "Độ phân giải 4K, 8K chuyên dụng.",
+    },
+    popularComputersTitle: "Máy tính nổi bật",
+    latestPhonesTitle: "Điện thoại mới nhất",
+    graphicsMonitorsTitle: "Màn hình đồ họa",
+    viewAll: "Xem tất cả",
+  },
 };
 export default vi;

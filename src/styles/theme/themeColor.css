@@ -6,23 +6,23 @@
 /* THEME CONFIG */
 @theme {
   --color-primary: #0f3d69;
-  --color-background-light: #f8fafc;
-  --color-background-dark: #05111d;
+  --color-background-light: #f7f7f8;
+  --color-background-dark: #031528;
   --color-navy-light: #062b4c;
   --color-navy-dark: #021526;
   --font-display: "Playfair Display", serif;
   --font-sans: "Inter", sans-serif;
   --radius-default: 8px;
+  --color-onyx-black: #05070a;
 }
-@text{
+@text {
   --color-hover: #003c75;
 }
 /* dùng để kiểm tra máy màu ở trên */
-test{
-  color : #05111d;
+test {
+  color: #07192c;
   --color-primary: #003c75;
-  --color-navy-light: #062b4c;
+  --color-navy-light: #001b32;
   --color-background-light: #f8fafc;
-    /*  */
+  /*  */
 }
-
