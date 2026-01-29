@@ -24,5 +24,12 @@ test {
   --color-primary: #003c75;
   --color-navy-light: #001b32;
   --color-background-light: #f8fafc;
+    --color-primary: #0f3d69;
+  --color-background-light: #f7f7f8;
+  --color-background-dark: #031528;
+  --color-navy-light: #062b4c;
+  --color-navy-dark: #021526;
+  --radius-default: 8px;
+  --color-onyx-black: #05070a;
   /*  */
 }

@@ -15,6 +15,8 @@ import ProductManage from "../pages/admin/adminDashboard/ProductManage/ProductMa
 import BrandManage from "../pages/admin/adminDashboard/Brand/BrandManage.jsx";
 import EmployeeManage from "../pages/admin/adminDashboard/Staff/EmployeeManage.jsx";
 import CustomerLayout from "../components/layout/customer/CustomerLayout/CustomerLayout.jsx";
+import Profile from "../pages/user/Profile/Profile.jsx";
+
 // import News from "../pages/other/News/News.jsx";
 // import Contact from "../pages/other/Contact/Contact.jsx";
 export default function AppRoutes() {
@@ -26,13 +28,12 @@ export default function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       {/* <Route path="/terms" element={<Terms />} /> */}
       <Route path="/product-detail" element={<ProductDetail />} />
-
       <Route path="/" element={<CustomerLayout />}>
-          <Route path="/home" element={<Home />} />
-          {/* <Route path="/news" element={<News />} /> */}
-          {/* <Route path="/contact" element={<Contact />} /> */}
-          <Route path="/terms" element={<Terms />} />
-
+        <Route path="/home" element={<Home />} />
+        {/* <Route path="/news" element={<News />} /> */}
+        {/* <Route path="/contact" element={<Contact />} /> */}
+        <Route path="/terms" element={<Terms />} />
+          <Route path="/profile" element={<Profile />} />
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>

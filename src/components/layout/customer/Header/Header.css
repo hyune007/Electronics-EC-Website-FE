@@ -13,10 +13,26 @@
   animation: scroll 40s linear infinite;
 }
 
-.header{
-  position: sticky;
-  top:0;
+.icon-btn {
+  padding: 0.5rem;
+  border-radius: 0.75rem;
+  color: rgb(75 85 99); /* gray-600 */
+  transition: background-color 150ms ease, color 150ms ease;
 }
+
+.icon-btn:hover {
+  background-color: rgb(243 244 246); /* gray-100 */
+}
+
+.dark .icon-btn {
+  color: rgb(209 213 219); /* gray-300 */
+}
+
+.dark .icon-btn:hover {
+  background-color: rgb(31 41 55); /* gray-800 */
+}
+
+
 
 @keyframes scroll {
   from {
