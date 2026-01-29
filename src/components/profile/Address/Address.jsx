@@ -11,7 +11,7 @@ export default function Address() {
   };
 
   return (
-    <div className="rounded-2xl border p-6 bg-white dark:bg-slate-800 dark:text-slate-100">
+      <div className="rounded-2xl shadow-lg border p-6 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
       <div className="flex items-start gap-4 mb-6">
         <div className="p-3 rounded-lg bg-[var(--accent-light)] dark:bg-slate-700">
           <span className="material-symbols-outlined">location_on</span>

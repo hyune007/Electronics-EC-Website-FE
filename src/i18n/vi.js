@@ -126,6 +126,7 @@ const vi = {
   },
   home: {
     featuredTitle: "Danh mục nổi bật",
+    exploreProduct: "  Khám phá các sản phẩm nổi bật được chọn lọc dành riêng cho bạn",
     categories: {
       phone: "Điện thoại",
       computer: "Máy tính",

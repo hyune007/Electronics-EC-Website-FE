@@ -2,7 +2,7 @@ import demoImg from "../../../../assets/demo/s23u.jpg";
 export default function ProductCard() {
   return (
     <div>
-      <div className="min-w-[280px] bg-white dark:bg-gray-900 rounded-md overflow-hidden border border-gray-100 dark:border-gray-800 group transform transition-transform duration-300 hover:scale-105 hover:shadow-lg cursor-pointer">
+      <div className="min-w-[280px] bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800 group transform transition-transform duration-300 hover:scale-105 hover:shadow-lg cursor-pointer">
         <div className="h-56 bg-gray-50 dark:bg-gray-800 relative overflow-hidden">
           <img
             alt="Samsung Galaxy S23 Ultra 5G"

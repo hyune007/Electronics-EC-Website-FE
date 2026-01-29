@@ -6,7 +6,7 @@ export default function CustomerLayout() {
     return (
         <div className="min-h-screen flex flex-col bg-white dark:bg-background-dark">
             <Header />
-            <main className="flex-1">
+            <main className="flex-1 bg-background-light dark:bg-navy-deep">
                 <Outlet />
             </main>
             <Footer />
