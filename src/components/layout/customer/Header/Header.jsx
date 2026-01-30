@@ -79,7 +79,7 @@ export default function Header() {
 
           <div className="flex items-center gap-2 relative">
   
-            <button className="icon-btn">
+            <button className="icon-btn hidden lg:flex items-center gap-10">
               <span className="material-symbols-outlined">search</span>
             </button>
 
@@ -110,8 +110,8 @@ export default function Header() {
                 setShowDropdown(false);
               }}
             />
-
-            <ThemeToggleButton onToggle={toggleTheme} />
+            <div className="hidden lg:flex items-center gap-10"> <ThemeToggleButton onToggle={toggleTheme} /></div>
+           
 
             <button
               onClick={() => setMobileOpen((s) => !s)}
@@ -126,6 +126,9 @@ export default function Header() {
           <div className="lg:hidden border-t border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-background-dark">
             <div className="px-6 py-4 space-y-4">
               <nav className="flex flex-col gap-2">
+                 <button className="icon-btn justify-start flex">
+              <span className="material-symbols-outlined">search</span>
+            </button>
                 <NavLink
                   to="/home"
                   onClick={() => setMobileOpen(false)}
@@ -156,6 +159,7 @@ export default function Header() {
                 >
                   {vi.layout.header.contact}
                 </NavLink>
+                 <ThemeToggleButton onToggle={toggleTheme} />
               </nav>
             </div>
           </div>

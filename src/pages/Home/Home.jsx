@@ -11,8 +11,8 @@ export default function Home() {
   return (
     <div className="w-full min-h-screen bg-neutral-100 dark:bg-[#0b0f1a] py-6 text-neutral-900 dark:text-neutral-100 transition-colors">
       <div className="max-w-[1250px] mx-auto pb-20 space-y-14 px-3">
-        <section className="w-full h-[48vh] flex items-center justify-center">
-          <div className="w-full h-full rounded-2xl overflow-hidden border border-neutral-200 dark:border-[#1f2937] shadow-lg">
+        <section className="w-full h-[48vh] flex items-center justify-center hidden lg:flex">
+          <div className="w-full h-full rounded-2xl overflow-hidden border border-neutral-200 dark:border-[#1f2937] shadow-lg ">
             <Banner />
           </div>
         </section>
