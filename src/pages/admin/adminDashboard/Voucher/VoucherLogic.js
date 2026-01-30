@@ -1,29 +1,30 @@
 import { useMemo, useState } from "react";
-import { mockImport } from "../../../mocks/mockImports.js";
+import { mockVouchers } from "../../../../mocks/mockVouchers.js";
 
-export function useImportLogic() {
-    const [list, setList] = useState(mockImport);
+export function useVoucherLogic() {
+    const [vouchers, setVouchers] = useState(mockVouchers);
     const [search, setSearch] = useState("");
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
 
     const emptyForm = {
-        ip_id: "",
-        sp_id: "",
-        ip_quantity: "",
-        ip_date: ""
+        km_id: "",
+        km_name: "",
+        km_description: "",
+        km_percent: "",
+        km_start_date: "",
+        km_end_date: ""
     };
 
     const [form, setForm] = useState(emptyForm);
 
     /* ================= FILTER ================= */
-    const filteredList = useMemo(() => {
+    const filteredVouchers = useMemo(() => {
         const keyword = search.toLowerCase().trim();
-        return list.filter(i =>
-            i.ip_id.toLowerCase().includes(keyword) ||
-            i.sp_id.toLowerCase().includes(keyword)
+        return vouchers.filter(v =>
+            v.km_name.toLowerCase().includes(keyword)
         );
-    }, [list, search]);
+    }, [vouchers, search]);
 
     /* ================= OPEN ADD ================= */
     const openAdd = () => {
@@ -33,28 +34,28 @@ export function useImportLogic() {
     };
 
     /* ================= OPEN EDIT ================= */
-    const openEdit = (item) => {
-        setEditing(item);
-        setForm({ ...item });
+    const openEdit = (voucher) => {
+        setEditing(voucher);
+        setForm({ ...voucher });
         setOpenForm(true);
     };
 
     /* ================= SUBMIT ================= */
     const handleSubmit = () => {
         if (editing) {
-            setList(list.map(i =>
-                i.ip_id === editing.ip_id ? form : i
+            setVouchers(vouchers.map(v =>
+                v.km_id === editing.km_id ? form : v
             ));
         } else {
-            setList([...list, form]);
+            setVouchers([...vouchers, form]);
         }
         setOpenForm(false);
     };
 
     /* ================= DELETE ================= */
     const handleDelete = (id) => {
-        if (window.confirm("Xóa phiếu import này?")) {
-            setList(list.filter(i => i.ip_id !== id));
+        if (window.confirm("Xóa voucher này?")) {
+            setVouchers(vouchers.filter(v => v.km_id !== id));
         }
     };
 
@@ -62,7 +63,7 @@ export function useImportLogic() {
         search, setSearch,
         openForm, setOpenForm,
         form, setForm,
-        filteredList,
+        filteredVouchers,
         openAdd, openEdit,
         handleSubmit,
         handleDelete

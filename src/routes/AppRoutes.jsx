@@ -5,17 +5,24 @@ import ForgotPassword from "../pages/auth/ForgotPassword/ForgotPassword.jsx";
 import ChangePassword from "../pages/auth/ChangePassword/ChangePassword.jsx";
 import Home from "../pages/Home/Home.jsx";
 import NotFound from "../pages/error/NotFound/NotFound.jsx";
-import Header from "../components/layout/Header/Header.jsx";
-import Footer from "../components/layout/Footer/Footer.jsx";
+
 import Terms from "../pages/other/Terms/Terms.jsx";
 import ProductDetail from "../pages/product/ProductDetail/ProductDetail.jsx";
-import AdminLayout from "../components/layoutsAdmin/AdminLayout.jsx";
-import Dashboard from "../pages/adminDashboard/Dashboard/Dashboard.jsx";
-import CustomerManage from "../pages/adminDashboard/Customer/CustomerManage.jsx";
-import OrderManage from "../pages/adminDashboard/Order/OrderManage.jsx";
-import ProductManage from "../pages/adminDashboard/ProductManage/ProductManage.jsx";
-import BrandManage from "../pages/adminDashboard/Brand/BrandManage.jsx";
-import EmployeeManage from "../pages/adminDashboard/Staff/EmployeeManage.jsx";
+import AdminLayout from "../components/layout/admin/layoutsAdmin/AdminLayout.jsx";
+import Dashboard from "../pages/admin/adminDashboard/Dashboard/Dashboard.jsx";
+import CustomerManage from "../pages/admin/adminDashboard/Customer/CustomerManage.jsx";
+import OrderManage from "../pages/admin/adminDashboard/Order/OrderManage.jsx";
+import ProductManage from "../pages/admin/adminDashboard/ProductManage/ProductManage.jsx";
+import BrandManage from "../pages/admin/adminDashboard/Brand/BrandManage.jsx";
+import EmployeeManage from "../pages/admin/adminDashboard/Staff/EmployeeManage.jsx";
+import TestLogin from "../pages/auth/TestLogin/TestLogin.jsx";
+import TestRegister from "../pages/auth/TestRegister/TestRegister.jsx";
+import ProductFilter from "../components/customer/product/ProductFilter/ProductFilter.jsx";
+import CustomerLayout from "../components/layout/customer/CustomerLayout/CustomerLayout.jsx";
+import Profile from "../pages/user/Profile/Profile.jsx";
+import Product from "../pages/product/Product/Product.jsx";
+import ImportManage from "../pages/admin/adminDashboard/Import/ImportManage.jsx";
+import VoucherManage from "../pages/admin/adminDashboard/Voucher/VoucherManage.jsx";
 // import Profile from "../pages/user/Profile/Profile.jsx";
 
 export default function AppRoutes() {
