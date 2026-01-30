@@ -32,8 +32,8 @@ export default function AppRoutes() {
       <Route path="/product-detail" element={<ProductDetail />} />
       <Route path="/product-filter" element={<ProductFilter />} />
 
-      <Route path="/" element={<CustomerLayout />}>
-        <Route path="/home" element={<Home />} />
+      <Route element={<CustomerLayout />}>
+        <Route path="/" element={<Home />} />
         {/* <Route path="/news" element={<News />} /> */}
         {/* <Route path="/contact" element={<Contact />} /> */}
         <Route path="/products" element={<Product />} />
