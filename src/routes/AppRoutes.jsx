@@ -28,7 +28,6 @@ import VoucherManage from "../pages/admin/adminDashboard/Voucher/VoucherManage.j
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/test-login" element={<TestLogin />} />
       <Route path="/register" element={<Register />} />
@@ -36,13 +35,13 @@ export default function AppRoutes() {
       <Route path="/change-password" element={<ChangePassword />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/terms" element={<Terms />} />
-      <Route path="/product-detail" element={<ProductDetail />} />
       <Route path="/product-filter" element={<ProductFilter />} />
 
       <Route element={<CustomerLayout />}>
         <Route path="/" element={<Home />} />
         {/* <Route path="/news" element={<News />} /> */}
         {/* <Route path="/contact" element={<Contact />} /> */}
+          <Route path="/product-detail" element={<ProductDetail />} />
         <Route path="/products" element={<Product />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/profile" element={<Profile />} />
