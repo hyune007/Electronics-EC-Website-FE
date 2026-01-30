@@ -123,10 +123,28 @@ const vi = {
         },
       },
     },
+    form: {
+      filterButton: "Bộ lọc",
+      filterTitle: "Bộ lọc",
+      search: "Tìm kiếm",
+      searchPlaceholder: "Nhập tên sản phẩm...",
+      priceRange: "Khoảng giá",
+      brand: "Thương hiệu",
+      or: "Hoặc",
+      productTypeLabel: "Loại sản phẩm",
+      allProductsTitle: "Tất cả sản phẩm",
+      sortLabel: "Sắp xếp:",
+      sortOptions: {
+        all: "Tất cả sản phẩm",
+        priceAsc: "Giá tăng dần",
+        priceDesc: "Giá giảm dần",
+      },
+    },
   },
   home: {
     featuredTitle: "Danh mục nổi bật",
-    exploreProduct: "  Khám phá các sản phẩm nổi bật được chọn lọc dành riêng cho bạn",
+    exploreProduct:
+      "  Khám phá các sản phẩm nổi bật được chọn lọc dành riêng cho bạn",
     categories: {
       phone: "Điện thoại",
       computer: "Máy tính",
@@ -158,7 +176,7 @@ const vi = {
         fullName: "Nhập họ và tên",
         phone: "Nhập số điện thoại",
         email: "Nhập email",
-        selectAddress: "-- Chọn địa chỉ --"
+        selectAddress: "-- Chọn địa chỉ --",
       },
       updateButton: "Cập nhật thông tin",
     },

@@ -7,10 +7,12 @@ import UserDropdown from "../../../profile/UserDropdown/UserDropdown.jsx";
 import ThemeToggleButton from "../../../common/ThemeToggleButtonHome.jsx";
 import BrandLogo from "../../../common/BrandLogo.jsx";
 import vi from "../../../../i18n/vi.js";
+import SubMenuHeader from "../../../customer/home/SubMenuHeader/SubMenuheader.jsx";
 
 export default function Header() {
   const { toggleTheme } = useTheme();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showSubmenu, setShowSubmenu] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -27,20 +29,15 @@ export default function Header() {
 
         <div className="hidden md:flex items-center gap-6 text-[11px] ml-4 shrink-0">
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px]">
-              mail
-            </span>
+            <span className="material-symbols-outlined text-[14px]">mail</span>
             <span>{vi.layout.header.infoEmail}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-[14px]">
-              call
-            </span>
+            <span className="material-symbols-outlined text-[14px]">call</span>
             <span>{vi.layout.header.infoPhone}</span>
           </div>
         </div>
       </div>
-
 
       <header
         className="
@@ -52,20 +49,30 @@ export default function Header() {
         "
       >
         <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
-    
           <Link to="/home">
             <BrandLogo />
           </Link>
 
- 
           <nav className="hidden lg:flex items-center gap-10">
             <NavLink to="/home" className="nav-link">
               {vi.layout.header.home}
             </NavLink>
 
-            <button type="button" className="nav-link">
-              {vi.layout.header.products}
-            </button>
+            <div
+              className="relative"
+              onMouseEnter={() => setShowSubmenu(true)}
+              onMouseLeave={() => setShowSubmenu(false)}
+            >
+              <NavLink to="/products" className="nav-link">
+                {vi.layout.header.products}
+              </NavLink>
+              {showSubmenu && (
+                <>
+                  <div className="absolute left-1/2 top-full -translate-x-1/2 w-12 h-3 bg-transparent rounded-b-md z-40 pointer-events-auto" />
+                  <SubMenuHeader />
+                </>
+              )}
+            </div>
 
             <NavLink to="/news" className="nav-link">
               {vi.layout.header.news}
@@ -76,18 +83,13 @@ export default function Header() {
             </NavLink>
           </nav>
 
-
           <div className="flex items-center gap-2 relative">
-  
             <button className="icon-btn hidden lg:flex items-center gap-10">
               <span className="material-symbols-outlined">search</span>
             </button>
 
- 
             <button className="icon-btn relative">
-              <span className="material-symbols-outlined">
-                shopping_cart
-              </span>
+              <span className="material-symbols-outlined">shopping_cart</span>
               <span className="absolute -top-1 -right-1 size-4 bg-primary text-white text-[10px] flex items-center justify-center rounded-full">
                 0
               </span>
@@ -97,9 +99,7 @@ export default function Header() {
               onClick={() => setShowDropdown((s) => !s)}
               className="icon-btn"
             >
-              <span className="material-symbols-outlined">
-                account_circle
-              </span>
+              <span className="material-symbols-outlined">account_circle</span>
             </button>
 
             <UserDropdown
@@ -110,8 +110,10 @@ export default function Header() {
                 setShowDropdown(false);
               }}
             />
-            <div className="hidden lg:flex items-center gap-10"> <ThemeToggleButton onToggle={toggleTheme} /></div>
-           
+            <div className="hidden lg:flex items-center gap-10">
+              {" "}
+              <ThemeToggleButton onToggle={toggleTheme} />
+            </div>
 
             <button
               onClick={() => setMobileOpen((s) => !s)}
@@ -126,9 +128,9 @@ export default function Header() {
           <div className="lg:hidden border-t border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-background-dark">
             <div className="px-6 py-4 space-y-4">
               <nav className="flex flex-col gap-2">
-                 <button className="icon-btn justify-start flex">
-              <span className="material-symbols-outlined">search</span>
-            </button>
+                <button className="icon-btn justify-start flex">
+                  <span className="material-symbols-outlined">search</span>
+                </button>
                 <NavLink
                   to="/home"
                   onClick={() => setMobileOpen(false)}
@@ -137,10 +139,7 @@ export default function Header() {
                   {vi.layout.header.home}
                 </NavLink>
 
-                <button
-                  type="button"
-                  className="nav-link text-left"
-                >
+                <button type="button" className="nav-link text-left">
                   {vi.layout.header.products}
                 </button>
 
@@ -159,7 +158,7 @@ export default function Header() {
                 >
                   {vi.layout.header.contact}
                 </NavLink>
-                 <ThemeToggleButton onToggle={toggleTheme} />
+                <ThemeToggleButton onToggle={toggleTheme} />
               </nav>
             </div>
           </div>
