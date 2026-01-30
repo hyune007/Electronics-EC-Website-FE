@@ -5,4 +5,6 @@ export const ROUTE_MAP = {
     products: "/admin/products",
     brands: "/admin/brands",
     staff: "/admin/staff",
+    imports: "/admin/imports",
+    vouchers: "/admin/vouchers",
 };

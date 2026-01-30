@@ -16,6 +16,8 @@ import OrderManage from "../pages/adminDashboard/Order/OrderManage.jsx";
 import ProductManage from "../pages/adminDashboard/ProductManage/ProductManage.jsx";
 import BrandManage from "../pages/adminDashboard/Brand/BrandManage.jsx";
 import EmployeeManage from "../pages/adminDashboard/Staff/EmployeeManage.jsx";
+import ImportManage from "../pages/adminDashboard/Import/ImportManage.jsx";
+import VoucherManage from "../pages/adminDashboard/Voucher/VoucherManage.jsx";
 // import Profile from "../pages/user/Profile/Profile.jsx";
 
 export default function AppRoutes() {
@@ -36,6 +38,8 @@ export default function AppRoutes() {
         <Route path="products" element={<ProductManage />} />
         <Route path="brands" element={<BrandManage />} />
         <Route path="staff" element={<EmployeeManage />} />
+        <Route path="imports" element={<ImportManage />}  />
+        <Route path="vouchers" element={<VoucherManage />} />
       </Route>
 
       <Route path="*" element={<NotFound />} />
