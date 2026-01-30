@@ -79,7 +79,7 @@ export default function Register() {
             <div className="lg:hidden text-center mb-6">
               <div className=" flex justify-center ">
                 <a href="/" className="block">
-                  <div className="w-[171px] h-[36px] overflow-hidden">
+                  <div className="w-[180px] h-[40px] overflow-hidden">
                     <BrandLogo />
                   </div>
                 </a>

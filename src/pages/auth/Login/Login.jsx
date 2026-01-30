@@ -71,7 +71,7 @@ export default function Login() {
             <div className="lg:hidden text-center mb-8">
               <div className="mt-6 flex justify-center ">
                 <a href="/" className="block">
-                  <div className="w-[170 h-[34px] overflow-hidden">
+                  <div className="w-[180px] h-[40px] overflow-hidden">
                     <BrandLogo />
                   </div>
                 </a>
