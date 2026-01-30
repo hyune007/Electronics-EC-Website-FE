@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { ROUTE_MAP } from "../../../../../routes/routesConfig/routeMap.js";
+import { ROUTE_MAP } from "../../../../../routes/routesConfig/routeMap";
 import {
   Menu,
   Home,
@@ -10,166 +10,151 @@ import {
   DollarSign,
   UserCog,
   LogOut,
+  Warehouse,
+  TicketPercent,
 } from "lucide-react";
 
 export default function Sidebar() {
+  const [isOpen, setIsOpen] = useState(true);
   const [highlight, setHighlight] = useState(null);
-  const [activeRect, setActiveRect] = useState(null);
   const location = useLocation();
 
-  const handleHover = (rect) => {
+  const handleSelect = (rect) => {
     setHighlight(rect);
-  };
-
-  const handleClick = (rect) => {
-    setHighlight(rect);
-    setActiveRect(rect);
   };
 
   return (
-    <aside
-      className="
-                group fixed md:static z-40 min-h-screen
+      <aside
+          className={`
+                fixed md:static z-40 min-h-screen
+                ${isOpen ? "w-72" : "w-20"}
                 bg-[#C1E7FF]
-                w-20 hover:w-72
-                transition-all duration-300
                 overflow-hidden shadow-lg
                 flex flex-col justify-between
-            "
-      onMouseLeave={() => {
-        if (activeRect) setHighlight(activeRect);
-      }}
-    >
-      {/* HEADER */}
-      <div>
-        <div className="h-16 flex items-center justify-between px-4 border-b border-black/20">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold">
-              U
-            </div>
-            <span className="font-bold text-lg text-black opacity-0 group-hover:opacity-100 transition">
-              UBRAINTECH
-            </span>
-          </div>
-          <Menu />
-        </div>
-
-        {/* MENU */}
-        <nav className="relative px-3 py-6 space-y-2">
-          {/* Highlight kính lúp */}
-          {highlight && (
+                transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
+            `}
+      >
+        {/* ================= HEADER ================= */}
+        <div>
+          <div
+              className={`
+                        h-16 flex items-center px-4 border-b border-black/20
+                        ${isOpen ? "justify-between" : "justify-center"}
+                        transition-all duration-300
+                    `}
+          >
+            {/* LOGO */}
             <div
-              className="
+                className={`
+                            flex items-center gap-2 overflow-hidden
+                            transition-all duration-500 ease-out
+                            ${isOpen
+                    ? "opacity-100 translate-x-0"
+                    : "opacity-0 -translate-x-4 pointer-events-none"}
+                        `}
+            >
+              <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold">
+                U
+              </div>
+              <span className="font-bold text-lg text-black whitespace-nowrap">
+                            UBRAINTECH
+                        </span>
+            </div>
+
+            {/* MENU BUTTON */}
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="
+                            w-9 h-9
+                            flex items-center justify-center
+                            rounded-lg
+                            hover:bg-black/10
+                            transition-all duration-300
+                        "
+            >
+              <Menu />
+            </button>
+          </div>
+
+          {/* ================= MENU ================= */}
+          <nav className="relative px-3 py-6 space-y-2">
+            {/* Highlight */}
+            {highlight && (
+                <div
+                    className="
                                 absolute left-2 right-2
                                 rounded-xl
-                                bg-white/40
+                                bg-white/60
                                 backdrop-blur-md
                                 shadow
-                                transition-all duration-300
+                                transition-all duration-500 ease-out
                             "
-              style={{
-                top: highlight.top,
-                height: highlight.height,
-              }}
-            />
-          )}
+                    style={{
+                      top: highlight.top,
+                      height: highlight.height,
+                    }}
+                />
+            )}
 
-          <SidebarItem
-            icon={<Home />}
-            label="Trang chủ"
-            to={ROUTE_MAP.home}
-            onHover={handleHover}
-            onClick={handleClick}
-            activePath={location.pathname}
-          />
+            <SidebarItem icon={<Home />} label="Trang chủ" to={ROUTE_MAP.home}
+                         onSelect={handleSelect} activePath={location.pathname} isOpen={isOpen} />
 
-          <SidebarItem
-            icon={<Users />}
-            label="Quản lí khách hàng"
-            to={ROUTE_MAP.customers}
-            onHover={handleHover}
-            onClick={handleClick}
-            activePath={location.pathname}
-          />
+            <SidebarItem icon={<Users />} label="Quản lí khách hàng" to={ROUTE_MAP.customers}
+                         onSelect={handleSelect} activePath={location.pathname} isOpen={isOpen} />
 
-          <SidebarItem
-            icon={<Package />}
-            label="Quản lí đơn hàng"
-            to={ROUTE_MAP.orders}
-            onHover={handleHover}
-            onClick={handleClick}
-            activePath={location.pathname}
-          />
+            <SidebarItem icon={<Package />} label="Quản lí đơn hàng" to={ROUTE_MAP.orders}
+                         onSelect={handleSelect} activePath={location.pathname} isOpen={isOpen} />
 
-          <SidebarItem
-            icon={<DollarSign />}
-            label="Quản lí sản phẩm"
-            to={ROUTE_MAP.products}
-            onHover={handleHover}
-            onClick={handleClick}
-            activePath={location.pathname}
-          />
+            <SidebarItem icon={<DollarSign />} label="Quản lí sản phẩm" to={ROUTE_MAP.products}
+                         onSelect={handleSelect} activePath={location.pathname} isOpen={isOpen} />
 
-          <SidebarItem
-            icon={<ShoppingBag />}
-            label="Quản lí hãng"
-            to={ROUTE_MAP.brands}
-            onHover={handleHover}
-            onClick={handleClick}
-            activePath={location.pathname}
-          />
+            <SidebarItem icon={<ShoppingBag />} label="Quản lí hãng" to={ROUTE_MAP.brands}
+                         onSelect={handleSelect} activePath={location.pathname} isOpen={isOpen} />
 
-          <SidebarItem
-            icon={<UserCog />}
-            label="Quản lí nhân viên"
-            to={ROUTE_MAP.staff}
-            onHover={handleHover}
-            onClick={handleClick}
-            activePath={location.pathname}
-          />
-        </nav>
-      </div>
+            <SidebarItem icon={<UserCog />} label="Quản lí nhân viên" to={ROUTE_MAP.staff}
+                         onSelect={handleSelect} activePath={location.pathname} isOpen={isOpen} />
 
-      {/* LOGOUT */}
-      {/* BOTTOM */}
-      <div className="px-4 pb-6">
-        <button
-          className="
-            w-full h-11
-            flex items-center
-            justify-center group-hover:justify-start
-            gap-3
-            px-3
-            rounded-xl
-            bg-black text-white
-            transition-all duration-300
-        "
-        >
-          {/* ICON */}
-          <LogOut size={18} className="shrink-0" />
+            <SidebarItem icon={<Warehouse />} label="Quản lí nhập kho" to={ROUTE_MAP.imports}
+                         onSelect={handleSelect} activePath={location.pathname} isOpen={isOpen} />
 
-          {/* TEXT */}
-          <span
-            className="
-                max-w-0
-                opacity-0
-                group-hover:max-w-[120px]
-                group-hover:opacity-100
-                transition-all duration-300
-                whitespace-nowrap
-                overflow-hidden
-            "
+            <SidebarItem icon={<TicketPercent />} label="Quản lí voucher" to={ROUTE_MAP.vouchers}
+                         onSelect={handleSelect} activePath={location.pathname} isOpen={isOpen} />
+          </nav>
+        </div>
+
+        {/* ================= LOGOUT ================= */}
+        <div className="px-4 pb-6">
+          <button
+              className="
+                        w-full h-11
+                        flex items-center gap-3 px-3
+                        rounded-xl
+                        bg-black text-white
+                        hover:bg-black/80
+                        transition-all duration-500 ease-out
+                    "
           >
-            Đăng xuất
-          </span>
-        </button>
-      </div>
-    </aside>
+            <LogOut size={18} />
+
+            <span
+                className={`
+                            transition-all duration-500 ease-out
+                            delay-200
+                            ${isOpen
+                    ? "opacity-100 translate-x-0"
+                    : "opacity-0 -translate-x-3 pointer-events-none"}
+                        `}
+            >
+                        Đăng xuất
+                    </span>
+          </button>
+        </div>
+      </aside>
   );
 }
 
-/* ===== ITEM ===== */
-function SidebarItem({ icon, label, to, onHover, onClick, activePath }) {
+/* ================= ITEM ================= */
+function SidebarItem({ icon, label, to, onSelect, activePath, isOpen }) {
   const ref = useRef(null);
 
   const rect = () => ({
@@ -179,32 +164,39 @@ function SidebarItem({ icon, label, to, onHover, onClick, activePath }) {
 
   useEffect(() => {
     if (activePath === to) {
-      onClick(rect());
+      onSelect(rect());
     }
-  }, [activePath]);
+  }, [activePath, to]);
 
   return (
-    <NavLink to={to} style={{ textDecoration: "none" }}>
-      <div
-        ref={ref}
-        onMouseEnter={() => onHover(rect())}
-        onClick={() => onClick(rect())}
-        className="
-                    relative z-10
-                    h-11
+      <NavLink to={to} className="no-underline">
+        <div
+            ref={ref}
+            onClick={() => onSelect(rect())}
+            className="
+                    relative z-10 h-11
                     flex items-center gap-4
-                    px-3
-                    rounded-xl
+                    px-3 rounded-xl
                     text-black
-                    cursor-pointer
-                    transition-all duration-200
+                    hover:bg-white/40
+                    transition-all duration-300
                 "
-      >
-        <span className="w-5 h-5 shrink-0">{icon}</span>
-        <span className="opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
-          {label}
-        </span>
-      </div>
-    </NavLink>
+        >
+          <span className="w-5 h-5 shrink-0">{icon}</span>
+
+          <span
+              className={`
+                        whitespace-nowrap
+                        transition-all duration-500 ease-out
+                        delay-150
+                        ${isOpen
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 -translate-x-4 pointer-events-none"}
+                    `}
+          >
+                        {label}
+                </span>
+        </div>
+      </NavLink>
   );
 }

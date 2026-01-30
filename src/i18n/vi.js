@@ -22,6 +22,7 @@ const vi = {
       phone: "Số điện thoại",
       password: "Mật khẩu",
       confirmPassword: "Xác nhận mật khẩu",
+      mismatch: "Mật khẩu xác nhận không khớp",
       haveAccount: "Đã có tài khoản?",
       login: "Đăng nhập",
       registerNow: "Đăng ký ngay",
