@@ -1,12 +1,58 @@
 import "./Login.css";
-// import { useEffect } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import vi from "../../../i18n/vi.js";
 import useTheme from "../../../hooks/useTheme";
 import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
 import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx";
 import BrandLogo from "../../../components/common/BrandLogo.jsx";
+import { login } from "../../../services/authService.js";
+import { decodeJwtPayload } from "../../../utils/jwt.js";
 export default function Login() {
   const { toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage("");
+    setIsSubmitting(true);
+
+    try {
+      const data = await login(formData);
+      const payload = decodeJwtPayload(data?.token);
+
+      if (!payload) {
+        setErrorMessage("Token không hợp lệ.");
+        return;
+      }
+
+      localStorage.setItem("authToken", data.token);
+
+      navigate("/test-login", {
+        state: {
+          token: data.token,
+          id: payload.sub,
+          roleId: payload.roleId,
+        },
+      });
+    } catch (error) {
+      const message =
+        error?.response?.data ||
+        error?.message ||
+        "Đăng nhập thất bại. Vui lòng thử lại.";
+      setErrorMessage(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="bg-background-light dark:bg-background-dark font-sans transition-colors duration-200">
@@ -39,7 +85,7 @@ export default function Login() {
                 {vi.auth.login.description}
               </p>
             </div>
-            <form action="#" className="space-y-3" method="POST">
+            <form className="space-y-3" onSubmit={handleSubmit}>
               <div>
                 <label
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
@@ -56,8 +102,10 @@ export default function Login() {
                     id="email"
                     name="email"
                     placeholder="example@ubrain.com"
-                    required=""
+                    required
                     type="email"
+                    value={formData.email}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
@@ -85,16 +133,26 @@ export default function Login() {
                     id="password"
                     name="password"
                     placeholder="••••••••"
-                    required=""
+                    required
                     type="password"
+                    value={formData.password}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
+              {errorMessage ? (
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  {errorMessage}
+                </p>
+              ) : null}
               <button
                 className="w-full bg-primary hover:bg-[#0a2d4d] text-white font-bold py-2 px-3 mt-4 rounded-xl shadow-lg shadow-primary/20 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 "
                 type="submit"
+                disabled={isSubmitting}
               >
-                <span>{vi.auth.login.login}</span>
+                <span>
+                  {isSubmitting ? "Đang đăng nhập..." : vi.auth.login.login}
+                </span>
                 <span className="material-symbols-outlined text-base">
                   login
                 </span>

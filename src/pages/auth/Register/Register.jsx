@@ -1,11 +1,66 @@
 import "./Register.css";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import useTheme from "../../../hooks/useTheme";
 import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
 import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx";
 import BrandLogo from "../../../components/common/BrandLogo.jsx";
 import vi from "../../../i18n/vi.js";
+import { fetchCustomerByEmail, register } from "../../../services/authService.js";
 export default function Register() {
   const { toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage("");
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMessage(vi.auth.register.mismatch);
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+      });
+
+      const customer = await fetchCustomerByEmail(formData.email);
+
+      navigate("/test-register", {
+        state: {
+          customer,
+        },
+      });
+    } catch (error) {
+      const message =
+        error?.response?.data ||
+        error?.message ||
+        "Dang ky that bai. Vui long thu lai.";
+      setErrorMessage(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="bg-background-light dark:bg-background-dark font-sans transition-colors duration-200">
@@ -38,7 +93,7 @@ export default function Register() {
                 {vi.auth.register.description}
               </p>
             </div>
-            <form action="#" className="space-y-2" method="POST">
+            <form className="space-y-2" onSubmit={handleSubmit}>
               <div>
                 <label
                   className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2"
@@ -55,8 +110,10 @@ export default function Register() {
                     id="name"
                     name="name"
                     placeholder="Nguyễn Văn A"
-                    required=""
+                    required
                     type="text"
+                    value={formData.name}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
@@ -76,8 +133,10 @@ export default function Register() {
                     id="email"
                     name="email"
                     placeholder="example@ubrain.com"
-                    required=""
+                    required
                     type="email"
+                    value={formData.email}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
@@ -97,8 +156,10 @@ export default function Register() {
                     id="phone"
                     name="phone"
                     placeholder="0123 456 789"
-                    required=""
+                    required
                     type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
@@ -118,8 +179,10 @@ export default function Register() {
                     id="password"
                     name="password"
                     placeholder="••••••••"
-                    required=""
+                    required
                     type="password"
+                    value={formData.password}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
@@ -137,19 +200,29 @@ export default function Register() {
                   <input
                     className="w-full pl-12 pr-4 py-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     id="confirm_password"
-                    name="confirm_password"
+                    name="confirmPassword"
                     placeholder="••••••••"
-                    required=""
+                    required
                     type="password"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
                   />
                 </div>
               </div>
+              {errorMessage ? (
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  {errorMessage}
+                </p>
+              ) : null}
               <div className="pt-2">
                 <button
                   className="w-full bg-primary hover:bg-[#0a2d4d] text-white font-bold py-2 px-3 rounded-xl shadow-lg shadow-primary/20 transition-all transform active:scale-[0.99] flex items-center justify-center gap-2"
                   type="submit"
+                  disabled={isSubmitting}
                 >
-                  <span>{vi.auth.register.registerNow}</span>
+                  <span>
+                    {isSubmitting ? "Dang xu ly..." : vi.auth.register.registerNow}
+                  </span>
                   <span className="material-symbols-outlined text-base">
                     person_add
                   </span>

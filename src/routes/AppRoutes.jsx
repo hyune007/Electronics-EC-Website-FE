@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
 import Login from "../pages/auth/Login/Login.jsx";
+import TestLogin from "../pages/auth/TestLogin/TestLogin.jsx";
 import Register from "../pages/auth/Register/Register.jsx";
+import TestRegister from "../pages/auth/TestRegister/TestRegister.jsx";
 import ForgotPassword from "../pages/auth/ForgotPassword/ForgotPassword.jsx";
 import ChangePassword from "../pages/auth/ChangePassword/ChangePassword.jsx";
 import Home from "../pages/Home/Home.jsx";
@@ -23,7 +25,9 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/test-login" element={<TestLogin />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/test-register" element={<TestRegister />} />
       <Route path="/change-password" element={<ChangePassword />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/terms" element={<Terms />} />
