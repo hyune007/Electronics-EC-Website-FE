@@ -142,7 +142,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="px-2 py-4">
+        <section className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-extrabold">
               {vi.home.latestPhonesTitle}
