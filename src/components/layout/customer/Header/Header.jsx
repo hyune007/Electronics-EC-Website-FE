@@ -139,10 +139,9 @@ export default function Header() {
                   {vi.layout.header.home}
                 </NavLink>
 
-                <button type="button" className="nav-link text-left">
+                <NavLink to="/products" className="nav-link">
                   {vi.layout.header.products}
-                </button>
-
+                </NavLink>
                 <NavLink
                   to="/news"
                   onClick={() => setMobileOpen(false)}
