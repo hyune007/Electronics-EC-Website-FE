@@ -6,7 +6,7 @@ import ProductCard from "../ProductCard/ProductCard.jsx";
 const PAGE_SIZE = 12;
 
 export default function ProductList() {
-  const [page, setPage] = useState(0); // zero-based
+  const [page, setPage] = useState(0);
   const [products, setProducts] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -84,7 +84,7 @@ export default function ProductList() {
           <span className="text-sm text-gray-500 dark:text-slate-300">
             {vi.product.form.sortLabel}
           </span>
-          <select className="border border-gray-200 dark:border-gray-700 bg-transparent rounded-lg px-3 py-1.5 text-sm focus:outline-none dark:text-slate-100">
+          <select className="border border-gray-200 dark:bg-primary rounded-lg px-3 py-1.5 text-sm focus:outline-none dark:text-slate-100">
             <option value="">{vi.product.form.sortOptions.all}</option>
             <option value="asc">{vi.product.form.sortOptions.priceAsc}</option>
             <option value="desc">
@@ -94,7 +94,7 @@ export default function ProductList() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10 dark:text-slate-100">
         {loading && (
           <div className="col-span-full text-center">Đang tải...</div>
         )}

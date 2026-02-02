@@ -1,6 +1,44 @@
+import { useState, useRef, useEffect } from "react";
 import demoImg from "../../../../assets/demo/demo.jpg";
 
 export default function ProductCard({ product }) {
+  const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0 });
+  const timerRef = useRef(null);
+  const pendingPos = useRef({ x: 0, y: 0 });
+
+  const handlePointerEnter = (e) => {
+    pendingPos.current = { x: e.clientX, y: e.clientY };
+    timerRef.current = setTimeout(() => {
+      setTooltip({
+        visible: true,
+        x: pendingPos.current.x + 12,
+        y: pendingPos.current.y + 12,
+      });
+      timerRef.current = null;
+    }, 1000);
+  };
+
+  const handlePointerMove = (e) => {
+    pendingPos.current = { x: e.clientX, y: e.clientY };
+    setTooltip((t) =>
+      t.visible ? { ...t, x: e.clientX + 12, y: e.clientY + 12 } : t,
+    );
+  };
+
+  const handlePointerLeave = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    setTooltip({ visible: false, x: 0, y: 0 });
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
   if (!product) {
     return (
       <div className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
@@ -16,7 +54,35 @@ export default function ProductCard({ product }) {
   }
 
   return (
-    <div>
+    <div
+      className="cursor-pointer relative"
+      onPointerEnter={handlePointerEnter}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
+    >
+      {product.description && tooltip.visible && (
+        <div
+          style={{
+            position: "fixed",
+            left: tooltip.x,
+            top: tooltip.y,
+            background: "rgba(0,0,0,0.85)",
+            color: "#fff",
+            padding: "6px 8px",
+            borderRadius: 6,
+            fontSize: 12,
+            pointerEvents: "none",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            maxWidth: 300,
+            zIndex: 9999,
+          }}
+        >
+          {product.description}
+        </div>
+      )}
+
       <div
         className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden
                 border border-gray-100 dark:border-gray-800
@@ -39,7 +105,7 @@ export default function ProductCard({ product }) {
             {product.brand?.name || ""}
           </p>
 
-          <h4 className="font-bold text-sm mb-1 line-clamp-2 min-h-[2.5rem]">
+          <h4 className="font-bold text-sm mb-1 line-clamp-2 min-h-[2.5rem] dark:text-text-light">
             {product?.name}
           </h4>
 
