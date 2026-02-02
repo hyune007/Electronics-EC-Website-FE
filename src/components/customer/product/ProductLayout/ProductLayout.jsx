@@ -19,7 +19,7 @@ export default function ProductLayout() {
   }, [filterOpen]);
   return (
     <div>
-      <Banner />
+      <Banner variant="product" />
       <main className="max-w-7xl mx-auto px-6 py-10">
         <div className="mb-4 lg:hidden">
           <button

@@ -1,23 +1,48 @@
 import Banner from "../../components/customer/home/Banner/Banner.jsx";
 import useDragScroll from "../../hooks/useDragScroll";
+import useRevealOnScroll from "../../hooks/useRevealOnScroll";
+import "./Home.css";
 import vi from "../../i18n/vi";
 import ProductCard from "../../components/customer/product/ProductCard/ProductCard.jsx";
-
+import { useEffect, useState } from "react";
+import { getProducts } from "../../api/Product/productApi";
+const HOME_SLIDE_SIZE = 7;
 export default function Home() {
   const scroller1 = useDragScroll();
   const scroller2 = useDragScroll();
   const scroller3 = useDragScroll();
+  useRevealOnScroll();
+  const [popularComputers, setPopularComputers] = useState([]);
+  const [latestPhones, setLatestPhones] = useState([]);
+  const [graphicsMonitors, setGraphicsMonitors] = useState([]);
 
+  useEffect(() => {
+    getProducts({ p: 0, size: HOME_SLIDE_SIZE, category: "LSP02" })
+      .then((res) => setPopularComputers(res.data.content || []))
+      .catch(console.error);
+
+    getProducts({ p: 0, size: HOME_SLIDE_SIZE, category: "LSP01" })
+      .then((res) => setLatestPhones(res.data.content || []))
+      .catch(console.error);
+
+    getProducts({ p: 0, size: HOME_SLIDE_SIZE, category: "LSP08" })
+      .then((res) => setGraphicsMonitors(res.data.content || []))
+      .catch(console.error);
+  }, []);
   return (
-    <div className="w-full min-h-screen bg-neutral-100 dark:bg-[#0b0f1a] py-6 text-neutral-900 dark:text-neutral-100 transition-colors">
+    <div className="w-full min-h-screen bg-neutral-100 dark:bg-[#0b0f1a] py-15 text-neutral-900 dark:text-neutral-100 transition-colors">
       <div className="max-w-[1250px] mx-auto pb-20 space-y-14 px-3">
-        <section className="w-full h-[48vh] flex items-center justify-center hidden lg:flex">
-          <div className="w-full h-full rounded-2xl overflow-hidden border border-neutral-200 dark:border-[#1f2937] shadow-lg ">
-            <Banner />
-          </div>
+        <section
+          className="w-full flex items-center justify-center hidden lg:flex reveal-on-scroll"
+          style={{ "--reveal-delay": "0ms" }}
+        >
+          <Banner variant="home" />
         </section>
 
-        <div className="text-center">
+        <div
+          className="text-center reveal-on-scroll"
+          style={{ "--reveal-delay": "80ms" }}
+        >
           <h2 className="text-4xl font-extrabold tracking-tight">
             {vi.home.featuredTitle}
           </h2>
@@ -26,7 +51,10 @@ export default function Home() {
           </p>
         </div>
 
-        <section className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6">
+        <section
+          className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6 reveal-on-scroll"
+          style={{ "--reveal-delay": "120ms" }}
+        >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div
               className="group cursor-pointer rounded-2xl border border-neutral-200 dark:border-[#243041]
@@ -115,8 +143,14 @@ export default function Home() {
         </section>
 
         <section className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-extrabold">
+          <div
+            className="flex items-center justify-between mb-6 reveal-on-scroll"
+            style={{ "--reveal-delay": "160ms" }}
+          >
+            <h2
+              className="text-2xl font-extrabold reveal-on-scroll"
+              style={{ "--reveal-delay": "200ms" }}
+            >
               {vi.home.popularComputersTitle}
             </h2>
             <button className="text-sm font-semibold text-neutral-500 hover:text-primary flex items-center gap-1">
@@ -130,19 +164,19 @@ export default function Home() {
           <div
             ref={scroller1}
             className="flex items-start gap-6 overflow-x-auto no-scrollbar overflow-y-visible
-                       pt-3 pb-6 -mx-6 px-6"
+                       pt-3 pb-6 -mx-6 px-6 reveal-on-scroll"
+            style={{ "--reveal-delay": "240ms" }}
           >
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
+            {popularComputers.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </div>
         </section>
 
-         <section className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6">
+        <section
+          className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6 reveal-on-scroll"
+          style={{ "--reveal-delay": "120ms" }}
+        >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-extrabold">
               {vi.home.latestPhonesTitle}
@@ -158,19 +192,19 @@ export default function Home() {
           <div
             ref={scroller2}
             className="flex items-start gap-6 overflow-x-auto no-scrollbar overflow-y-visible
-                       pt-3 pb-6 -mx-6 px-6"
+                       pt-3 pb-6 -mx-6 px-6 reveal-on-scroll"
+            style={{ "--reveal-delay": "240ms" }}
           >
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
+            {latestPhones.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </div>
         </section>
 
-        <section className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6">
+        <section
+          className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6 reveal-on-scroll"
+          style={{ "--reveal-delay": "120ms" }}
+        >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-extrabold">
               {vi.home.graphicsMonitorsTitle}
@@ -186,15 +220,12 @@ export default function Home() {
           <div
             ref={scroller3}
             className="flex items-start gap-6 overflow-x-auto no-scrollbar overflow-y-visible
-                       pt-3 pb-6 -mx-6 px-6"
+                       pt-3 pb-6 -mx-6 px-6 reveal-on-scroll"
+            style={{ "--reveal-delay": "240ms" }}
           >
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
-            <ProductCard />
+            {graphicsMonitors.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
           </div>
         </section>
       </div>

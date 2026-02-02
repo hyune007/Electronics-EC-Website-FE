@@ -1,14 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import vi from "../../../../i18n/vi.js";
+import { getProducts } from "../../../../api/Product/productApi.js";
 import ProductCard from "../ProductCard/ProductCard.jsx";
 
 const PAGE_SIZE = 12;
-const PRODUCTS = Array.from({ length: 37 }, (_, i) => ({
-  id: i + 1,
-}));
 
 export default function ProductList() {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0); // zero-based
+  const [products, setProducts] = useState([]);
+  const [totalPages, setTotalPages] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
 
   const CATEGORIES = [
     { id: "LSP01", name: "Điện thoại" },
@@ -23,11 +25,35 @@ export default function ProductList() {
     { id: "LSP10", name: "Phụ kiện khác" },
   ];
 
-  const totalPages = Math.ceil(PRODUCTS.length / PAGE_SIZE);
+  useEffect(() => {
+    let mounted = true;
+    const timer = setTimeout(() => {
+      if (!mounted) return;
+      setLoading(true);
+      setError(false);
 
-  const paginatedProducts = useMemo(() => {
-    const start = (page - 1) * PAGE_SIZE;
-    return PRODUCTS.slice(start, start + PAGE_SIZE);
+      getProducts({ p: page, size: PAGE_SIZE })
+        .then((res) => {
+          if (!mounted) return;
+          const data = res.data;
+          setProducts(data.content || []);
+          setTotalPages(data.totalPages || 0);
+        })
+        .catch((err) => {
+          if (!mounted) return;
+          console.error(err);
+          setError(true);
+        })
+        .finally(() => {
+          if (!mounted) return;
+          setLoading(false);
+        });
+    }, 0);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+    };
   }, [page]);
 
   return (
@@ -48,29 +74,50 @@ export default function ProductList() {
           ))}
         </div>
       </div>
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
-        <h1 className="text-2xl font-bold tracking-tight dark:text-slate-100">{vi.product.form.allProductsTitle}</h1>
+        <h1 className="text-2xl font-bold tracking-tight dark:text-slate-100">
+          {vi.product.form.allProductsTitle}
+        </h1>
 
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-500 dark:text-slate-300">{vi.product.form.sortLabel}</span>
-            <select className="border border-gray-200 dark:border-gray-700 bg-transparent rounded-lg px-3 py-1.5 text-sm focus:outline-none dark:text-slate-100">
-            <option>{vi.product.form.sortOptions.all}</option>
-            <option>{vi.product.form.sortOptions.priceAsc}</option>
-            <option>{vi.product.form.sortOptions.priceDesc}</option>
+          <span className="text-sm text-gray-500 dark:text-slate-300">
+            {vi.product.form.sortLabel}
+          </span>
+          <select className="border border-gray-200 dark:border-gray-700 bg-transparent rounded-lg px-3 py-1.5 text-sm focus:outline-none dark:text-slate-100">
+            <option value="">{vi.product.form.sortOptions.all}</option>
+            <option value="asc">{vi.product.form.sortOptions.priceAsc}</option>
+            <option value="desc">
+              {vi.product.form.sortOptions.priceDesc}
+            </option>
           </select>
         </div>
       </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-        {paginatedProducts.map((product) => (
-          <ProductCard key={product.id} />
-        ))}
+        {loading && (
+          <div className="col-span-full text-center">Đang tải...</div>
+        )}
+        {error && (
+          <div className="col-span-full text-center text-red-500">
+            Lỗi tải dữ liệu
+          </div>
+        )}
+        {!loading && !error && products.length === 0 && (
+          <div className="col-span-full text-center">Không có sản phẩm</div>
+        )}
+        {!loading &&
+          !error &&
+          products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
       </div>
 
-      {/* Phân trang ở đây*/}
+      {/* Phân trang đây */}
       <div className="mt-16 flex justify-center items-center gap-2">
         <button
-          disabled={page === 1}
-          onClick={() => setPage((p) => p - 1)}
+          disabled={page === 0}
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
           className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700
             disabled:opacity-40 disabled:cursor-not-allowed
             hover:bg-primary hover:text-white transition dark:text-slate-100"
@@ -80,32 +127,29 @@ export default function ProductList() {
           </span>
         </button>
 
-        {Array.from({ length: totalPages }).map((_, i) => {
-          const p = i + 1;
-          return (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`w-10 h-10 rounded-lg text-sm font-semibold transition
-                  ${
-                    page === p
-                      ? "bg-primary text-white"
-                      : "border border-gray-200 dark:border-gray-700 hover:bg-primary hover:text-white dark:text-slate-300"
-                  }`}
-            >
-              {p}
-            </button>
-          );
-        })}
+        {Array.from({ length: totalPages }).map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setPage(i)}
+            className={`w-10 h-10 rounded-lg text-sm font-semibold transition
+              ${
+                page === i
+                  ? "bg-primary text-white"
+                  : "border border-gray-200 dark:border-gray-700 hover:bg-primary hover:text-white dark:text-slate-300"
+              }`}
+          >
+            {i + 1}
+          </button>
+        ))}
 
         <button
-          disabled={page === totalPages}
-          onClick={() => setPage((p) => p + 1)}
+          disabled={page === totalPages - 1}
+          onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
           className="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700
             disabled:opacity-40 disabled:cursor-not-allowed
             hover:bg-primary hover:text-white transition dark:text-slate-100"
         >
-          <span className="material-symbols-outlined text-[20px] dark:text-slate-100">
+          <span className="material-symbols-outlined text-[20px]">
             chevron_right
           </span>
         </button>

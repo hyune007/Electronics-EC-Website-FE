@@ -172,7 +172,6 @@ export default function Sidebar({
 
   return (
     <>
-
       <aside className="hidden lg:block lg:w-64 shrink-0">{AsideContent}</aside>
 
       {/* Mobile: compact icon at top-right (draggable) */}
@@ -191,10 +190,16 @@ export default function Sidebar({
           }
           setMobileOpen(true);
         }}
-        style={pos.x != null ? { left: pos.x, top: pos.y, right: 'auto' } : { top: 16, right: 16 }}
+        style={
+          pos.x != null
+            ? { left: pos.x, top: pos.y, right: "auto" }
+            : { top: 16, right: 16 }
+        }
         title="Kéo để di chuyển"
       >
-        <span className="material-symbols-outlined text-xl">account_circle</span>
+        <span className="material-symbols-outlined text-xl">
+          account_circle
+        </span>
       </button>
 
       {mobileOpen && (
@@ -205,7 +210,6 @@ export default function Sidebar({
           />
           <div className="absolute right-0 top-0 h-full w-[86vw] max-w-xs bg-white dark:bg-slate-900 p-4 overflow-auto shadow-xl transform transition">
             <div className="flex items-center justify-between mb-4">
-           
               <button onClick={() => setMobileOpen(false)} className="p-2">
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -221,4 +225,3 @@ export default function Sidebar({
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
-
