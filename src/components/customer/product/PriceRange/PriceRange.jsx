@@ -1,13 +1,49 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 const MIN = 0;
-const MAX = 100_000_000;
-const STEP = 500_000;
-const MIN_GAP = 10_000_000;
+const MAX = 100_000;
+const STEP = 500;
+const MIN_GAP = 10000;
 
-export default function PriceRange() {
-  const [minPrice, setMinPrice] = useState(MIN);
-  const [maxPrice, setMaxPrice] = useState(MAX);
+const clampMin = (value, max) =>
+  Math.min(Math.max(value || MIN, MIN), max - MIN_GAP);
+
+const clampMax = (value, min) =>
+  Math.max(Math.min(value || MAX, MAX), min + MIN_GAP);
+
+export default function PriceRange({
+  min: propMin = null,
+  max: propMax = null,
+  onChange = () => {},
+}) {
+  const [minPrice, setMinPrice] = useState(propMin ?? MIN);
+  const [maxPrice, setMaxPrice] = useState(propMax ?? MAX);
+
+  useEffect(() => {
+    if (typeof propMin === "number") setMinPrice(propMin);
+  }, [propMin]);
+
+  useEffect(() => {
+    if (typeof propMax === "number") setMaxPrice(propMax);
+  }, [propMax]);
+
+  const updateMin = useCallback(
+    (value) => {
+      const next = clampMin(value, maxPrice);
+      setMinPrice(next);
+      onChange(next, maxPrice);
+    },
+    [maxPrice, onChange],
+  );
+
+  const updateMax = useCallback(
+    (value) => {
+      const next = clampMax(value, minPrice);
+      setMaxPrice(next);
+      onChange(minPrice, next);
+    },
+    [minPrice, onChange],
+  );
 
   return (
     <div className="space-y-4">
@@ -18,9 +54,7 @@ export default function PriceRange() {
           min={MIN}
           max={maxPrice - MIN_GAP}
           step={STEP}
-          onChange={(e) =>
-            setMinPrice(Math.min(+e.target.value || MIN, maxPrice - MIN_GAP))
-          }
+          onChange={(e) => updateMin(+e.target.value)}
           className="w-1/2 rounded-lg border px-2 py-1 text-sm
                      dark:text-slate-100 dark:bg-slate-900 dark:border-slate-700"
         />
@@ -30,9 +64,7 @@ export default function PriceRange() {
           min={minPrice + MIN_GAP}
           max={MAX}
           step={STEP}
-          onChange={(e) =>
-            setMaxPrice(Math.max(+e.target.value || MAX, minPrice + MIN_GAP))
-          }
+          onChange={(e) => updateMax(+e.target.value)}
           className="w-1/2 rounded-lg border px-2 py-1 text-sm
                      dark:text-slate-100 dark:bg-slate-900 dark:border-slate-700"
         />
@@ -55,9 +87,7 @@ export default function PriceRange() {
           max={MAX}
           step={STEP}
           value={minPrice}
-          onChange={(e) =>
-            setMinPrice(Math.min(+e.target.value, maxPrice - MIN_GAP))
-          }
+          onChange={(e) => updateMin(+e.target.value)}
           className="absolute left-0 top-1/2 w-full -translate-y-1/2
             appearance-none bg-transparent pointer-events-none
             [&::-webkit-slider-thumb]:pointer-events-auto
@@ -70,15 +100,14 @@ export default function PriceRange() {
             [&::-webkit-slider-thumb]:border-white
             [&::-webkit-slider-thumb]:shadow-md"
         />
+
         <input
           type="range"
           min={MIN}
           max={MAX}
           step={STEP}
           value={maxPrice}
-          onChange={(e) =>
-            setMaxPrice(Math.max(+e.target.value, minPrice + MIN_GAP))
-          }
+          onChange={(e) => updateMax(+e.target.value)}
           className="absolute left-0 top-1/2 w-full -translate-y-1/2
             appearance-none bg-transparent pointer-events-none
             [&::-webkit-slider-thumb]:pointer-events-auto

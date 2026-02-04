@@ -35,14 +35,7 @@ export default function Login() {
       }
 
       localStorage.setItem("authToken", data.token);
-
-      navigate("/test-login", {
-        state: {
-          token: data.token,
-          id: payload.sub,
-          roleId: payload.roleId,
-        },
-      });
+      navigate("/profile?tab=information");
     } catch (error) {
       const message =
         error?.response?.data ||

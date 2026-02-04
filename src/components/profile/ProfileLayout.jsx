@@ -5,9 +5,17 @@ import Information from "./Information/Information";
 import Address from "./Address/Address";
 import ChangePass from "./ChangePass/ChangePass";
 import ShowInfor from "./ShowInfor/ShowInfor";
+import { useSearchParams } from "react-router-dom";
 
 export default function ProfileLayout() {
-  const [view, setView] = useState("information");
+  // const [view, setView] = useState("information");
+   const [searchParams, setSearchParams] = useSearchParams();
+
+  const view = searchParams.get("tab");
+
+  const setView = (v) => {
+    setSearchParams({ tab: v });
+  };
 
   return (
     <div>

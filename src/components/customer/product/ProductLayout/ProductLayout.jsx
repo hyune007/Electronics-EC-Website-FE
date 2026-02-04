@@ -5,6 +5,11 @@ import ProductFilter from "../ProductFilter/ProductFilter.jsx";
 import Banner from "../../home/Banner/Banner.jsx";
 
 export default function ProductLayout() {
+  const [keyword, setKeyword] = useState("");
+  const [brands, setBrands] = useState([]);
+  const [priceRanges, setPriceRanges] = useState([]);
+  const [minPrice, setMinPrice] = useState(null);
+  const [maxPrice, setMaxPrice] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
   useEffect(() => {
     const onResize = () => {
@@ -35,8 +40,42 @@ export default function ProductLayout() {
           <ProductFilter
             open={filterOpen}
             onClose={() => setFilterOpen(false)}
+            keyword={keyword}
+            selectedBrands={brands}
+            selectedPriceRanges={priceRanges}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onKeywordChange={setKeyword}
+            onToggleBrand={(b) =>
+              setBrands((prev) =>
+                prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b],
+              )
+            }
+            onTogglePriceRange={(r) =>
+              setPriceRanges((prev) => {
+                const next = prev.includes(r)
+                  ? prev.filter((x) => x !== r)
+                  : [...prev, r];
+                // reset slider to default bounds (0 - 100000) when user selects a checkbox
+                setMinPrice(0);
+                setMaxPrice(100000);
+                return next;
+              })
+            }
+            onPriceRangeChange={(min, max) => {
+              // user moved slider -> clear checkbox selections to avoid conflict
+              setPriceRanges([]);
+              setMinPrice(min);
+              setMaxPrice(max);
+            }}
           />
-          <ProductList />
+          <ProductList
+            keyword={keyword}
+            brands={brands}
+            priceRanges={priceRanges}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+          />
         </div>
       </main>
     </div>
