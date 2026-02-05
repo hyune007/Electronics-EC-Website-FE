@@ -1,5 +1,5 @@
 import "./Header.css";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 import useTheme from "../../../../hooks/useTheme.js";
@@ -8,12 +8,22 @@ import ThemeToggleButton from "../../../common/ThemeToggleButtonHome.jsx";
 import BrandLogo from "../../../common/BrandLogo.jsx";
 import vi from "../../../../i18n/vi.js";
 import SubMenuHeader from "../../../customer/home/SubMenuHeader/SubMenuheader.jsx";
+import { useAuth } from "../../../../hooks/useAuth";
 
 export default function Header() {
   const { toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
+
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSubmenu, setShowSubmenu] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    setShowDropdown(false);
+    navigate("/login");
+  };
 
   return (
     <>
@@ -95,23 +105,36 @@ export default function Header() {
               </span>
             </button>
 
-            <button
-              onClick={() => setShowDropdown((s) => !s)}
-              className="icon-btn"
-            >
-              <span className="material-symbols-outlined">account_circle</span>
-            </button>
+            {isAuthenticated ? (
+              <>
+                <button
+                  onClick={() => setShowDropdown((s) => !s)}
+                  className="icon-btn flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined">account_circle</span>
+                  <span className="hidden lg:inline text-sm text-gray-700 dark:text-gray-200">
+                    {user?.name}
+                  </span>
+                </button>
 
-            <UserDropdown
-              open={showDropdown}
-              onClose={() => setShowDropdown(false)}
-              onLogout={() => {
-                console.log("logout");
-                setShowDropdown(false);
-              }}
-            />
+                <UserDropdown
+                  open={showDropdown}
+                  onClose={() => setShowDropdown(false)}
+                  onLogout={handleLogout}
+                  user={user}
+                />
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="icon-btn flex items-center gap-1 text-sm"
+              >
+                <span className="material-symbols-outlined">login</span>
+                <span className="hidden lg:inline">Đăng nhập</span>
+              </Link>
+            )}
+
             <div className="hidden lg:flex items-center gap-10">
-              {" "}
               <ThemeToggleButton onToggle={toggleTheme} />
             </div>
 
@@ -158,6 +181,19 @@ export default function Header() {
                 >
                   {vi.layout.header.contact}
                 </NavLink>
+
+                {isAuthenticated && (
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileOpen(false);
+                    }}
+                    className="nav-link text-left text-red-500"
+                  >
+                    Đăng xuất
+                  </button>
+                )}
+
                 <ThemeToggleButton onToggle={toggleTheme} />
               </nav>
             </div>

@@ -5,10 +5,10 @@ import './index.css'
 import "./styles/theme/themeColor.css"
 
 import App from "./App.jsx";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
 
 const savedTheme = localStorage.getItem("theme");
 
-// Default to light theme when no preference is saved.
 if (savedTheme === "dark") {
   document.documentElement.classList.add("dark");
 } else {
@@ -18,7 +18,9 @@ if (savedTheme === "dark") {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>
 );

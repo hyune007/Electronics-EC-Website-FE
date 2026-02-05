@@ -6,7 +6,8 @@ import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
 import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx";
 import BrandLogo from "../../../components/common/BrandLogo.jsx";
 import vi from "../../../i18n/vi.js";
-import { fetchCustomerByEmail, register } from "../../../services/authService.js";
+import { register } from "../../../services/authService.js";
+
 export default function Register() {
   const { toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -34,6 +35,11 @@ export default function Register() {
       return;
     }
 
+    if (formData.password.length < 6) {
+      setErrorMessage("Mật khẩu phải có ít nhất 6 ký tự");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -44,18 +50,15 @@ export default function Register() {
         phone: formData.phone,
       });
 
-      const customer = await fetchCustomerByEmail(formData.email);
-
-      navigate("/test-register", {
-        state: {
-          customer,
-        },
+      navigate("/login", {
+        state: { message: "Đăng ký thành công! Vui lòng đăng nhập." },
       });
     } catch (error) {
       const message =
+        error?.response?.data?.message ||
         error?.response?.data ||
         error?.message ||
-        "Dang ky that bai. Vui long thu lai.";
+        "Đăng ký thất bại. Vui lòng thử lại.";
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
@@ -181,6 +184,7 @@ export default function Register() {
                     placeholder="••••••••"
                     required
                     type="password"
+                    minLength={6}
                     value={formData.password}
                     onChange={handleChange}
                   />
@@ -221,7 +225,7 @@ export default function Register() {
                   disabled={isSubmitting}
                 >
                   <span>
-                    {isSubmitting ? "Dang xu ly..." : vi.auth.register.registerNow}
+                    {isSubmitting ? "Đang xử lý..." : vi.auth.register.registerNow}
                   </span>
                   <span className="material-symbols-outlined text-base">
                     person_add
@@ -275,7 +279,6 @@ export default function Register() {
           </div>
         </div>
       </div>
-      {/* Nut doi trang thai */}
       <div className="fixed bottom-6 right-6">
         <ThemeToggleButton onToggle={toggleTheme} />
       </div>
