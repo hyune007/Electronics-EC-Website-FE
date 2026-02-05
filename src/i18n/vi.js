@@ -87,7 +87,7 @@ const vi = {
       address: "Hồ Chí Minh, Việt Nam",
       phone: "0394 000 000",
       email: "UBrainTech@gmail.com",
-      copyright: "© {year} UBrain Tech. Tất cả các quyền được bảo lưu.",
+      copyright: "© {year} UBrain Tech. Tất cả các quyền được bảo lưu (Website nhằm mục đích học tập, không có giá trị thương mại. Xem thêm ở điều khoản dịch vụ).",
       terms: "Điều khoản dịch vụ",
       privacy: "Bảo mật thông tin",
     },
@@ -230,5 +230,13 @@ const vi = {
       mismatch: "Mật khẩu mới không khớp",
     },
   },
+  contact:{
+    infor: {
+    email: "UBrainTech@gmail.com",
+    phone: "0394 000 000",
+    address: "Tầng 6, UBrain Tech Building, TP. Hồ Chí Minh",
+    workingTime: "Thứ 2 - Thứ 7 | 08:30 - 20:00",
+  }
+  }
 };
 export default vi;

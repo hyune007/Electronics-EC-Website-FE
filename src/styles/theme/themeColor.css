@@ -11,6 +11,7 @@
   --color-navy-light: #062b4c;
   --color-navy-dark: #021526;
   --color-navy-deep: #010d1c;
+  --color-text-light: #287bae;
 ;
   --font-display: "Playfair Display", serif;
   --font-sans: "Inter", sans-serif;
@@ -22,6 +23,7 @@
 }
 /* dùng để kiểm tra máy màu ở trên */
 test {
+  color:  #287bae;
   color: #010d1c;
   color: #07192c;
   color: #000a19;

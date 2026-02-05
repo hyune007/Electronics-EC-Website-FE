@@ -1,7 +1,54 @@
 import PriceRange from "../PriceRange/PriceRange.jsx";
 import vi from "../../../../i18n/vi.js";
 
-export default function ProductFilter({ open = false, onClose = () => {} }) {
+const PRICE_LABELS = new Map([
+  ["0-5000", "0 – 5.000₫"],
+  ["5000-10000", "5.000 – 10.000 ₫"],
+  ["10000-20000", "10.000 – 20.000 ₫"],
+  ["20000-100000", "Trên 20.000 ₫"]
+]);
+
+const BRANDS = [
+  "Apple",
+  "Samsung",
+  "Google",
+  "Xiaomi",
+  "Oppo",
+  "OnePlus",
+  "Asus",
+  "Sony",
+  "Dell",
+  "HP",
+  "Lenovo",
+  "LG",
+  "Acer",
+  "MSI",
+  "Razer",
+  "Logitech",
+  "Corsair",
+  "SteelSeries",
+  "Marshall",
+  "JBL",
+  "Bose",
+  "Sony Audio",
+  "Anker",
+];
+
+export default function ProductFilter({
+  open = false,
+  onClose = () => { },
+
+  keyword = "",
+  selectedBrands = [],
+  selectedPriceRanges = [],
+  minPrice = 0,
+  maxPrice = 0,
+
+  onKeywordChange = () => { },
+  onToggleBrand = () => { },
+  onTogglePriceRange = () => { },
+  onPriceRangeChange = () => { },
+}) {
   return (
     <>
       <aside className="hidden lg:block lg:w-1/4 space-y-8">
@@ -9,17 +56,21 @@ export default function ProductFilter({ open = false, onClose = () => {} }) {
           <h3 className="text-lg font-bold mb-4 border-b pb-2 dark:border-slate-800 dark:text-slate-100">
             {vi.product.form.search}
           </h3>
-          <input
-            type="text"
-            placeholder={vi.product.form.searchPlaceholder}
-            className="
+          <div>
+            <input
+              type="text"
+              placeholder={vi.product.form.searchPlaceholder}
+              value={keyword}
+              onChange={(e) => onKeywordChange(e.target.value)}
+              className="
               w-full rounded-lg
               border border-slate-200 dark:border-slate-700
               bg-white dark:bg-slate-900
               px-3 py-2 text-sm dark:text-slate-100 dark:placeholder-slate-400
               focus:outline-none focus:ring-2 focus:ring-primary/30
             "
-          />
+            />
+          </div>
         </div>
 
         <div>
@@ -28,18 +79,15 @@ export default function ProductFilter({ open = false, onClose = () => {} }) {
           </h3>
 
           <div className="space-y-2">
-            {[
-              "0 – 5.000.000 ₫",
-              "5.000.000 – 10.000.000 ₫",
-              "10.000.000 – 20.000.000 ₫",
-              "Trên 20.000.000 ₫",
-            ].map((label) => (
+            {[...PRICE_LABELS.entries()].map(([key, label]) => (
               <label
-                key={label}
+                key={key}
                 className="flex items-center gap-3 cursor-pointer group"
               >
                 <input
                   type="checkbox"
+                  checked={selectedPriceRanges.includes(key)}
+                  onChange={() => onTogglePriceRange(key)}
                   className="rounded border-slate-300 text-primary focus:ring-primary"
                 />
                 <span className="text-sm group-hover:text-accent transition-colors dark:text-slate-300">
@@ -55,7 +103,11 @@ export default function ProductFilter({ open = false, onClose = () => {} }) {
             <span className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
           </div>
 
-          <PriceRange />
+          <PriceRange
+            min={minPrice}
+            max={maxPrice}
+            onChange={onPriceRangeChange}
+          />
         </div>
 
         <div>
@@ -64,37 +116,15 @@ export default function ProductFilter({ open = false, onClose = () => {} }) {
           </h3>
 
           <div className="max-h-64 overflow-y-auto pr-2 space-y-2">
-            {[
-              "Apple",
-              "Samsung",
-              "Google",
-              "Xiaomi",
-              "Oppo",
-              "OnePlus",
-              "Asus",
-              "Sony",
-              "Dell",
-              "HP",
-              "Lenovo",
-              "LG",
-              "Acer",
-              "MSI",
-              "Razer",
-              "Logitech",
-              "Corsair",
-              "SteelSeries",
-              "Marshall",
-              "JBL",
-              "Bose",
-              "Sony Audio",
-              "Anker",
-            ].map((brand) => (
+            {BRANDS.map((brand) => (
               <label
                 key={brand}
                 className="flex items-center gap-2 cursor-pointer text-sm"
               >
                 <input
                   type="checkbox"
+                  checked={selectedBrands.includes(brand)}
+                  onChange={() => onToggleBrand(brand)}
                   className="rounded text-primary focus:ring-primary"
                 />
                 <span className="hover:text-accent transition-colors dark:text-slate-300">
@@ -133,6 +163,8 @@ export default function ProductFilter({ open = false, onClose = () => {} }) {
           <input
             type="text"
             placeholder={vi.product.form.searchPlaceholder}
+            value={keyword}
+            onChange={(e) => onKeywordChange(e.target.value)}
             className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm dark:text-slate-100 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
@@ -142,18 +174,15 @@ export default function ProductFilter({ open = false, onClose = () => {} }) {
             {vi.product.form.priceRange}
           </h3>
           <div className="space-y-2">
-            {[
-              "0 – 5.000.000 ₫",
-              "5.000.000 – 10.000.000 ₫",
-              "10.000.000 – 20.000.000 ₫",
-              "Trên 20.000.000 ₫",
-            ].map((label) => (
+            {[...PRICE_LABELS.entries()].map(([key, label]) => (
               <label
-                key={label}
+                key={key}
                 className="flex items-center gap-3 cursor-pointer group"
               >
                 <input
                   type="checkbox"
+                  checked={selectedPriceRanges.includes(key)}
+                  onChange={() => onTogglePriceRange(key)}
                   className="rounded border-slate-300 text-primary focus:ring-primary"
                 />
                 <span className="text-sm group-hover:text-accent transition-colors dark:text-slate-300">
@@ -169,7 +198,11 @@ export default function ProductFilter({ open = false, onClose = () => {} }) {
             <span className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
           </div>
 
-          <PriceRange />
+          <PriceRange
+            min={minPrice}
+            max={maxPrice}
+            onChange={onPriceRangeChange}
+          />
         </div>
 
         <div className="mt-6">
@@ -177,37 +210,15 @@ export default function ProductFilter({ open = false, onClose = () => {} }) {
             {vi.product.form.brand}
           </h3>
           <div className="max-h-64 overflow-y-auto pr-2 space-y-2">
-            {[
-              "Apple",
-              "Samsung",
-              "Google",
-              "Xiaomi",
-              "Oppo",
-              "OnePlus",
-              "Asus",
-              "Sony",
-              "Dell",
-              "HP",
-              "Lenovo",
-              "LG",
-              "Acer",
-              "MSI",
-              "Razer",
-              "Logitech",
-              "Corsair",
-              "SteelSeries",
-              "Marshall",
-              "JBL",
-              "Bose",
-              "Sony Audio",
-              "Anker",
-            ].map((brand) => (
+            {BRANDS.map((brand) => (
               <label
                 key={brand}
                 className="flex items-center gap-2 cursor-pointer text-sm"
               >
                 <input
                   type="checkbox"
+                  checked={selectedBrands.includes(brand)}
+                  onChange={() => onToggleBrand(brand)}
                   className="rounded text-primary focus:ring-primary"
                 />
                 <span className="hover:text-accent transition-colors dark:text-slate-300">

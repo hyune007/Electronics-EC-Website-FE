@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+
 import vi from "../../../i18n/vi";
 
 export default function Information({ addresses = [] }) {
@@ -14,8 +15,12 @@ export default function Information({ addresses = [] }) {
           <span className="material-symbols-outlined">person</span>
         </div>
         <div>
-          <h1 className="text-2xl font-semibold">{vi.profile.information.title}</h1>
-          <p className="text-sm mt-1 dark:text-slate-300">{vi.profile.information.desc}</p>
+          <h1 className="text-2xl font-semibold">
+            {vi.profile.information.title}
+          </h1>
+          <p className="text-sm mt-1 dark:text-slate-300">
+            {vi.profile.information.desc}
+          </p>
         </div>
       </div>
 
@@ -34,6 +39,9 @@ export default function Information({ addresses = [] }) {
             onChange={(e) => setFullName(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           />
+          <p className="text-sm font-semibold break-all">
+            {fullName || "(khong co)"}
+          </p>
         </div>
 
         <div>
@@ -47,6 +55,9 @@ export default function Information({ addresses = [] }) {
             onChange={(e) => setPhone(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           />
+          <p className="text-sm font-semibold break-all">
+            {phone || "(khong co)"}
+          </p>
         </div>
 
         <div className="md:col-span-2">
@@ -60,6 +71,9 @@ export default function Information({ addresses = [] }) {
             onChange={(e) => setEmail(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           />
+          <p className="text-sm font-semibold break-all">
+            {email || "(khong co)"}
+          </p>
         </div>
 
         <div className="md:col-span-2">
@@ -72,7 +86,10 @@ export default function Information({ addresses = [] }) {
             onChange={(e) => setDefaultAddress(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
           >
-            <option value="">{vi.profile.information.placeholders.selectAddress}</option>
+            <option value="">
+              {vi.profile.information.placeholders.selectAddress}
+            </option>
+            
             {addresses.length === 0 && (
               <option value="sample-1">123 Nguyễn Trãi, Q1</option>
             )}

@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/auth/Login/Login.jsx";
 import Register from "../pages/auth/Register/Register.jsx";
 import ForgotPassword from "../pages/auth/ForgotPassword/ForgotPassword.jsx";
@@ -7,7 +7,9 @@ import Home from "../pages/Home/Home.jsx";
 import NotFound from "../pages/error/NotFound/NotFound.jsx";
 import Unauthorized from "../pages/error/Unauthorized/Unauthorized.jsx";
 
+import Contact from "../pages/other/Contact/Contact.jsx";
 import Terms from "../pages/other/Terms/Terms.jsx";
+import News from "../pages/other/News/News.jsx";
 import ProductDetail from "../pages/product/ProductDetail/ProductDetail.jsx";
 import AdminLayout from "../components/layout/admin/layoutsAdmin/AdminLayout.jsx";
 import Dashboard from "../pages/admin/adminDashboard/Dashboard/Dashboard.jsx";
@@ -32,27 +34,29 @@ const ROLES = {
   CUSTOMER: "ROLE_CUSTOMER",
 };
 
-export default function AppRoutes() {
+export default function AppRoutes({ location }) {
   return (
-    <Routes>
-      {/* Public routes */}
+    <Routes location={location} key={location ? location.pathname : undefined}>
       <Route path="/login" element={<Login />} />
       <Route path="/test-login" element={<TestLogin />} />
       <Route path="/register" element={<Register />} />
       <Route path="/test-register" element={<TestRegister />} />
       <Route path="/change-password" element={<ChangePassword />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
-      <Route path="/terms" element={<Terms />} />
+      {/* <Route path="/terms" element={<Terms />} /> */}
       <Route path="/product-filter" element={<ProductFilter />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
 
       {/* Customer layout routes */}
       <Route element={<CustomerLayout />}>
         {/* Public */}
-        <Route path="/" element={<Home />} />
-        <Route path="/product-detail" element={<ProductDetail />} />
-        <Route path="/products" element={<Product />} />
-        <Route path="/terms" element={<Terms />} />
+          <Route index element={<Navigate to="home" replace />} />
+          <Route path="home" element={<Home />} />
+          <Route path="products" element={<Product />} />
+          <Route path="product-detail" element={<ProductDetail />} />
+          <Route path="news" element={<News />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="terms" element={<Terms />} />
 
         {/* Protected - Customer+ */}
         <Route
@@ -79,7 +83,8 @@ export default function AppRoutes() {
         <Route path="orders" element={<OrderManage />} />
         <Route path="products" element={<ProductManage />} />
         <Route path="brands" element={<BrandManage />} />
-        <Route path="imports" element={<ImportManage />} />
+        <Route path="staff" element={<EmployeeManage />} />
+        <Route path="imports" element={<ImportManage />}  />
         <Route path="vouchers" element={<VoucherManage />} />
 
         {/* Admin only */}

@@ -1,11 +1,52 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import vi from "../../../../i18n/vi.js";
 import ProductList from "../ProductList/ProductList.jsx";
 import ProductFilter from "../ProductFilter/ProductFilter.jsx";
 import Banner from "../../home/Banner/Banner.jsx";
 
 export default function ProductLayout() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [keyword, setKeyword] = useState("");
+  const [brands, setBrands] = useState([]);
+  const [priceRanges, setPriceRanges] = useState([]);
+  const [minPrice, setMinPrice] = useState(null);
+  const [maxPrice, setMaxPrice] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const [priceSort, setPriceSort] = useState("");
+  const [category, setCategory] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (page >= 0) params.append("p", page + 1);
+    if (category) params.append("category", category);
+    if (brands.length) params.append("brand", brands.join(","));
+    if (keyword) params.append("q", keyword);
+
+    if (priceRanges.length) {
+      params.append("priceRanges", priceRanges.join(","));
+    } else {
+      if (typeof minPrice === "number") params.append("minPrice", minPrice);
+      if (typeof maxPrice === "number") params.append("maxPrice", maxPrice);
+    }
+
+    if (priceSort) params.append("sort", priceSort);
+
+    setSearchParams(params, { replace: true });
+  }, [
+    page,
+    category,
+    brands,
+    keyword,
+    priceRanges,
+    minPrice,
+    maxPrice,
+    priceSort,
+  ]);
+
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 1024 && filterOpen) {
@@ -17,9 +58,10 @@ export default function ProductLayout() {
     onResize();
     return () => window.removeEventListener("resize", onResize);
   }, [filterOpen]);
+
   return (
     <div>
-      <Banner />
+      <Banner variant="product" />
       <main className="max-w-7xl mx-auto px-6 py-10">
         <div className="mb-4 lg:hidden">
           <button
@@ -35,8 +77,48 @@ export default function ProductLayout() {
           <ProductFilter
             open={filterOpen}
             onClose={() => setFilterOpen(false)}
+            keyword={keyword}
+            selectedBrands={brands}
+            selectedPriceRanges={priceRanges}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            onKeywordChange={setKeyword}
+            onToggleBrand={(b) =>
+              setBrands((prev) =>
+                prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b],
+              )
+            }
+            onTogglePriceRange={(r) =>
+              setPriceRanges((prev) => {
+                const next = prev.includes(r)
+                  ? prev.filter((x) => x !== r)
+                  : [...prev, r];
+                // reset slider to default bounds (0 - 100000) when user selects a checkbox
+                setMinPrice(0);
+                setMaxPrice(100000);
+                return next;
+              })
+            }
+            onPriceRangeChange={(min, max) => {
+              // user moved slider -> clear checkbox selections to avoid conflict
+              setPriceRanges([]);
+              setMinPrice(min);
+              setMaxPrice(max);
+            }}
           />
-          <ProductList />
+          <ProductList
+            page={page}
+            setPage={setPage}
+            category={category}
+            setCategory={setCategory}
+            brands={brands}
+            keyword={keyword}
+            priceRanges={priceRanges}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            priceSort={priceSort}
+            setPriceSort={setPriceSort}
+          />
         </div>
       </main>
     </div>
