@@ -89,6 +89,7 @@ export default function Information({ addresses = [] }) {
             <option value="">
               {vi.profile.information.placeholders.selectAddress}
             </option>
+            
             {addresses.length === 0 && (
               <option value="sample-1">123 Nguyễn Trãi, Q1</option>
             )}

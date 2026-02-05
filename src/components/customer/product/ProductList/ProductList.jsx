@@ -14,9 +14,8 @@ export default function ProductList({
   minPrice,
   maxPrice,
   priceSort,
-  setPriceSort
+  setPriceSort,
 }) {
-
   const [products, setProducts] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -74,12 +73,12 @@ export default function ProductList({
 
       const parseLabelToRange = (label) => {
         if (!label) return null;
-        // normalize dash types
+        // chuẩn hóa dấu gạch
         const DASH_RE = /[\u2012\u2013\u2014\u2015\-]/;
         const hasTren = /Trên/.test(label);
 
         if (hasTren) {
-          // extract first numeric token after 'Trên'
+          // trích xuất mã số đầu tiên sau 'Trên'
           const after = label.split(/Trên/i)[1] || label;
           const numStr = (after.match(/\d[\d\.\s]*/)?.[0] || "").replace(
             /[\.\s]/g,
@@ -90,7 +89,7 @@ export default function ProductList({
           return { min: num, max: null };
         }
 
-        // split by dash-like characters to get left/right parts
+        // được chia thành các phần trái/phải bằng các ký tự giống dấu gạch ngang.
         const parts = label.split(DASH_RE).map((s) => (s || "").trim());
         if (parts.length < 2) return null;
         const leftNum = (parts[0].match(/\d[\d\.\s]*/)?.[0] || "").replace(
@@ -113,7 +112,7 @@ export default function ProductList({
         .filter(Boolean);
 
       const params = {
-        p: page
+        p: page,
       };
 
       if (category) params.category = category;
@@ -209,10 +208,11 @@ export default function ProductList({
                 setCategory(c.id);
                 setPage(0);
               }}
-              className={`px-3 py-2 rounded-lg border ${category === c.id
-                ? "bg-primary text-white"
-                : "border-gray-200 dark:border-gray-700 hover:bg-primary hover:text-white"
-                }`}
+              className={`px-3 py-2 rounded-lg border ${
+                category === c.id
+                  ? "bg-primary text-white"
+                  : "border-gray-200 dark:border-gray-700 hover:bg-primary hover:text-white"
+              }`}
             >
               {c.name}
             </button>
@@ -223,10 +223,11 @@ export default function ProductList({
               setCategory(null);
               setPage(0);
             }}
-            className={`px-3 py-2 rounded-lg border ${category === null
-              ? "bg-primary text-white border-primary"
-              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-primary hover:text-white dark:text-slate-100"
-              }`}
+            className={`px-3 py-2 rounded-lg border ${
+              category === null
+                ? "bg-primary text-white border-primary"
+                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-primary hover:text-white dark:text-slate-100"
+            }`}
           >
             Tất cả
           </button>
@@ -282,10 +283,11 @@ export default function ProductList({
           <button
             key={i}
             onClick={() => setPage(i)}
-            className={`w-10 h-10 rounded-lg ${page === i
-              ? "bg-primary text-white"
-              : "border hover:bg-primary hover:text-white"
-              }`}
+            className={`w-10 h-10 rounded-lg ${
+              page === i
+                ? "bg-primary text-white"
+                : "border hover:bg-primary hover:text-white"
+            }`}
           >
             {i + 1}
           </button>
