@@ -3,22 +3,24 @@ import vi from "../../../../i18n/vi.js";
 import { getProducts } from "../../../../api/Product/productApi.js";
 import ProductCard from "../ProductCard/ProductCard.jsx";
 
-const PAGE_SIZE = 12;
-
 export default function ProductList({
-  keyword,
+  page,
+  setPage,
+  category,
+  setCategory,
   brands,
+  keyword,
   priceRanges,
   minPrice,
   maxPrice,
+  priceSort,
+  setPriceSort
 }) {
-  const [page, setPage] = useState(0);
+
   const [products, setProducts] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [priceSort, setPriceSort] = useState("");
-  const [category, setCategory] = useState(null);
 
   const CATEGORIES = [
     { id: "LSP01", name: "Điện thoại" },
@@ -111,12 +113,12 @@ export default function ProductList({
         .filter(Boolean);
 
       const params = {
-        p: page,
-        size: PAGE_SIZE,
-        category: category || null,
-        q: keyword || null,
-        priceSort: priceSort || null,
+        p: page
       };
+
+      if (category) params.category = category;
+      if (keyword) params.q = keyword;
+      if (priceSort) params.priceSort = priceSort;
 
       if (brands?.length) {
         params.brand = brands.map((b) => BRAND_NAME_TO_ID[b] || b);
@@ -207,11 +209,10 @@ export default function ProductList({
                 setCategory(c.id);
                 setPage(0);
               }}
-              className={`px-3 py-2 rounded-lg border ${
-                category === c.id
-                  ? "bg-primary text-white"
-                  : "border-gray-200 dark:border-gray-700 hover:bg-primary hover:text-white"
-              }`}
+              className={`px-3 py-2 rounded-lg border ${category === c.id
+                ? "bg-primary text-white"
+                : "border-gray-200 dark:border-gray-700 hover:bg-primary hover:text-white"
+                }`}
             >
               {c.name}
             </button>
@@ -222,11 +223,10 @@ export default function ProductList({
               setCategory(null);
               setPage(0);
             }}
-            className={`px-3 py-2 rounded-lg border ${
-              category === null
-                ? "bg-primary text-white border-primary"
-                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-primary hover:text-white dark:text-slate-100"
-            }`}
+            className={`px-3 py-2 rounded-lg border ${category === null
+              ? "bg-primary text-white border-primary"
+              : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-primary hover:text-white dark:text-slate-100"
+              }`}
           >
             Tất cả
           </button>
@@ -282,11 +282,10 @@ export default function ProductList({
           <button
             key={i}
             onClick={() => setPage(i)}
-            className={`w-10 h-10 rounded-lg ${
-              page === i
-                ? "bg-primary text-white"
-                : "border hover:bg-primary hover:text-white"
-            }`}
+            className={`w-10 h-10 rounded-lg ${page === i
+              ? "bg-primary text-white"
+              : "border hover:bg-primary hover:text-white"
+              }`}
           >
             {i + 1}
           </button>

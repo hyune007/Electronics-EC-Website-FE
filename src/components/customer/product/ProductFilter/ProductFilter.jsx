@@ -1,12 +1,12 @@
 import PriceRange from "../PriceRange/PriceRange.jsx";
 import vi from "../../../../i18n/vi.js";
 
-const PRICE_LABELS = [
-  "0 – 5.000₫",
-  "5.000 – 10.000 ₫",
-  "10.000 – 20.000 ₫",
-  "Trên 20.000 ₫",
-];
+const PRICE_LABELS = new Map([
+  ["0-5000", "0 – 5.000₫"],
+  ["5000-10000", "5.000 – 10.000 ₫"],
+  ["10000-20000", "10.000 – 20.000 ₫"],
+  ["20000-100000", "Trên 20.000 ₫"]
+]);
 
 const BRANDS = [
   "Apple",
@@ -36,7 +36,7 @@ const BRANDS = [
 
 export default function ProductFilter({
   open = false,
-  onClose = () => {},
+  onClose = () => { },
 
   keyword = "",
   selectedBrands = [],
@@ -44,10 +44,10 @@ export default function ProductFilter({
   minPrice = 0,
   maxPrice = 0,
 
-  onKeywordChange = () => {},
-  onToggleBrand = () => {},
-  onTogglePriceRange = () => {},
-  onPriceRangeChange = () => {},
+  onKeywordChange = () => { },
+  onToggleBrand = () => { },
+  onTogglePriceRange = () => { },
+  onPriceRangeChange = () => { },
 }) {
   return (
     <>
@@ -79,15 +79,15 @@ export default function ProductFilter({
           </h3>
 
           <div className="space-y-2">
-            {PRICE_LABELS.map((label) => (
+            {[...PRICE_LABELS.entries()].map(([key, label]) => (
               <label
-                key={label}
+                key={key}
                 className="flex items-center gap-3 cursor-pointer group"
               >
                 <input
                   type="checkbox"
-                  checked={selectedPriceRanges.includes(label)}
-                  onChange={() => onTogglePriceRange(label)}
+                  checked={selectedPriceRanges.includes(key)}
+                  onChange={() => onTogglePriceRange(key)}
                   className="rounded border-slate-300 text-primary focus:ring-primary"
                 />
                 <span className="text-sm group-hover:text-accent transition-colors dark:text-slate-300">
@@ -174,15 +174,15 @@ export default function ProductFilter({
             {vi.product.form.priceRange}
           </h3>
           <div className="space-y-2">
-            {PRICE_LABELS.map((label) => (
+            {[...PRICE_LABELS.entries()].map(([key, label]) => (
               <label
-                key={label}
+                key={key}
                 className="flex items-center gap-3 cursor-pointer group"
               >
                 <input
                   type="checkbox"
-                  checked={selectedPriceRanges.includes(label)}
-                  onChange={() => onTogglePriceRange(label)}
+                  checked={selectedPriceRanges.includes(key)}
+                  onChange={() => onTogglePriceRange(key)}
                   className="rounded border-slate-300 text-primary focus:ring-primary"
                 />
                 <span className="text-sm group-hover:text-accent transition-colors dark:text-slate-300">

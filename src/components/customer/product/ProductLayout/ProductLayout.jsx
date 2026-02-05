@@ -1,16 +1,52 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import vi from "../../../../i18n/vi.js";
 import ProductList from "../ProductList/ProductList.jsx";
 import ProductFilter from "../ProductFilter/ProductFilter.jsx";
 import Banner from "../../home/Banner/Banner.jsx";
 
 export default function ProductLayout() {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [keyword, setKeyword] = useState("");
   const [brands, setBrands] = useState([]);
   const [priceRanges, setPriceRanges] = useState([]);
   const [minPrice, setMinPrice] = useState(null);
   const [maxPrice, setMaxPrice] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [page, setPage] = useState(0);
+  const [priceSort, setPriceSort] = useState("");
+  const [category, setCategory] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (page >= 0) params.append("p", page + 1);
+    if (category) params.append("category", category);
+    if (brands.length) params.append("brand", brands.join(","));
+    if (keyword) params.append("q", keyword);
+
+    if (priceRanges.length) {
+      params.append("priceRanges", priceRanges.join(","));
+    } else {
+      if (typeof minPrice === "number") params.append("minPrice", minPrice);
+      if (typeof maxPrice === "number") params.append("maxPrice", maxPrice);
+    }
+
+    if (priceSort) params.append("sort", priceSort);
+
+    setSearchParams(params, { replace: true });
+  }, [
+    page,
+    category,
+    brands,
+    keyword,
+    priceRanges,
+    minPrice,
+    maxPrice,
+    priceSort,
+  ]);
+
   useEffect(() => {
     const onResize = () => {
       if (window.innerWidth >= 1024 && filterOpen) {
@@ -22,6 +58,7 @@ export default function ProductLayout() {
     onResize();
     return () => window.removeEventListener("resize", onResize);
   }, [filterOpen]);
+
   return (
     <div>
       <Banner variant="product" />
@@ -70,11 +107,17 @@ export default function ProductLayout() {
             }}
           />
           <ProductList
-            keyword={keyword}
+            page={page}
+            setPage={setPage}
+            category={category}
+            setCategory={setCategory}
             brands={brands}
+            keyword={keyword}
             priceRanges={priceRanges}
             minPrice={minPrice}
             maxPrice={maxPrice}
+            priceSort={priceSort}
+            setPriceSort={setPriceSort}
           />
         </div>
       </main>
