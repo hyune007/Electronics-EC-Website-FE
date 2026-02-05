@@ -1,97 +1,114 @@
-import { useMemo, useState } from "react";
-import { mockCustomers } from "../../../../mocks/mockCustomers.js";
+import { useEffect, useMemo, useState } from "react";
+import {
+    getAllCustomers,
+    createCustomer,
+    updateCustomer,
+    deleteCustomer
+} from "../../../../services/customerService";
 
 export function useCustomerLogic() {
-  const [customers, setCustomers] = useState(mockCustomers);
-  const [search, setSearch] = useState("");
-  const [openForm, setOpenForm] = useState(false);
-  const [editing, setEditing] = useState(null);
+    const [customers, setCustomers] = useState([]);
+    const [search, setSearch] = useState("");
+    const [openForm, setOpenForm] = useState(false);
+    const [editing, setEditing] = useState(null);
 
-  const emptyForm = {
-    kh_id: "",
-    kh_name: "",
-    kh_password: "",
-    kh_phone: "",
-    kh_mail: "",
-    kh_role: "USER", // 🔒 khóa cứng
-  };
 
-  const [form, setForm] = useState(emptyForm);
-
-  /* ================= FILTER ================= */
-  const filteredCustomers = useMemo(() => {
-    const keyword = search.toLowerCase().trim();
-    return customers.filter(
-      (c) =>
-        c.kh_name.toLowerCase().includes(keyword) ||
-        c.kh_phone.includes(keyword),
-    );
-  }, [customers, search]);
-
-  /* ================= OPEN ADD ================= */
-  const openAdd = () => {
-    setEditing(null);
-    setForm({ ...emptyForm }); // tránh reference
-    setOpenForm(true);
-  };
-
-  /* ================= OPEN EDIT ================= */
-  const openEdit = (customer) => {
-    setEditing(customer);
-    setForm({
-      ...customer,
-      kh_password: "", // ⚠️ không show password cũ
-      kh_role: "USER", // 🔒 ép role
-    });
-    setOpenForm(true);
-  };
-
-  /* ================= SUBMIT ================= */
-  const handleSubmit = () => {
-    const submitData = {
-      ...form,
-      kh_role: "USER", // 🔒 luôn USER
+    const emptyForm = {
+        kh_id: "",
+        kh_name: "",
+        kh_password: "",
+        kh_phone: "",
+        kh_mail: "",
+        kh_role: "ROLE_CUSTOMER",
     };
 
-    if (editing) {
-      setCustomers(
-        customers.map((c) =>
-          c.kh_id === editing.kh_id
-            ? {
-                ...c,
-                ...submitData,
-                // nếu không nhập password mới thì giữ cũ
-                kh_password: submitData.kh_password || c.kh_password,
-              }
-            : c,
-        ),
-      );
-    } else {
-      setCustomers([...customers, submitData]);
-    }
+    const [form, setForm] = useState(emptyForm);
 
-    setOpenForm(false);
-  };
+    /* ================= LOAD DATA ================= */
+    useEffect(() => {
+        fetchCustomers();
+    }, []);
 
-  /* ================= DELETE ================= */
-  const handleDelete = (id) => {
-    if (window.confirm("Xóa khách hàng này?")) {
-      setCustomers(customers.filter((c) => c.kh_id !== id));
-    }
-  };
+    const fetchCustomers = async () => {
+        try {
+            const data = await getAllCustomers();
 
-  return {
-    search,
-    setSearch,
-    openForm,
-    setOpenForm,
-    editing,
-    form,
-    setForm,
-    filteredCustomers,
-    openAdd,
-    openEdit,
-    handleSubmit,
-    handleDelete,
-  };
+            console.log("RAW API:", data);
+
+            const mapped = data.map((c) => ({
+                kh_id: c.kh_id,
+                kh_name: c.kh_name,
+                kh_phone: c.kh_phone,
+                kh_mail: c.kh_mail,
+                kh_password: c.kh_password,
+                kh_role: c.kh_role
+            }));
+
+            setCustomers(mapped);
+        } catch (e) {
+            console.error("Fetch customers failed:", e);
+        }
+    };
+
+    /* ================= FILTER ================= */
+    const filteredCustomers = useMemo(() => {
+        const keyword = search.toLowerCase().trim();
+
+        return customers.filter(c =>
+            c.kh_name.toLowerCase().includes(keyword) ||
+            c.kh_phone.includes(keyword)
+        );
+    }, [customers, search]);
+
+    /* ================= SUBMIT ================= */
+    const handleSubmit = async () => {
+        const payload = {
+            kh_id: form.kh_id,
+            kh_name: form.kh_name,
+            kh_password: form.kh_password,
+            kh_phone: form.kh_phone,
+            kh_mail: form.kh_mail,
+            kh_role: "ROLE_CUSTOMER",
+        };
+
+        if (editing) {
+            await updateCustomer(editing.kh_id, payload);
+        } else {
+            await createCustomer(payload);
+        }
+
+        setOpenForm(false);
+        fetchCustomers();
+    };
+
+    /* ================= DELETE ================= */
+    const handleDelete = async (id) => {
+        if (window.confirm("Xóa khách hàng này?")) {
+            await deleteCustomer(id);
+            fetchCustomers();
+        }
+    };
+
+    return {
+        search,
+        setSearch,
+        openForm,
+        setOpenForm,
+        editing,
+        form,
+        setForm,
+        filteredCustomers,
+        openAdd: () => {
+            setEditing(null);
+            setForm(emptyForm);
+            setOpenForm(true);
+        },
+        openEdit: (customer) => {
+            setEditing(customer);
+            setForm({ ...customer, kh_password: "" });
+            setOpenForm(true);
+        },
+        handleSubmit,
+        handleDelete,
+    };
 }

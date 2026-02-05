@@ -35,25 +35,34 @@ export default function BrandManage() {
                     </tr>
                     </thead>
                     <tbody>
-                    {bm.filteredBrands.map(b => (
-                        <tr key={b.hang_id}>
-                            <td>{b.hang_id}</td>
-                            <td>{b.hang_name}</td>
-                            <td className="action">
-                                <button onClick={() => bm.openEdit(b)}>
-                                    <Pencil size={14} />
-                                </button>
-                                <button
-                                    className="danger"
-                                    onClick={() => bm.handleDelete(b.hang_id)}
-                                >
-                                    <Trash2 size={14} />
-                                </button>
+                    {bm.loading && (
+                        <tr>
+                            <td colSpan="3" className="loading">
+                                Đang tải dữ liệu...
                             </td>
                         </tr>
-                    ))}
+                    )}
 
-                    {bm.filteredBrands.length === 0 && (
+                    {!bm.loading &&
+                        bm.filteredBrands.map((b) => (
+                            <tr key={b.hang_id}>
+                                <td>{b.hang_id}</td>
+                                <td>{b.hang_name}</td>
+                                <td className="action">
+                                    <button onClick={() => bm.openEdit(b)}>
+                                        <Pencil size={14} />
+                                    </button>
+                                    <button
+                                        className="danger"
+                                        onClick={() => bm.handleDelete(b.hang_id)}
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+
+                    {!bm.loading && bm.filteredBrands.length === 0 && (
                         <tr>
                             <td colSpan="3" className="empty">
                                 Không có hãng
@@ -63,6 +72,7 @@ export default function BrandManage() {
                     </tbody>
                 </table>
             </div>
+
 
             {/* MODAL */}
             <BrandForm

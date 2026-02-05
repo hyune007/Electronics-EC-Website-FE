@@ -1,64 +1,108 @@
-import { useMemo, useState } from "react";
-import { mockBrands } from "../../../../mocks/mockBrands.js";
+import { useEffect, useMemo, useState } from "react";
+import {
+    getAllBrands,
+    createBrand,
+    updateBrand,
+    deleteBrand,
+} from "../../../../services/brandService";
 
 export function useBrandLogic() {
-  const [brands, setBrands] = useState(mockBrands);
-  const [search, setSearch] = useState("");
-  const [openForm, setOpenForm] = useState(false);
-  const [editing, setEditing] = useState(null);
+    // ===== STATE =====
+    const [brands, setBrands] = useState([]);
+    const [search, setSearch] = useState("");
+    const [openForm, setOpenForm] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-  const [form, setForm] = useState({
-    hang_id: "",
-    hang_name: "",
-  });
+    const [form, setForm] = useState({
+        hang_id: "",
+        hang_name: "",
+    });
 
-  const filteredBrands = useMemo(() => {
-    return brands.filter((b) =>
-      b.hang_name.toLowerCase().includes(search.toLowerCase()),
-    );
-  }, [brands, search]);
+    // ===== LOAD DATA =====
+    useEffect(() => {
+        setLoading(true);
+        getAllBrands()
+            .then(setBrands)
+            .catch((err) => {
+                console.error(err);
+                alert("Không tải được danh sách hãng");
+            })
+            .finally(() => setLoading(false));
+    }, []);
 
-  const openAdd = () => {
-    setEditing(null);
-    setForm({ hang_id: "", hang_name: "" });
-    setOpenForm(true);
-  };
+    // ===== FILTER =====
+    const filteredBrands = useMemo(() => {
+        return brands.filter((b) =>
+            b.hang_name.toLowerCase().includes(search.toLowerCase())
+        );
+    }, [brands, search]);
 
-  const openEdit = (brand) => {
-    setEditing(brand);
-    setForm(brand);
-    setOpenForm(true);
-  };
+    // ===== OPEN FORM =====
+    const openAdd = () => {
+        setEditing(null);
+        setForm({ hang_id: "", hang_name: "" });
+        setOpenForm(true);
+    };
 
-  const handleSubmit = () => {
-    if (!form.hang_id || !form.hang_name) return;
+    const openEdit = (brand) => {
+        setEditing(brand);
+        setForm({ ...brand });
+        setOpenForm(true);
+    };
 
-    if (editing) {
-      setBrands(brands.map((b) => (b.hang_id === editing.hang_id ? form : b)));
-    } else {
-      setBrands([...brands, form]);
-    }
-    setOpenForm(false);
-  };
+    // ===== SUBMIT =====
+    const handleSubmit = async () => {
+        if (!form.hang_id || !form.hang_name) return;
 
-  const handleDelete = (id) => {
-    if (confirm("Xóa hãng này?")) {
-      setBrands(brands.filter((b) => b.hang_id !== id));
-    }
-  };
+        try {
+            if (editing) {
+                await updateBrand(editing.hang_id, form);
+                setBrands((prev) =>
+                    prev.map((b) =>
+                        b.hang_id === editing.hang_id ? { ...form } : b
+                    )
+                );
+            } else {
+                const newBrand = await createBrand(form);
+                setBrands((prev) => [
+                    ...prev,
+                    { hang_id: newBrand.id, hang_name: newBrand.name },
+                ]);
+            }
+            setOpenForm(false);
+        } catch (err) {
+            console.error(err);
+            alert("Lưu hãng thất bại");
+        }
+    };
 
-  return {
-    search,
-    setSearch,
-    openForm,
-    setOpenForm,
-    editing,
-    form,
-    setForm,
-    filteredBrands,
-    openAdd,
-    openEdit,
-    handleSubmit,
-    handleDelete,
-  };
+    // ===== DELETE =====
+    const handleDelete = async (id) => {
+        if (!confirm("Xóa hãng này?")) return;
+
+        try {
+            await deleteBrand(id);
+            setBrands((prev) => prev.filter((b) => b.hang_id !== id));
+        } catch (err) {
+            console.error(err);
+            alert("Xóa thất bại");
+        }
+    };
+
+    return {
+        loading,
+        search,
+        setSearch,
+        openForm,
+        setOpenForm,
+        editing,
+        form,
+        setForm,
+        filteredBrands,
+        openAdd,
+        openEdit,
+        handleSubmit,
+        handleDelete,
+    };
 }

@@ -26,15 +26,16 @@ export default function Sidebar() {
   return (
       <aside
           className={`
-                fixed md:static z-40 min-h-screen
-                ${isOpen ? "w-72" : "w-20"}
-                bg-[#C1E7FF]
-                overflow-hidden shadow-lg
-                flex flex-col justify-between
-                transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
-            `}
+    md:static z-40 h-full
+    ${isOpen ? "w-72" : "w-20"}
+    bg-[#C1E7FF]
+    overflow-hidden shadow-lg
+    flex flex-col justify-between
+    transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
+  `}
       >
-        {/* ================= HEADER ================= */}
+
+      {/* ================= HEADER ================= */}
         <div>
           <div
               className={`
