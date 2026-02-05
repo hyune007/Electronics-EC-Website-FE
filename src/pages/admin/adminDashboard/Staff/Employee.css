@@ -48,9 +48,11 @@
    TABLE
 ================================ */
 .table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
     background: #fff;
     border-radius: 18px;
-    overflow: hidden;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
 }
 
@@ -61,6 +63,9 @@ table {
 
 thead {
     background: #f8fafc;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 th,

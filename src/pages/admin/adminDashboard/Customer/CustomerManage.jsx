@@ -37,6 +37,7 @@ export default function CustomerManage() {
                         <th>Hành động</th>
                     </tr>
                     </thead>
+
                     <tbody>
                     {cm.filteredCustomers.map(c => (
                         <tr key={c.kh_id}>
@@ -45,7 +46,9 @@ export default function CustomerManage() {
                             <td>{c.kh_phone}</td>
                             <td>{c.kh_mail}</td>
                             <td>
-                                <span className="role user">USER</span>
+            <span className="role user">
+                Khách hàng
+            </span>
                             </td>
                             <td className="action">
                                 <button onClick={() => cm.openEdit(c)}>
@@ -60,15 +63,8 @@ export default function CustomerManage() {
                             </td>
                         </tr>
                     ))}
-
-                    {cm.filteredCustomers.length === 0 && (
-                        <tr>
-                            <td colSpan="6" className="empty">
-                                Không có khách hàng
-                            </td>
-                        </tr>
-                    )}
                     </tbody>
+
                 </table>
             </div>
 

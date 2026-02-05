@@ -8,6 +8,55 @@
     gap: 16px;
 }
 
+/* =====================================================
+   TABLE WRAP - SCROLL
+===================================================== */
+.table-wrap {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #eee;
+}
+
+.table-wrap table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-wrap thead th {
+    position: sticky;
+    top: 0;
+    background: #f8fafc;
+    z-index: 10;
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    text-align: left;
+}
+
+.table-wrap td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.action {
+    display: flex;
+    gap: 8px;
+}
+
+.action button {
+    padding: 6px;
+    border-radius: 6px;
+    background: #e5e7eb;
+    cursor: pointer;
+}
+
+.action .danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
 
 /* =====================================================
    ROLE BADGE (ADMIN / USER)
