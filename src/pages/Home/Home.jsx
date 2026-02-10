@@ -5,7 +5,7 @@ import "./Home.css";
 import vi from "../../i18n/vi";
 import ProductCard from "../../components/customer/product/ProductCard/ProductCard.jsx";
 import { useEffect, useState } from "react";
-import { getProducts } from "../../api/Product/productApi";
+import { getProducts } from "../../services/customer/productService.js";
 const HOME_SLIDE_SIZE = 7;
 export default function Home() {
   const scroller1 = useDragScroll();

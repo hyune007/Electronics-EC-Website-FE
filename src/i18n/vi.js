@@ -12,6 +12,8 @@ const vi = {
       continueWithGoogle: "Tiếp tục với Google",
       noAccount: "Chưa có tài khoản?",
       registerNow: "Đăng ký ngay",
+      loginTypeCustomer: "Khách hàng",
+      loginTypeEmployee: "Nhân viên",
     },
     register: {
       title: "Đăng ký tài khoản",

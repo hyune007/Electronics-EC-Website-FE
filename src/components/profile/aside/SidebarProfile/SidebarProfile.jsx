@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import useTheme from "../../../../hooks/useTheme";
-
+import { decodeJwtPayload } from "../../../../utils/jwt";
+import { getCustomerById } from "../../../../services/customer/customerService";
 export default function Sidebar({
   name = "Nguyễn Trường Huy",
   onSelectView,
   view = "myorder",
 }) {
+  const [fullName, setFullName] = useState("");
   const { theme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -46,7 +48,6 @@ export default function Sidebar({
     function onUp() {
       if (!dragging) return;
       setDragging(false);
-      // leave dragMoved true briefly so click can be suppressed
       setTimeout(() => (dragMoved.current = false), 50);
     }
 
@@ -62,6 +63,34 @@ export default function Sidebar({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [dragging]);
+
+  useEffect(() => {
+    const fetchCustomerName = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
+
+        const decoded = decodeJwtPayload(token);
+        const customerId = decoded?.sub;
+        if (!customerId) return;
+
+        const cacheKey = `customerInfo_${customerId}`;
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+          const customer = JSON.parse(cached);
+          setFullName(customer?.name || "");
+        }
+
+        const freshCustomer = await getCustomerById(customerId);
+        setFullName(freshCustomer?.name || "");
+        localStorage.setItem(cacheKey, JSON.stringify(freshCustomer));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchCustomerName();
+  }, []);
 
   function handleDragStart(e) {
     // open on click still works; dragging starts on mousedown/touchstart
@@ -100,7 +129,7 @@ export default function Sidebar({
           </span>
         </div>
         <div>
-          <p className="font-semibold text-sm">{name}</p>
+          <p className="font-semibold text-sm">{fullName || name}</p>
         </div>
       </div>
 

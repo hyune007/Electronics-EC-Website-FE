@@ -5,6 +5,8 @@ import ForgotPassword from "../pages/auth/ForgotPassword/ForgotPassword.jsx";
 import ChangePassword from "../pages/auth/ChangePassword/ChangePassword.jsx";
 import Home from "../pages/Home/Home.jsx";
 import NotFound from "../pages/error/NotFound/NotFound.jsx";
+import Unauthorized from "../pages/error/Unauthorized/Unauthorized.jsx";
+
 import Contact from "../pages/other/Contact/Contact.jsx";
 import Terms from "../pages/other/Terms/Terms.jsx";
 import News from "../pages/other/News/News.jsx";
@@ -24,6 +26,13 @@ import Profile from "../pages/user/Profile/Profile.jsx";
 import Product from "../pages/product/Product/Product.jsx";
 import ImportManage from "../pages/admin/adminDashboard/Import/ImportManage.jsx";
 import VoucherManage from "../pages/admin/adminDashboard/Voucher/VoucherManage.jsx";
+import ProtectedRoute from "../components/common/ProtectedRoute.jsx";
+
+const ROLES = {
+  ADMIN: "ROLE_ADMIN",
+  EMPLOYEE: "ROLE_EMPLOYEE",
+  CUSTOMER: "ROLE_CUSTOMER",
+};
 
 export default function AppRoutes({ location }) {
   return (
@@ -36,27 +45,57 @@ export default function AppRoutes({ location }) {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       {/* <Route path="/terms" element={<Terms />} /> */}
       <Route path="/product-filter" element={<ProductFilter />} />
+      <Route path="/unauthorized" element={<Unauthorized />} />
 
-      <Route path="/" element={<CustomerLayout />}>
-        <Route index element={<Navigate to="home" replace />} />
-        <Route path="home" element={<Home />} />
-        <Route path="products" element={<Product />} />
-        <Route path="product-detail" element={<ProductDetail />} />
-        <Route path="news" element={<News />} />
-        <Route path="contact" element={<Contact />} />
-        <Route path="terms" element={<Terms />} />
-        <Route path="profile" element={<Profile />} />
+      {/* Customer layout routes */}
+      <Route element={<CustomerLayout />}>
+        {/* Public */}
+          <Route index element={<Navigate to="home" replace />} />
+          <Route path="home" element={<Home />} />
+          <Route path="products" element={<Product />} />
+          <Route path="product-detail" element={<ProductDetail />} />
+          <Route path="news" element={<News />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="terms" element={<Terms />} />
+
+        {/* Protected - Customer+ */}
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.CUSTOMER, ROLES.EMPLOYEE, ROLES.ADMIN]}>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
-      <Route path="/admin" element={<AdminLayout />}>
+      {/* Admin routes - Protected */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="customers" element={<CustomerManage />} />
         <Route path="orders" element={<OrderManage />} />
         <Route path="products" element={<ProductManage />} />
         <Route path="brands" element={<BrandManage />} />
         <Route path="staff" element={<EmployeeManage />} />
-        <Route path="imports" element={<ImportManage />} />
+        <Route path="imports" element={<ImportManage />}  />
         <Route path="vouchers" element={<VoucherManage />} />
+
+        {/* Admin only */}
+        <Route
+          path="staff"
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+              <EmployeeManage />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="*" element={<NotFound />} />
