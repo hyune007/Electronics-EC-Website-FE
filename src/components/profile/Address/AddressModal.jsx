@@ -1,6 +1,7 @@
 import { useState } from "react";
 import useTheme from "../../../hooks/useTheme";
 import vi from "../../../i18n/vi";
+import addressData from "../../../utils/addressData";
 
 export default function AddressModal({ open, onClose, onSave }) {
   const { theme } = useTheme();
@@ -11,18 +12,6 @@ export default function AddressModal({ open, onClose, onSave }) {
     detail: "",
     default: false,
   });
-
-  const CITIES = [
-    { value: "hcm", label: "Hồ Chí Minh" },
-    { value: "hn", label: "Hà Nội" },
-    { value: "dn", label: "Đà Nẵng" },
-  ];
-
-  const WARDS = {
-    hcm: ["Quận 1", "Quận 3", "Quận 5"],
-    hn: ["Ba Đình", "Hoàn Kiếm", "Đống Đa"],
-    dn: ["Hải Châu", "Sơn Trà"],
-  };
 
   if (!open) return null;
 
@@ -47,14 +36,14 @@ export default function AddressModal({ open, onClose, onSave }) {
             <select
               value={addr.city}
               onChange={(e) =>
-                setAddr({ ...addr, city: e.target.value, ward: "" })
+                setAddr({ ...addr, city: e.target.value })
               }
               className="w-full border rounded-md p-2"
             >
               <option value="">{vi.profile.address.modal.selectCity}</option>
-              {CITIES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
+              {addressData.map((c) => (
+                <option key={c.id} value={c.city}>
+                  {c.city}
                 </option>
               ))}
             </select>
@@ -64,28 +53,10 @@ export default function AddressModal({ open, onClose, onSave }) {
             <label className="block text-sm dark:text-slate-300 mb-1">
               {vi.profile.address.modal.ward}
             </label>
-            <select
+            <input
+              placeholder={vi.profile.address.modal.wardPlaceholder}
               value={addr.ward}
               onChange={(e) => setAddr({ ...addr, ward: e.target.value })}
-              className="w-full border rounded-md p-2"
-            >
-              <option value="">{vi.profile.address.modal.selectWard}</option>
-              {(WARDS[addr.city] || []).map((w, i) => (
-                <option key={i} value={w}>
-                  {w}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm dark:text-slate-300 mb-1">
-              {vi.profile.address.modal.street}
-            </label>
-            <input
-              placeholder={vi.profile.address.modal.streetPlaceholder}
-              value={addr.street}
-              onChange={(e) => setAddr({ ...addr, street: e.target.value })}
               className="w-full border rounded-md p-2"
             />
           </div>

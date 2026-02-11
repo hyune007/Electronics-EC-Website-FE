@@ -208,7 +208,7 @@ const vi = {
         city: "Thành phố",
         selectCity: "-- Chọn thành phố --",
         ward: "Phường",
-        selectWard: "-- Chọn phường --",
+        wardPlaceholder: "Tên phường",
         street: "Tên đường",
         streetPlaceholder: "Tên đường",
         detail: "Địa chỉ chi tiết",
