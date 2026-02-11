@@ -30,14 +30,12 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = useCallback((loginResponse) => {
-        const { token, userId, name, email, roleId, roleName } = loginResponse;
+        const { token } = loginResponse;
+        const payload = decodeJwtPayload(token);
 
         const userData = {
-            id: userId,
-            name,
-            email,
-            roleId,
-            roleName
+            id: payload?.sub,
+            roleId: payload?.roleId,
         };
 
         localStorage.setItem('authToken', token);

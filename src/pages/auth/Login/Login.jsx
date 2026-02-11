@@ -8,6 +8,7 @@ import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx"
 import BrandLogo from "../../../components/common/BrandLogo.jsx";
 import { login as loginApi, loginEmployee as loginEmployeeApi } from "../../../services/authService.js";
 import { useAuth } from "../../../hooks/useAuth";
+import { decodeJwtPayload } from "../../../utils/jwt.js";
 
 export default function Login() {
   const { toggleTheme } = useTheme();
@@ -23,8 +24,8 @@ export default function Login() {
   // Redirect based on role if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      const roleName = user.roleName;
-      if (roleName === "ROLE_ADMIN" || roleName === "ROLE_EMPLOYEE") {
+      const roleId = user.roleId;
+      if (roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE") {
         navigate("/admin/dashboard", { replace: true });
       } else {
         const from = location.state?.from?.pathname || "/";
@@ -62,9 +63,10 @@ export default function Login() {
       // Store auth data
       login(response);
 
-      // Redirect based on role
-      const roleName = response.roleName;
-      if (roleName === "ROLE_ADMIN" || roleName === "ROLE_EMPLOYEE") {
+      // Redirect based on role (decode JWT since backend only returns token)
+      const payload = decodeJwtPayload(response.token);
+      const roleId = payload?.roleId;
+      if (roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE") {
         navigate("/admin/dashboard", { replace: true });
       } else {
         const from = location.state?.from?.pathname || "/";
