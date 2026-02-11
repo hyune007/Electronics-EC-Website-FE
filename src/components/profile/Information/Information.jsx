@@ -5,6 +5,7 @@ import {
   updateCustomerInfor,
 } from "../../../services/customer/customerService";
 import vi from "../../../i18n/vi";
+import LoadingCircle from "../../common/LoadScreen";
 
 export default function Information({ addresses = [] }) {
   const [customerId, setCustomerId] = useState(null);
@@ -13,7 +14,7 @@ export default function Information({ addresses = [] }) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [defaultAddress, setDefaultAddress] = useState("");
-  const [, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchCustomer = async () => {
@@ -88,6 +89,8 @@ export default function Information({ addresses = [] }) {
   };
 
   return (
+    <>
+    <LoadingCircle show={loading} />
     <div className="rounded-2xl shadow-lg border p-6 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
       <div className="flex items-start gap-4 mb-6">
         <div className="p-3 rounded-lg bg-[var(--accent-light)] dark:bg-slate-700 dark:text-slate-100">
@@ -186,5 +189,6 @@ export default function Information({ addresses = [] }) {
         </div>
       </form>
     </div>
+    </>
   );
 }

@@ -27,7 +27,7 @@ import Product from "../pages/product/Product/Product.jsx";
 import ImportManage from "../pages/admin/adminDashboard/Import/ImportManage.jsx";
 import VoucherManage from "../pages/admin/adminDashboard/Voucher/VoucherManage.jsx";
 import ProtectedRoute from "../components/common/ProtectedRoute.jsx";
-
+import LoadingCircle from "../components/common/LoadScreen.jsx";
 const ROLES = {
   ADMIN: "ROLE_ADMIN",
   EMPLOYEE: "ROLE_EMPLOYEE",
@@ -46,7 +46,7 @@ export default function AppRoutes({ location }) {
       {/* <Route path="/terms" element={<Terms />} /> */}
       <Route path="/product-filter" element={<ProductFilter />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
-
+      <Route path="/loading" element={<LoadingCircle show={true} />} />
       {/* Customer layout routes */}
       <Route element={<CustomerLayout />}>
         {/* Public */}
