@@ -29,6 +29,18 @@ export default function Information() {
   useEffect(() => {
     if (!customerId) return;
 
+    const cacheKey = `customerInfo_${customerId}`;
+    const cached = localStorage.getItem(cacheKey);
+
+    if (cached) {
+      const parsed = JSON.parse(cached);
+
+      setFullName(parsed.name || "");
+      setEmail(parsed.email || "");
+      setPhone(parsed.phone || "");
+    }
+
+    // vẫn fetch API nhưng không bắt buộc, chỉ để sync mới nhất
     const fetchData = async () => {
       try {
         const freshCustomer = await getCustomerById(customerId);
@@ -37,10 +49,7 @@ export default function Information() {
         setEmail(freshCustomer.email || "");
         setPhone(freshCustomer.phone || "");
 
-        localStorage.setItem(
-          `customerInfo_${customerId}`,
-          JSON.stringify(freshCustomer)
-        );
+        localStorage.setItem(cacheKey, JSON.stringify(freshCustomer));
 
         const addrRes = await getAddresses(customerId);
         setAddresses(addrRes.data);
@@ -49,7 +58,10 @@ export default function Information() {
       }
     };
 
-    fetchData();
+    // chỉ gọi nếu chưa có cache
+    if (!cached) {
+      fetchData();
+    }
   }, [customerId]);
 
   const handleSubmit = async (e) => {

@@ -3,11 +3,13 @@ import AddressModal from "./AddressModal";
 import vi from "../../../i18n/vi";
 import { getAddresses, createAddress, deleteAddress } from "../../../services/customer/addressService";
 import { jwtDecode } from "jwt-decode";
+import LoadingCircle from "../../common/LoadScreen";
 
 export default function Address() {
   const [addresses, setAddresses] = useState([]);
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState(null);
+    const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -27,6 +29,7 @@ export default function Address() {
 
   const handleCreateAddress = async (addr) => {
     try {
+       setLoading(true);
       const payload = {
         city: addr.city,
         ward: addr.ward,
@@ -43,6 +46,8 @@ export default function Address() {
     } catch (err) {
       const msg = err.response?.data;
       alert(msg || "Thêm địa chỉ thất bại");
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -55,6 +60,8 @@ export default function Address() {
       reloadAddresses();
     } catch (err) {
       alert("Xóa địa chỉ thất bại");
+      console.error(err);
+      
     }
   };
 
@@ -64,6 +71,8 @@ export default function Address() {
     });
   };
   return (
+    <>
+     <LoadingCircle show={loading} />
     <div className="rounded-2xl shadow-lg border p-6 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
       <div className="flex items-start gap-4 mb-6">
         <div className="p-3 rounded-lg bg-[var(--accent-light)] dark:bg-slate-700">
@@ -117,5 +126,6 @@ export default function Address() {
         onSave={handleCreateAddress}
       />
     </div>
+    </>
   );
 }

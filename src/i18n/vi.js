@@ -212,7 +212,7 @@ const vi = {
         street: "Tên đường",
         streetPlaceholder: "Tên đường",
         detail: "Địa chỉ chi tiết",
-        detailPlaceholder: "Địa chỉ chi tiết",
+        detailPlaceholder: "Địa chỉ chi tiết: Số nhà, tên đường",
         cancel: "Huỷ",
         save: "Lưu",
       },
