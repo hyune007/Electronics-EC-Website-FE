@@ -11,6 +11,9 @@ export const createAddress = (data) =>
 export const updateAddress = (id, data) =>
   api.put(`${API}/update/${id}`, data);
 
+export const setDefault = (id) =>
+  api.put(`${API}/set-default/${id}`);
+
 export const deleteAddress = (id) =>
   api.delete(`${API}/delete/${id}`); 
 

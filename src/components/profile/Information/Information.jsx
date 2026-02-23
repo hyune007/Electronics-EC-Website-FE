@@ -4,7 +4,7 @@ import {
   getCustomerById,
   updateCustomerInfor,
 } from "../../../services/customer/customerService";
-import { getAddresses } from "../../../services/customer/addressService";
+import { getAddresses, setDefault } from "../../../services/customer/addressService";
 import vi from "../../../i18n/vi";
 import LoadingCircle from "../../common/LoadScreen";
 
@@ -34,34 +34,45 @@ export default function Information() {
 
     if (cached) {
       const parsed = JSON.parse(cached);
-
       setFullName(parsed.name || "");
       setEmail(parsed.email || "");
       setPhone(parsed.phone || "");
+      setAddresses(parsed.addresses || []);
+      setDefaultAddress(parsed.defaultAddressId || "");
     }
 
-    // vẫn fetch API nhưng không bắt buộc, chỉ để sync mới nhất
     const fetchData = async () => {
       try {
-        const freshCustomer = await getCustomerById(customerId);
+        const [freshCustomer, addrRes] = await Promise.all([
+          getCustomerById(customerId),
+          getAddresses(customerId),
+        ]);
 
         setFullName(freshCustomer.name || "");
         setEmail(freshCustomer.email || "");
         setPhone(freshCustomer.phone || "");
 
-        localStorage.setItem(cacheKey, JSON.stringify(freshCustomer));
+        const addresses = addrRes.data || [];
+        setAddresses(addresses);
 
-        const addrRes = await getAddresses(customerId);
-        setAddresses(addrRes.data);
+        const def = addresses.find(a => a.default);
+        const defaultAddressId = def ? def.id : "";
+        setDefaultAddress(defaultAddressId);
+
+        localStorage.setItem(
+          cacheKey,
+          JSON.stringify({
+            ...freshCustomer,
+            addresses,
+            defaultAddressId,
+          })
+        );
       } catch (err) {
         console.error(err);
       }
     };
 
-    // chỉ gọi nếu chưa có cache
-    if (!cached) {
-      fetchData();
-    }
+    fetchData();
   }, [customerId]);
 
   const handleSubmit = async (e) => {
@@ -88,6 +99,10 @@ export default function Information() {
           phone: phone,
         }),
       );
+
+      if (defaultAddress) {
+        await setDefault(defaultAddress);
+      }
 
       setEditMode(false);
 
@@ -176,15 +191,20 @@ export default function Information() {
               className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
               disabled={!editMode}
             >
-              <option value="">
-                {vi.profile.information.placeholders.selectAddress}
-              </option>
-
-              {addresses.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {`${a.city} - ${a.ward} - ${a.detailAddress}`}
-                </option>
-              ))}
+              {addresses.length === 0 ? (
+                <option>Đang tải địa chỉ...</option>
+              ) : (
+                <>
+                  <option value="">
+                    {vi.profile.information.placeholders.selectAddress}
+                  </option>
+                  {addresses.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {`${a.city} - ${a.ward} - ${a.detailAddress}`}
+                    </option>
+                  ))}
+                </>
+              )}
             </select>
           </div>
 
