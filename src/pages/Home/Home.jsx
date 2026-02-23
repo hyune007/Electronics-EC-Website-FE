@@ -5,7 +5,7 @@ import "./Home.css";
 import vi from "../../i18n/vi";
 import ProductCard from "../../components/customer/product/ProductCard/ProductCard.jsx";
 import { useEffect, useState } from "react";
-import { getProducts } from "../../api/Product/productApi";
+import { getProducts } from "../../services/customer/productService.js";
 const HOME_SLIDE_SIZE = 7;
 export default function Home() {
   const scroller1 = useDragScroll();
@@ -61,7 +61,7 @@ export default function Home() {
                             bg-neutral-50 dark:bg-[#111827]
                             p-6 transition-all duration-300
                             hover:-translate-y-1 hover:shadow-xl"
-            >
+            > <a href="#phone">
               <div
                 className="w-14 h-14 rounded-xl bg-neutral-200/70 dark:bg-[#1e293b]
                               flex items-center justify-center mb-6"
@@ -82,14 +82,14 @@ export default function Home() {
                   arrow_forward
                 </span>
               </div>
-            </div>
+            </a></div>
 
             <div
               className="group cursor-pointer rounded-2xl border border-neutral-200 dark:border-[#243041]
                             bg-neutral-50 dark:bg-[#111827]
                             p-6 transition-all duration-300
                             hover:-translate-y-1 hover:shadow-xl"
-            >
+            ><a href="#laptop">
               <div
                 className="w-14 h-14 rounded-xl bg-neutral-200/70 dark:bg-[#1e293b]
                               flex items-center justify-center mb-6"
@@ -110,14 +110,14 @@ export default function Home() {
                   arrow_forward
                 </span>
               </div>
-            </div>
+            </a></div>
 
             <div
               className="group cursor-pointer rounded-2xl border border-neutral-200 dark:border-[#243041]
                             bg-neutral-50 dark:bg-[#111827]
                             p-6 transition-all duration-300
                             hover:-translate-y-1 hover:shadow-xl"
-            >
+            ><a href="#monitor">
               <div
                 className="w-14 h-14 rounded-xl bg-neutral-200/70 dark:bg-[#1e293b]
                               flex items-center justify-center mb-6"
@@ -138,11 +138,11 @@ export default function Home() {
                   arrow_forward
                 </span>
               </div>
-            </div>
+            </a></div>
           </div>
         </section>
 
-        <section className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6">
+        <section id="laptop" className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6">
           <div
             className="flex items-center justify-between mb-6 reveal-on-scroll"
             style={{ "--reveal-delay": "160ms" }}
@@ -174,6 +174,7 @@ export default function Home() {
         </section>
 
         <section
+          id="phone"
           className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6 reveal-on-scroll"
           style={{ "--reveal-delay": "120ms" }}
         >
@@ -202,6 +203,7 @@ export default function Home() {
         </section>
 
         <section
+          id="monitor"
           className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6 reveal-on-scroll"
           style={{ "--reveal-delay": "120ms" }}
         >

@@ -1,0 +1,34 @@
+import api from "../api"; 
+const API_URL = "http://localhost:8080/api/customer";
+
+export const getCustomerById = async (id) => {
+  const response = await api.get(`${API_URL}/${id}`);
+  return response.data;
+};
+export const updateCustomerInfor = async (id, customer) => {
+  const response = await api.put(`${API_URL}/update/${id}`, {
+    id:id,
+    name: customer.kh_name,
+    phone: customer.kh_phone,
+    email: customer.kh_mail,
+    password: customer.kh_password,
+    role: {
+      id: customer.kh_role_id ?? "ROLE_CUSTOMER"
+    }
+  });
+
+  return response.data;
+};
+
+export const changePassword = async (id, newPassword) => {
+  const response = await api.put(`${API_URL}/update/${id}`, {
+    id: id,
+    password: newPassword,
+    role: {
+      id: "ROLE_CUSTOMER"
+    }
+  });
+
+  return response.data;
+};
+

@@ -27,7 +27,9 @@ import Product from "../pages/product/Product/Product.jsx";
 import ImportManage from "../pages/admin/adminDashboard/Import/ImportManage.jsx";
 import VoucherManage from "../pages/admin/adminDashboard/Voucher/VoucherManage.jsx";
 import ProtectedRoute from "../components/common/ProtectedRoute.jsx";
-
+import LoadingCircle from "../components/common/LoadScreen.jsx";
+import ShipperDashboard from "../pages/shipper/ShipperDashboard/ShipperDashboard.jsx";
+import ActiveTaskPage from "../pages/shipper/ActiveTaskPage/ActiveTaskPage.jsx";
 const ROLES = {
   ADMIN: "ROLE_ADMIN",
   EMPLOYEE: "ROLE_EMPLOYEE",
@@ -46,23 +48,27 @@ export default function AppRoutes({ location }) {
       {/* <Route path="/terms" element={<Terms />} /> */}
       <Route path="/product-filter" element={<ProductFilter />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
+      <Route path="/loading" element={<LoadingCircle show={true} />} />
+      <Route path="/shipper-dashboard" element={<ShipperDashboard />} />
+      <Route path="/active-task/:orderId" element={<ActiveTaskPage />} />
 
       {/* Customer layout routes */}
       <Route element={<CustomerLayout />}>
         {/* Public */}
-          <Route index element={<Navigate to="home" replace />} />
-          <Route path="home" element={<Home />} />
-          <Route path="products" element={<Product />} />
-          <Route path="product-detail" element={<ProductDetail />} />
-          <Route path="news" element={<News />} />
-          <Route path="contact" element={<Contact />} />
-          <Route path="terms" element={<Terms />} />
+        <Route index element={<Navigate to="home" replace />} />
+        <Route path="home" element={<Home />} />
+        <Route path="products" element={<Product />} />
+        <Route path="product-detail" element={<ProductDetail />} />
+        <Route path="news" element={<News />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="terms" element={<Terms />} />
 
         {/* Protected - Customer+ */}
         <Route
           path="/profile"
           element={
-            <ProtectedRoute allowedRoles={[ROLES.CUSTOMER, ROLES.EMPLOYEE, ROLES.ADMIN]}>
+            <ProtectedRoute
+              allowedRoles={[ROLES.CUSTOMER, ROLES.EMPLOYEE, ROLES.ADMIN]}>
               <Profile />
             </ProtectedRoute>
           }

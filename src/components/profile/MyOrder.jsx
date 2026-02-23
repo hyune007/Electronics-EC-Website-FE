@@ -103,10 +103,10 @@ export default function MyOrder() {
           </thead>
 
           <tbody className="divide-y divide-slate-200/40 dark:divide-slate-700/10">
-            {filtered.map((o, idx) => (
+            {filtered.map((o) => (
               <tr key={o.id} className="transition-colors">
                 <td className="px-6 py-5 text-sm font-medium dark:group-hover:text-slate-100">
-                  {`HD${String(idx + 1).padStart(3, "0")}`}
+                  {o.id}
                 </td>
 
                 <td className="px-6 py-5 text-sm dark:text-slate-300 dark:group-hover:text-slate-100">

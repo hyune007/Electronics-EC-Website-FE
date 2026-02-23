@@ -269,6 +269,7 @@ export default function Login() {
         </div>
       </div>
 
+      {/* Nut doi trang thai */}
       <div className="fixed bottom-6 right-6">
         <ThemeToggleButton onToggle={toggleTheme} />
       </div>

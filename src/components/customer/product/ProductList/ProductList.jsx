@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import vi from "../../../../i18n/vi.js";
-import { getProducts } from "../../../../api/Product/productApi.js";
+import { getProducts } from "../../../../services/customer/productService.js";
 import ProductCard from "../ProductCard/ProductCard.jsx";
 
 export default function ProductList({

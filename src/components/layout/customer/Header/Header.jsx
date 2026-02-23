@@ -9,6 +9,8 @@ import BrandLogo from "../../../common/BrandLogo.jsx";
 import vi from "../../../../i18n/vi.js";
 import SubMenuHeader from "../../../customer/home/SubMenuHeader/SubMenuheader.jsx";
 import { useAuth } from "../../../../hooks/useAuth";
+import { useAuth } from "../../../../hooks/useAuth";
+import { jwtDecode } from "jwt-decode";
 
 export default function Header() {
   const { toggleTheme } = useTheme();
@@ -20,10 +22,22 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = () => {
+    const token = localStorage.getItem("authToken");
+    if (token){
+      const decoded = jwtDecode(token);
+      localStorage.removeItem(`customerInfo_${decoded.sub}`);
+    }
+    localStorage.removeItem("customerInfo");
     logout();
     setShowDropdown(false);
     navigate("/login");
   };
+  //
+  // const handleLogout = () => {
+  //   logout();
+  //   setShowDropdown(false);
+  //   navigate("/login");
+  // };
 
   return (
     <>
@@ -135,6 +149,7 @@ export default function Header() {
             )}
 
             <div className="hidden lg:flex items-center gap-10">
+              {" "}
               <ThemeToggleButton onToggle={toggleTheme} />
             </div>
 
