@@ -9,7 +9,6 @@ import BrandLogo from "../../../common/BrandLogo.jsx";
 import vi from "../../../../i18n/vi.js";
 import SubMenuHeader from "../../../customer/home/SubMenuHeader/SubMenuheader.jsx";
 import { useAuth } from "../../../../hooks/useAuth";
-import { useAuth } from "../../../../hooks/useAuth";
 import { jwtDecode } from "jwt-decode";
 
 export default function Header() {
