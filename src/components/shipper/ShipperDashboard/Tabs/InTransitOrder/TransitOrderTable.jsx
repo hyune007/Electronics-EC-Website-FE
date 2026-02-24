@@ -1,9 +1,17 @@
-import React from "react";
-import orders from "../../../../../mocks/mockOrderShipper";
-const ordersList = orders.inTransitOrder;
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { getAllBills } from "../../../../../services/billService";
 
 export default function TransitOrderTable({ onSelectOrder, selectedOrder }) {
+  const [ordersList, setOrdersList] = useState([]);
+
+  useEffect(() => {
+    const fetchBills = async () => {
+      const res = await getAllBills();
+      setOrdersList(res.data.filter(b => b.status === "Đang giao"));
+    };
+    fetchBills();
+  }, []);
   const formatCurrency = (value) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
@@ -37,11 +45,11 @@ export default function TransitOrderTable({ onSelectOrder, selectedOrder }) {
                 className={`border-t cursor-pointer transition hover:bg-neutral-100 ${selectedOrder?.id === order.id ? "bg-blue-50 dark:bg-slate-800" : ""}`}
               >
                 <td className="p-3 font-bold text-primary">{order.id}</td>
-                <td className="p-3">{order.name}</td>
-                <td className="p-3">{order.phone}</td>
-                <td className="p-3">{order.address}</td>
+                <td className="p-3">{order.customer.name}</td>
+                <td className="p-3">{order.customer.phone}</td>
+                <td className="p-3">{order.address.detailAddress}, {order.address.ward}, {order.address.city}</td>
                 <td className="p-3 font-semibold">
-                  {formatCurrency(order.price)}
+                  {formatCurrency(order.totalAmount)}
                 </td>
                 <td className="p-3 text-center">
                   <button
@@ -69,12 +77,12 @@ export default function TransitOrderTable({ onSelectOrder, selectedOrder }) {
           >
             <div className="flex-1">
               <div className="text-sm font-semibold text-primary">
-                {order.id} • {order.name}
+                {order.id} • {order.customer.name}
               </div>
-              <div className="text-xs text-slate-400">{order.address}</div>
+              <div className="text-xs text-slate-400">{order.address.detailAddress}, {order.address.ward}, {order.address.city}</div>
             </div>
             <div className="flex-shrink-0 text-right">
-              <div className="font-bold">{formatCurrency(order.price)}</div>
+              <div className="font-bold">{formatCurrency(order.totalAmount)}</div>
               <button
                 onClick={(e) => {
                   e.stopPropagation();

@@ -5,6 +5,7 @@ import addressData from "../../../utils/addressData";
 
 export default function AddressModal({ open, onClose, onSave }) {
   const { theme } = useTheme();
+  const [errors, setErrors] = useState({});
   const [addr, setAddr] = useState({
     city: "",
     ward: "",
@@ -15,14 +16,31 @@ export default function AddressModal({ open, onClose, onSave }) {
 
   if (!open) return null;
 
+  const validate = () => {
+    const e = {};
+
+    if (!addr.city) {
+      e.city = vi.profile.address.error.cityRequired;
+    }
+
+    if (!addr.ward.trim()) {
+      e.ward = vi.profile.address.error.wardRequired;
+    }
+
+    if (!addr.detail.trim() || addr.detail.length < 5) {
+      e.detail = vi.profile.address.error.detailInvalid;
+    }
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div
-        className={`p-6 rounded-lg w-full max-w-md border ${
-          theme === "dark"
-            ? "bg-slate-800 text-slate-100 border-slate-700"
-            : "bg-white"
-        }`}
+        className={`p-6 rounded-lg w-full max-w-md border ${theme === "dark"
+          ? "bg-slate-800 text-slate-100 border-slate-700"
+          : "bg-white"
+          }`}
       >
         <h3 className="text-lg font-bold mb-4">
           {vi.profile.address.modal.title}
@@ -35,10 +53,12 @@ export default function AddressModal({ open, onClose, onSave }) {
             </label>
             <select
               value={addr.city}
-              onChange={(e) =>
-                setAddr({ ...addr, city: e.target.value })
-              }
-              className="w-full border rounded-md p-2"
+              onChange={(e) => {
+                setAddr({ ...addr, city: e.target.value });
+                setErrors({ ...errors, city: null });
+              }}
+              className={`w-full border rounded-md p-2 ${errors.city ? "border-red-500" : ""
+                }`}
             >
               <option value="">{vi.profile.address.modal.selectCity}</option>
               {addressData.map((c) => (
@@ -47,6 +67,9 @@ export default function AddressModal({ open, onClose, onSave }) {
                 </option>
               ))}
             </select>
+            {errors.city && (
+              <p className="text-xs text-red-500 mt-1">{errors.city}</p>
+            )}
           </div>
 
           <div>
@@ -54,11 +77,17 @@ export default function AddressModal({ open, onClose, onSave }) {
               {vi.profile.address.modal.ward}
             </label>
             <input
-              placeholder={vi.profile.address.modal.wardPlaceholder}
               value={addr.ward}
-              onChange={(e) => setAddr({ ...addr, ward: e.target.value })}
-              className="w-full border rounded-md p-2"
+              onChange={(e) => {
+                setAddr({ ...addr, ward: e.target.value });
+                setErrors({ ...errors, ward: null });
+              }}
+              className={`w-full border rounded-md p-2 ${errors.ward ? "border-red-500" : ""
+                }`}
             />
+            {errors.ward && (
+              <p className="text-xs text-red-500 mt-1">{errors.ward}</p>
+            )}
           </div>
 
           <div>
@@ -66,11 +95,17 @@ export default function AddressModal({ open, onClose, onSave }) {
               {vi.profile.address.modal.detail}
             </label>
             <textarea
-              placeholder={vi.profile.address.modal.detailPlaceholder}
               value={addr.detail}
-              onChange={(e) => setAddr({ ...addr, detail: e.target.value })}
-              className="w-full border rounded-md p-2 h-24"
+              onChange={(e) => {
+                setAddr({ ...addr, detail: e.target.value });
+                setErrors({ ...errors, detail: null });
+              }}
+              className={`w-full border rounded-md p-2 h-24 ${errors.detail ? "border-red-500" : ""
+                }`}
             />
+            {errors.detail && (
+              <p className="text-xs text-red-500 mt-1">{errors.detail}</p>
+            )}
           </div>
         </div>
 
@@ -80,6 +115,7 @@ export default function AddressModal({ open, onClose, onSave }) {
           </button>
           <button
             onClick={() => {
+              if (!validate()) return;
               onSave(addr);
               onClose();
             }}

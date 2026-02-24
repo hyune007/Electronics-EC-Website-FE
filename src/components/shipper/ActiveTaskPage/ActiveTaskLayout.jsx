@@ -1,15 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ActiveTaskHeader from "./ActiveTaskHeader";
 import TaskInfoPanel from "./TaskInfoPanel";
 import NavigationMap from "./NavigationMap";
 import BottomActionBar from "./BottomActionBar";
-import orders from "../../../mocks/mockOrderShipper";
+import { getAllBills } from "../../../services/billService";
 import { useParams } from "react-router-dom";
 
 export default function ActiveTaskLayout() {
   const { orderId } = useParams();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const order = orders.inTransitOrder.find((o) => o.id === orderId);
+  useEffect(() => {
+    getAllBills()
+      .then((res) => {
+        const found = res.data.find((b) => b.id === orderId);
+        setOrder(found);
+      })
+      .finally(() => setLoading(false));
+  }, [orderId]);
+
+  if (loading) {
+    return <div className="text-white p-4">Đang tải đơn hàng...</div>;
+  }
 
   if (!order) {
     return <div>Không tìm thấy đơn</div>;

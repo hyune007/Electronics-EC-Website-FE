@@ -3,8 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import L from "leaflet";
 import { geocodeAddress } from "../../utils/geocode";
 import { Polyline } from "react-leaflet";
-import fakeOrders from "../../mocks/mockOrderShipper";
-const newOrderList = fakeOrders.newOrder;
+import { getAllBills } from "../../services/billService";
 const shipperIcon = new L.Icon({
   iconUrl:
     "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png",
@@ -139,26 +138,45 @@ export default function MapWidget({
 
   useEffect(() => {
     async function loadOrders() {
-      const source = externalOrders ?? newOrderList;
+      let source = externalOrders;
+
+      if (!Array.isArray(source)) {
+        const res = await getAllBills();
+        source = Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data)
+            ? res.data
+            : [];
+      }
+
       const result = [];
 
       for (const order of source) {
-        const coords = await geocodeAddress(order.address);
-        console.log("Name:", order.name);
-        console.log("Coords:", coords);
-        result.push({
-          ...order,
-          position: coords,
-        });
-        // delay tránh bị rate limit
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        if (!order.address) continue;
+
+        const fullAddress = `${order.address.detailAddress}, ${order.address.ward}, ${order.address.city}`;
+
+        try {
+          const coords = await geocodeAddress(fullAddress);
+
+          if (!coords) continue;
+
+          result.push({
+            ...order,
+            position: coords,
+          });
+        } catch (err) {
+          console.error("Geocode failed:", fullAddress, err);
+        }
+
+        await new Promise((r) => setTimeout(r, 200));
       }
 
       setOrders(result);
     }
 
     loadOrders();
-  }, []);
+  }, [externalOrders]);
 
   useEffect(() => {
     if (!selectedOrderWithCoords) return;
@@ -205,7 +223,7 @@ export default function MapWidget({
 
       <div className="h-[300px] lg:h-[400px] w-full">
         <MapContainer
-          center={fakeShipperPosition || defaultPosition || shipperPosition}
+          center={shipperPosition || fakeShipperPosition || defaultPosition}
           zoom={15}
           scrollWheelZoom={true}
           className="h-screen w-full z-0"
@@ -251,7 +269,8 @@ export default function MapWidget({
                   <Popup>
                     {order.id}
                     <br />
-                    {order.address}
+                    {order.address.detailAddress}, {order.address.ward},{" "}
+                    {order.address.city}
                   </Popup>
                 </Marker>
               ),

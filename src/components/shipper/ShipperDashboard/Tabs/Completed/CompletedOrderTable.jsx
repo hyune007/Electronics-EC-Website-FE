@@ -1,14 +1,22 @@
-import React from "react";
-import orders from "../../../../../mocks/mockOrderShipper";
-const ordersList = orders.completedOrder;
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { getAllBills } from "../../../../../services/billService";
 
 export default function CompletedOrderTable({ onSelectOrder, selectedOrder }) {
+  const [ordersList, setOrdersList] = useState([]);
+  useEffect(() => {
+    const fetchBills = async () => {
+      const res = await getAllBills();
+      setOrdersList(res.data.filter(b => b.status === "Đã giao"));
+    };
+    fetchBills();
+  }, []);
   const formatCurrency = (value) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
     }).format(value);
-
+  const navigate = useNavigate();
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-neutral-200">
       <div className="p-4 font-bold flex items-center justify-between">
@@ -36,15 +44,18 @@ export default function CompletedOrderTable({ onSelectOrder, selectedOrder }) {
                 className={`border-t cursor-pointer transition hover:bg-neutral-100 ${selectedOrder?.id === order.id ? "bg-blue-50 dark:bg-slate-800" : ""}`}
               >
                 <td className="p-3 font-bold text-primary">{order.id}</td>
-                <td className="p-3">{order.name}</td>
-                <td className="p-3">{order.phone}</td>
-                <td className="p-3">{order.address}</td>
+                <td className="p-3">{order.customer.name}</td>
+                <td className="p-3">{order.customer.phone}</td>
+                <td className="p-3">{order.address.detailAddress}, {order.address.ward}, {order.address.city}</td>
                 <td className="p-3 font-semibold">
-                  {formatCurrency(order.price)}
+                  {formatCurrency(order.totalAmount)}
                 </td>
                 <td className="p-3 text-center">
                   <button
-                    onClick={() => onSelectOrder?.(order)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/active-task/${order.id}`);
+                    }}
                     className="bg-primary text-white px-3 py-1 rounded-md text-xs hover:opacity-90"
                   >
                     Xem
@@ -60,18 +71,27 @@ export default function CompletedOrderTable({ onSelectOrder, selectedOrder }) {
         {ordersList.map((order) => (
           <div
             key={order.id}
-            onClick={() => onSelectOrder?.(order)}
+            onClick={() => {
+              onSelectOrder?.(order);
+              navigate(`/active-task/${order.id}`);
+            }}
             className={`p-4 flex items-center justify-between gap-3 cursor-pointer transition ${selectedOrder?.id === order.id ? "bg-blue-50 dark:bg-slate-800" : "bg-white dark:bg-slate-900"}`}
           >
             <div className="flex-1">
               <div className="text-sm font-semibold text-primary">
-                {order.id} • {order.name}
+                {order.id} • {order.customer.name}
               </div>
-              <div className="text-xs text-slate-400">{order.address}</div>
+              <div className="text-xs text-slate-400">{order.address.detailAddress}, {order.address.ward}, {order.address.city}</div>
             </div>
             <div className="flex-shrink-0 text-right">
-              <div className="font-bold">{formatCurrency(order.price)}</div>
-              <button className="mt-2 w-full bg-primary text-white px-3 py-1 rounded-md text-sm">
+              <div className="font-bold">{formatCurrency(order.totalAmount)}</div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/active-task/${order.id}`);
+                }}
+                className="mt-2 w-full bg-primary text-white px-3 py-1 rounded-md text-sm"
+              >
                 Xem
               </button>
             </div>

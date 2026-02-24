@@ -6,7 +6,7 @@ export default function TaskInfoPanel({ order }) {
       style: "currency",
       currency: "VND",
     }).format(value);
-
+  console.log(order);
   return (
     <div className="flex flex-col flex-1 overflow-y-auto p-3 lg:p-4 space-y-3 text-slate-200">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800 pb-2">
@@ -36,19 +36,19 @@ export default function TaskInfoPanel({ order }) {
             <span className="material-symbols-outlined text-primary text-[17px]">
               person
             </span>
-            {order?.name}
+            {order?.customer?.name}
           </div>
           <div className="text-xs text-slate-400 flex items-start gap-1.5">
             <span className="material-symbols-outlined text-[15px]">
               location_on
             </span>
-            {order?.address}
+            {order?.address?.detailAddress}, {order?.address?.ward}, {order?.address?.city}
           </div>
           <div className="text-xs text-slate-400 flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[15px]">
               phone
             </span>
-            {order?.phone}
+            {order?.customer?.phone}
           </div>
         </div>
         <div className="flex gap-2">
@@ -56,7 +56,7 @@ export default function TaskInfoPanel({ order }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {order?.product?.map((p, i) => (
+        {order?.detailBills?.map((d, i) => (
           <div
             key={i}
             className="bg-slate-900 border border-slate-800 rounded-md p-2.5 hover:border-primary/40 hover:bg-slate-800/60 transition"
@@ -64,17 +64,16 @@ export default function TaskInfoPanel({ order }) {
             <div className="flex items-start justify-between gap-2">
               <div>
                 <div className="font-medium text-xs text-slate-100 leading-tight">
-                  {p.name}
+                  {d.product?.name}
                 </div>
                 <div className="text-[11px] text-slate-400 mt-0.5">
-                  SKU: {p.sku}
                   <span className="text-primary font-semibold">
-                    {" "}• SL: {p.qty}
+                    {" "}• SL: {d.quantity}
                   </span>
                 </div>
               </div>
               <div className="font-semibold text-xs text-primary whitespace-nowrap">
-                {formatCurrency(p.price)}
+                {formatCurrency(d.product?.price)}
               </div>
             </div>
           </div>
