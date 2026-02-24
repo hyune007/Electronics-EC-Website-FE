@@ -1,9 +1,9 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import './index.css'
-import "./styles/theme/themeColor.css"
-
+import "./index.css";
+import "./styles/theme/themeColor.css";
+import { CartProvider } from "./contexts/CartContext";
 import App from "./App.jsx";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 
@@ -19,8 +19,10 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <CartProvider>
+          <App />
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
-  </StrictMode>
+  </StrictMode>,
 );

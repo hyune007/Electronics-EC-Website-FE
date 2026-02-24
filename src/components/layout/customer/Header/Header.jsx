@@ -1,7 +1,8 @@
 import "./Header.css";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
-
+import { useCart } from "../../../../contexts/CartContext";
+import { useEffect, useRef } from "react";
 import useTheme from "../../../../hooks/useTheme.js";
 import UserDropdown from "../../../profile/UserDropdown/UserDropdown.jsx";
 import ThemeToggleButton from "../../../common/ThemeToggleButtonHome.jsx";
@@ -19,10 +20,24 @@ export default function Header() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showSubmenu, setShowSubmenu] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Hiệu ứng
+  const { cart } = useCart();
+  const badgeRef = useRef(null);
 
+  const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    if (!badgeRef.current) return;
+
+    badgeRef.current.classList.add("scale-125");
+    setTimeout(() => {
+      badgeRef.current?.classList.remove("scale-125");
+    }, 200);
+  }, [totalQuantity]);
+  //
   const handleLogout = () => {
     const token = localStorage.getItem("authToken");
-    if (token){
+    if (token) {
       const decoded = jwtDecode(token);
       localStorage.removeItem(`customerInfo_${decoded.sub}`);
     }
@@ -105,12 +120,23 @@ export default function Header() {
               <span className="material-symbols-outlined">search</span>
             </button>
 
-            <button className="icon-btn relative">
+            <NavLink
+              to="/checkout?tab=cart"
+              className="icon-btn relative"
+              id="cart-icon"
+            >
               <span className="material-symbols-outlined">shopping_cart</span>
-              <span className="absolute -top-1 -right-1 size-4 bg-primary text-white text-[10px] flex items-center justify-center rounded-full">
-                0
-              </span>
-            </button>
+
+              {totalQuantity > 0 && (
+                <span
+                  ref={badgeRef}
+                  id="cart-badge"
+                  className="absolute -top-1 -right-1 size-4 bg-primary text-white text-[10px] flex items-center justify-center rounded-full transition-all duration-200"
+                >
+                  {totalQuantity}
+                </span>
+              )}
+            </NavLink>
 
             {isAuthenticated ? (
               <>
@@ -118,7 +144,9 @@ export default function Header() {
                   onClick={() => setShowDropdown((s) => !s)}
                   className="icon-btn flex items-center gap-2"
                 >
-                  <span className="material-symbols-outlined">account_circle</span>
+                  <span className="material-symbols-outlined">
+                    account_circle
+                  </span>
                   <span className="hidden lg:inline text-sm text-gray-700 dark:text-gray-200">
                     {user?.name}
                   </span>

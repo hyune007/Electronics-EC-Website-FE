@@ -23,23 +23,18 @@ const markerIcon = new L.Icon({
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
-function FocusMarker({ position }) {
+function FocusMarker({ position, selectedOrderId }) {
   const map = useMap();
-  const prevRef = React.useRef();
+
   useEffect(() => {
     if (!position) return;
-    // Chỉ aim nếu vị trí thực sự thay đổi
-    if (
-      !prevRef.current ||
-      position[0] !== prevRef.current[0] ||
-      position[1] !== prevRef.current[1]
-    ) {
-      map.flyTo(position, 17, {
-        duration: 1.5,
-      });
-      prevRef.current = position;
-    }
-  }, [position, map]);
+
+    // Khi chọn đơn hàng, zoom và đưa marker vào giữa map
+    map.flyTo(position, 18, {
+      duration: 1.5,
+    });
+  }, [position, selectedOrderId, map]);
+
   return null;
 }
 
@@ -208,7 +203,7 @@ export default function MapWidget({
           center={fakeShipperPosition || defaultPosition || shipperPosition}
           zoom={15}
           scrollWheelZoom={true}
-          className="h-screen w-full z-0"
+          className="h-full w-full z-0"
         >
           <FocusMarker
             position={selectedOrderWithCoords?.position}

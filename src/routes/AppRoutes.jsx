@@ -30,6 +30,7 @@ import ProtectedRoute from "../components/common/ProtectedRoute.jsx";
 import LoadingCircle from "../components/common/LoadScreen.jsx";
 import ShipperDashboard from "../pages/shipper/ShipperDashboard/ShipperDashboard.jsx";
 import ActiveTaskPage from "../pages/shipper/ActiveTaskPage/ActiveTaskPage.jsx";
+import Checkout from "../pages/user/Checkout/Checkout.jsx";
 const ROLES = {
   ADMIN: "ROLE_ADMIN",
   EMPLOYEE: "ROLE_EMPLOYEE",
@@ -58,10 +59,11 @@ export default function AppRoutes({ location }) {
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<Home />} />
         <Route path="products" element={<Product />} />
-        <Route path="product-detail" element={<ProductDetail />} />
+        <Route path="product-detail/:id" element={<ProductDetail />} />
         <Route path="news" element={<News />} />
         <Route path="contact" element={<Contact />} />
         <Route path="terms" element={<Terms />} />
+        <Route path="/checkout" element={<Checkout />} />
 
         {/* Protected - Customer+ */}
         <Route

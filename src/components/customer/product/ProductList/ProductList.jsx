@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import vi from "../../../../i18n/vi.js";
 import { getProducts } from "../../../../services/customer/productService.js";
 import ProductCard from "../ProductCard/ProductCard.jsx";
-
+import BreadcrumbNav from "../ProductNav/BreadcrumbNav/BreadcrumbNav.jsx";
+// import { div } from "framer-motion/client";
+import { useSearchParams } from "react-router-dom";
 export default function ProductList({
   page,
   setPage,
@@ -20,6 +22,14 @@ export default function ProductList({
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get("category");
+    if (categoryFromUrl) {
+      setCategory(categoryFromUrl);
+    }
+  }, [searchParams]);
 
   const CATEGORIES = [
     { id: "LSP01", name: "Điện thoại" },
@@ -193,114 +203,120 @@ export default function ProductList({
     maxPrice,
   ]);
 
+  const currentCategory = CATEGORIES.find((c) => c.id === category) || null;
   return (
-    <main className="container mx-auto px-4 py-5">
-      <div className="mb-6">
-        <div className="mb-2 text-sm font-semibold text-gray-700 dark:text-slate-300">
-          {vi.product.form.productTypeLabel}
-        </div>
+    <div>
+      <BreadcrumbNav category={currentCategory} />
+      <main className="container mx-auto px-4 py-5">
+        <div className="mb-6">
+          <div className="mb-2 text-sm font-semibold text-gray-700 dark:text-slate-300">
+            {vi.product.form.productTypeLabel}
+          </div>
 
-        <div className="flex flex-wrap gap-3 py-2">
-          {CATEGORIES.map((c) => (
+          <div className="flex flex-wrap gap-3 py-2">
+            {CATEGORIES.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => {
+                  setCategory(c.id);
+                  setPage(0);
+                }}
+                className={`px-3 py-2 rounded-lg border ${
+                  category === c.id
+                    ? "bg-primary text-white"
+                    : "border-gray-200 dark:border-gray-700 hover:bg-primary hover:text-white"
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+
             <button
-              key={c.id}
               onClick={() => {
-                setCategory(c.id);
+                setCategory(null);
                 setPage(0);
               }}
               className={`px-3 py-2 rounded-lg border ${
-                category === c.id
-                  ? "bg-primary text-white"
-                  : "border-gray-200 dark:border-gray-700 hover:bg-primary hover:text-white"
+                category === null
+                  ? "bg-primary text-white border-primary"
+                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-primary hover:text-white dark:text-slate-100"
               }`}
             >
-              {c.name}
+              Tất cả
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
+          <h1 className="text-2xl font-bold tracking-tight dark:text-slate-100">
+            {vi.product.form.allProductsTitle}
+          </h1>
+
+          <select
+            value={priceSort}
+            onChange={(e) => {
+              setPriceSort(e.target.value);
+              setPage(0);
+            }}
+            className="border border-gray-200 dark:bg-primary rounded-lg px-3 py-1.5 text-sm dark:text-slate-100"
+          >
+            <option value="">{vi.product.form.sortOptions.all}</option>
+            <option value="asc">{vi.product.form.sortOptions.priceAsc}</option>
+            <option value="desc">
+              {vi.product.form.sortOptions.priceDesc}
+            </option>
+          </select>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+          {loading && (
+            <div className="col-span-full text-center">Đang tải...</div>
+          )}
+          {error && (
+            <div className="col-span-full text-center text-red-500">
+              Lỗi tải dữ liệu
+            </div>
+          )}
+          {!loading && !error && products.length === 0 && (
+            <div className="col-span-full text-center">Không có sản phẩm</div>
+          )}
+          {!loading &&
+            !error &&
+            products.map((p) => <ProductCard key={p.id} product={p} />)}
+        </div>
+
+        <div className="mt-16 flex justify-center items-center gap-2">
+          <button
+            disabled={page === 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            className="w-10 h-10 rounded-lg border hover:bg-primary hover:text-white disabled:opacity-40"
+          >
+            ‹
+          </button>
+
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setPage(i)}
+              className={`w-10 h-10 rounded-lg ${
+                page === i
+                  ? "bg-primary text-white"
+                  : "border hover:bg-primary hover:text-white"
+              }`}
+            >
+              {i + 1}
             </button>
           ))}
 
           <button
-            onClick={() => {
-              setCategory(null);
-              setPage(0);
-            }}
-            className={`px-3 py-2 rounded-lg border ${
-              category === null
-                ? "bg-primary text-white border-primary"
-                : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-primary hover:text-white dark:text-slate-100"
-            }`}
+            disabled={page === totalPages - 1}
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            className="w-10 h-10 rounded-lg border hover:bg-primary hover:text-white disabled:opacity-40"
           >
-            Tất cả
+            ›
           </button>
         </div>
-      </div>
-
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
-        <h1 className="text-2xl font-bold tracking-tight dark:text-slate-100">
-          {vi.product.form.allProductsTitle}
-        </h1>
-
-        <select
-          value={priceSort}
-          onChange={(e) => {
-            setPriceSort(e.target.value);
-            setPage(0);
-          }}
-          className="border border-gray-200 dark:bg-primary rounded-lg px-3 py-1.5 text-sm dark:text-slate-100"
-        >
-          <option value="">{vi.product.form.sortOptions.all}</option>
-          <option value="asc">{vi.product.form.sortOptions.priceAsc}</option>
-          <option value="desc">{vi.product.form.sortOptions.priceDesc}</option>
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
-        {loading && (
-          <div className="col-span-full text-center">Đang tải...</div>
-        )}
-        {error && (
-          <div className="col-span-full text-center text-red-500">
-            Lỗi tải dữ liệu
-          </div>
-        )}
-        {!loading && !error && products.length === 0 && (
-          <div className="col-span-full text-center">Không có sản phẩm</div>
-        )}
-        {!loading &&
-          !error &&
-          products.map((p) => <ProductCard key={p.id} product={p} />)}
-      </div>
-
-      <div className="mt-16 flex justify-center items-center gap-2">
-        <button
-          disabled={page === 0}
-          onClick={() => setPage((p) => Math.max(0, p - 1))}
-          className="w-10 h-10 rounded-lg border hover:bg-primary hover:text-white disabled:opacity-40"
-        >
-          ‹
-        </button>
-
-        {Array.from({ length: totalPages }).map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setPage(i)}
-            className={`w-10 h-10 rounded-lg ${
-              page === i
-                ? "bg-primary text-white"
-                : "border hover:bg-primary hover:text-white"
-            }`}
-          >
-            {i + 1}
-          </button>
-        ))}
-
-        <button
-          disabled={page === totalPages - 1}
-          onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-          className="w-10 h-10 rounded-lg border hover:bg-primary hover:text-white disabled:opacity-40"
-        >
-          ›
-        </button>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

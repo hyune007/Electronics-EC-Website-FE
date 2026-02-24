@@ -225,7 +225,9 @@ export default function Register() {
                   disabled={isSubmitting}
                 >
                   <span>
-                    {isSubmitting ? "Đang xử lý..." : vi.auth.register.registerNow}
+                    {isSubmitting
+                      ? "Đang xử lý..."
+                      : vi.auth.register.registerNow}
                   </span>
                   <span className="material-symbols-outlined text-base">
                     person_add

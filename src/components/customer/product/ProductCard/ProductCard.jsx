@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import demoImg from "../../../../assets/demo/demo.jpg";
+import { useNavigate } from "react-router-dom";
 
 export default function ProductCard({ product }) {
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0 });
   const timerRef = useRef(null);
   const pendingPos = useRef({ x: 0, y: 0 });
+  const navigate = useNavigate();
 
   const handlePointerEnter = (e) => {
     pendingPos.current = { x: e.clientX, y: e.clientY };
@@ -83,7 +85,7 @@ export default function ProductCard({ product }) {
         </div>
       )}
 
-      <div
+      <div onClick={() => navigate(`/product-detail/${product.id}`)}
         className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden
                 border border-gray-100 dark:border-gray-800
                 group flex flex-col
@@ -120,9 +122,9 @@ export default function ProductCard({ product }) {
 
           <button
             className="mt-auto w-full py-2 bg-gray-100 dark:bg-slate-800
-                       group-hover:bg-primary group-hover:text-white
-                       text-gray-700 dark:text-slate-100
-                       text-xs font-semibold rounded transition-colors"
+             group-hover:bg-primary group-hover:text-white
+             text-gray-700 dark:text-slate-100
+             text-xs font-semibold rounded transition-colors"
           >
             Xem chi tiết
           </button>

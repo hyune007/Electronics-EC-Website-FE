@@ -6,3 +6,6 @@ const API = axios.create({
 
 export const getProducts = (params) =>
   API.get("/all", { params });
+
+export const getProductById = (id) =>
+  API.get(`/detail/${id}`);

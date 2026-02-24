@@ -4,30 +4,39 @@ import useRevealOnScroll from "../../hooks/useRevealOnScroll";
 import "./Home.css";
 import vi from "../../i18n/vi";
 import ProductCard from "../../components/customer/product/ProductCard/ProductCard.jsx";
+import LoadScreen from "../../components/common/LoadScreen.jsx";
 import { useEffect, useState } from "react";
 import { getProducts } from "../../services/customer/productService.js";
+import { useNavigate } from "react-router-dom";
 const HOME_SLIDE_SIZE = 7;
 export default function Home() {
   const scroller1 = useDragScroll();
   const scroller2 = useDragScroll();
   const scroller3 = useDragScroll();
+  const navigate = useNavigate();
   useRevealOnScroll();
   const [popularComputers, setPopularComputers] = useState([]);
   const [latestPhones, setLatestPhones] = useState([]);
   const [graphicsMonitors, setGraphicsMonitors] = useState([]);
+  const [loadingPC, setLoadingPC] = useState(true);
+  const [loadingPhone, setLoadingPhone] = useState(true);
+  const [loadingMonitor, setLoadingMonitor] = useState(true);
 
   useEffect(() => {
+    setLoadingPC(true);
+    setLoadingPhone(true);
+    setLoadingMonitor(true);
     getProducts({ p: 0, size: HOME_SLIDE_SIZE, category: "LSP02" })
       .then((res) => setPopularComputers(res.data.content || []))
-      .catch(console.error);
+      .finally(() => setLoadingPC(false));
 
     getProducts({ p: 0, size: HOME_SLIDE_SIZE, category: "LSP01" })
       .then((res) => setLatestPhones(res.data.content || []))
-      .catch(console.error);
+      .finally(() => setLoadingPhone(false));
 
     getProducts({ p: 0, size: HOME_SLIDE_SIZE, category: "LSP08" })
       .then((res) => setGraphicsMonitors(res.data.content || []))
-      .catch(console.error);
+      .finally(() => setLoadingMonitor(false));
   }, []);
   return (
     <div className="w-full min-h-screen bg-neutral-100 dark:bg-[#0b0f1a] py-15 text-neutral-900 dark:text-neutral-100 transition-colors">
@@ -61,88 +70,98 @@ export default function Home() {
                             bg-neutral-50 dark:bg-[#111827]
                             p-6 transition-all duration-300
                             hover:-translate-y-1 hover:shadow-xl"
-            > <a href="#phone">
-              <div
-                className="w-14 h-14 rounded-xl bg-neutral-200/70 dark:bg-[#1e293b]
+            >
+              {" "}
+              <a href="#phone">
+                <div
+                  className="w-14 h-14 rounded-xl bg-neutral-200/70 dark:bg-[#1e293b]
                               flex items-center justify-center mb-6"
-              >
-                <span className="material-symbols-outlined text-3xl text-primary">
-                  smartphone
-                </span>
-              </div>
-              <h3 className="text-xl font-bold mb-2">
-                {vi.home.categories.phone}
-              </h3>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
-                {vi.home.descriptions.phone}
-              </p>
-              <div className="flex items-center gap-2 text-primary font-semibold text-sm">
-                <span>{vi.home.exploreNow}</span>
-                <span className="material-symbols-outlined text-base">
-                  arrow_forward
-                </span>
-              </div>
-            </a></div>
+                >
+                  <span className="material-symbols-outlined text-3xl text-primary">
+                    smartphone
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold mb-2">
+                  {vi.home.categories.phone}
+                </h3>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
+                  {vi.home.descriptions.phone}
+                </p>
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <span>{vi.home.exploreNow}</span>
+                  <span className="material-symbols-outlined text-base">
+                    arrow_forward
+                  </span>
+                </div>
+              </a>
+            </div>
 
             <div
               className="group cursor-pointer rounded-2xl border border-neutral-200 dark:border-[#243041]
                             bg-neutral-50 dark:bg-[#111827]
                             p-6 transition-all duration-300
                             hover:-translate-y-1 hover:shadow-xl"
-            ><a href="#laptop">
-              <div
-                className="w-14 h-14 rounded-xl bg-neutral-200/70 dark:bg-[#1e293b]
+            >
+              <a href="#laptop">
+                <div
+                  className="w-14 h-14 rounded-xl bg-neutral-200/70 dark:bg-[#1e293b]
                               flex items-center justify-center mb-6"
-              >
-                <span className="material-symbols-outlined text-3xl text-primary">
-                  laptop_mac
-                </span>
-              </div>
-              <h3 className="text-xl font-bold mb-2">
-                {vi.home.categories.computer}
-              </h3>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
-                {vi.home.descriptions.computer}
-              </p>
-              <div className="flex items-center gap-2 text-primary font-semibold text-sm">
-                <span>{vi.home.exploreNow}</span>
-                <span className="material-symbols-outlined text-base">
-                  arrow_forward
-                </span>
-              </div>
-            </a></div>
+                >
+                  <span className="material-symbols-outlined text-3xl text-primary">
+                    laptop_mac
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold mb-2">
+                  {vi.home.categories.computer}
+                </h3>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
+                  {vi.home.descriptions.computer}
+                </p>
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <span>{vi.home.exploreNow}</span>
+                  <span className="material-symbols-outlined text-base">
+                    arrow_forward
+                  </span>
+                </div>
+              </a>
+            </div>
 
             <div
               className="group cursor-pointer rounded-2xl border border-neutral-200 dark:border-[#243041]
                             bg-neutral-50 dark:bg-[#111827]
                             p-6 transition-all duration-300
                             hover:-translate-y-1 hover:shadow-xl"
-            ><a href="#monitor">
-              <div
-                className="w-14 h-14 rounded-xl bg-neutral-200/70 dark:bg-[#1e293b]
+            >
+              <a href="#monitor">
+                <div
+                  className="w-14 h-14 rounded-xl bg-neutral-200/70 dark:bg-[#1e293b]
                               flex items-center justify-center mb-6"
-              >
-                <span className="material-symbols-outlined text-3xl text-primary">
-                  desktop_windows
-                </span>
-              </div>
-              <h3 className="text-xl font-bold mb-2">
-                {vi.home.categories.monitor}
-              </h3>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
-                {vi.home.descriptions.monitor}
-              </p>
-              <div className="flex items-center gap-2 text-primary font-semibold text-sm">
-                <span>{vi.home.exploreNow}</span>
-                <span className="material-symbols-outlined text-base">
-                  arrow_forward
-                </span>
-              </div>
-            </a></div>
+                >
+                  <span className="material-symbols-outlined text-3xl text-primary">
+                    desktop_windows
+                  </span>
+                </div>
+                <h3 className="text-xl font-bold mb-2">
+                  {vi.home.categories.monitor}
+                </h3>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
+                  {vi.home.descriptions.monitor}
+                </p>
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <span>{vi.home.exploreNow}</span>
+                  <span className="material-symbols-outlined text-base">
+                    arrow_forward
+                  </span>
+                </div>
+              </a>
+            </div>
           </div>
         </section>
 
-        <section id="laptop" className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6">
+        <section
+          id="laptop"
+          className="rounded-2xl border border-neutral-200 dark:border-[#1f2937] bg-white dark:bg-[#0f172a] p-6"
+        >
           <div
             className="flex items-center justify-between mb-6 reveal-on-scroll"
             style={{ "--reveal-delay": "160ms" }}
@@ -153,7 +172,10 @@ export default function Home() {
             >
               {vi.home.popularComputersTitle}
             </h2>
-            <button className="text-sm font-semibold text-neutral-500 hover:text-primary flex items-center gap-1">
+            <button
+              onClick={() => navigate(`/products?p=1&category=LSP02`)}
+              className="text-sm font-semibold text-neutral-500 hover:text-primary flex items-center gap-1"
+            >
               {vi.home.viewAll}
               <span className="material-symbols-outlined text-sm">
                 chevron_right
@@ -167,9 +189,17 @@ export default function Home() {
                        pt-3 pb-6 -mx-6 px-6 reveal-on-scroll"
             style={{ "--reveal-delay": "240ms" }}
           >
-            {popularComputers.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+            {loadingPC ? (
+              <LoadScreen show={true} className="py-8 w-full" size={10} />
+            ) : popularComputers.length === 0 ? (
+              <div className="w-full text-center text-neutral-400 py-8">
+                Không có sản phẩm
+              </div>
+            ) : (
+              popularComputers.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))
+            )}
           </div>
         </section>
 
@@ -182,7 +212,10 @@ export default function Home() {
             <h2 className="text-2xl font-extrabold">
               {vi.home.latestPhonesTitle}
             </h2>
-            <button className="text-sm font-semibold text-neutral-500 hover:text-primary flex items-center gap-1">
+            <button
+              onClick={() => navigate(`/products?p=1&category=LSP01`)}
+              className="text-sm font-semibold text-neutral-500 hover:text-primary flex items-center gap-1"
+            >
               {vi.home.viewAll}
               <span className="material-symbols-outlined text-sm">
                 chevron_right
@@ -196,9 +229,15 @@ export default function Home() {
                        pt-3 pb-6 -mx-6 px-6 reveal-on-scroll"
             style={{ "--reveal-delay": "240ms" }}
           >
-            {latestPhones.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+            {loadingPhone ? (
+              <LoadScreen show={true} className="py-8 w-full" size={10} />
+            ) : latestPhones.length === 0 ? (
+              <div className="w-full text-center text-neutral-400 py-8">
+                Không có sản phẩm
+              </div>
+            ) : (
+              latestPhones.map((p) => <ProductCard key={p.id} product={p} />)
+            )}
           </div>
         </section>
 
@@ -211,7 +250,10 @@ export default function Home() {
             <h2 className="text-2xl font-extrabold">
               {vi.home.graphicsMonitorsTitle}
             </h2>
-            <button className="text-sm font-semibold text-neutral-500 hover:text-primary flex items-center gap-1">
+            <button
+              onClick={() => navigate(`/products?p=1&category=LSP08`)}
+              className="text-sm font-semibold text-neutral-500 hover:text-primary flex items-center gap-1"
+            >
               {vi.home.viewAll}
               <span className="material-symbols-outlined text-sm">
                 chevron_right
@@ -225,9 +267,17 @@ export default function Home() {
                        pt-3 pb-6 -mx-6 px-6 reveal-on-scroll"
             style={{ "--reveal-delay": "240ms" }}
           >
-            {graphicsMonitors.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
+            {loadingMonitor ? (
+              <LoadScreen show={true} className="py-8 w-full" size={10} />
+            ) : graphicsMonitors.length === 0 ? (
+              <div className="w-full text-center text-neutral-400 py-8">
+                Không có sản phẩm
+              </div>
+            ) : (
+              graphicsMonitors.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))
+            )}
           </div>
         </section>
       </div>
