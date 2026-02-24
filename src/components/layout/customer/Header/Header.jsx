@@ -46,6 +46,12 @@ export default function Header() {
     setShowDropdown(false);
     navigate("/login");
   };
+  //
+  // const handleLogout = () => {
+  //   logout();
+  //   setShowDropdown(false);
+  //   navigate("/login");
+  // };
 
   return (
     <>
@@ -170,6 +176,7 @@ export default function Header() {
             )}
 
             <div className="hidden lg:flex items-center gap-10">
+              {" "}
               <ThemeToggleButton onToggle={toggleTheme} />
             </div>
 

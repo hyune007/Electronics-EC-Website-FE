@@ -216,6 +216,11 @@ const vi = {
         cancel: "Huỷ",
         save: "Lưu",
       },
+      error: {
+        cityRequired: "Vui lòng chọn tỉnh / thành phố",
+        wardRequired: "Vui lòng nhập phường / xã",
+        detailInvalid: "Địa chỉ chi tiết phải có ít nhất 5 ký tự",
+      },
     },
     changePass: {
       title: "Cài đặt / Đổi mật khẩu",
@@ -230,13 +235,13 @@ const vi = {
       mismatch: "Mật khẩu mới không khớp",
     },
   },
-  contact:{
+  contact: {
     infor: {
-    email: "UBrainTech@gmail.com",
-    phone: "0394 000 000",
-    address: "Tầng 6, UBrain Tech Building, TP. Hồ Chí Minh",
-    workingTime: "Thứ 2 - Thứ 7 | 08:30 - 20:00",
-  }
+      email: "UBrainTech@gmail.com",
+      phone: "0394 000 000",
+      address: "Tầng 6, UBrain Tech Building, TP. Hồ Chí Minh",
+      workingTime: "Thứ 2 - Thứ 7 | 08:30 - 20:00",
+    }
   }
 };
 export default vi;

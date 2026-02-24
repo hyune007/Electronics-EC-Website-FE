@@ -4,9 +4,9 @@ import { decodeJwtPayload } from "../utils/jwt";
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState(null);
+    const [token, setToken] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const initAuth = () => {
@@ -29,30 +29,28 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = useCallback((loginResponse) => {
-    const { token, userId, name, email, roleId, roleName } = loginResponse;
+    const login = useCallback((loginResponse) => {
+        const { token } = loginResponse;
+        const payload = decodeJwtPayload(token);
 
-    const userData = {
-      id: userId,
-      name,
-      email,
-      roleId,
-      roleName,
-    };
+        const userData = {
+            id: payload?.sub,
+            roleId: payload?.roleId,
+        };
 
-    localStorage.setItem("authToken", token);
-    localStorage.setItem("authUser", JSON.stringify(userData));
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('authUser', JSON.stringify(userData));
 
     setToken(token);
     setUser(userData);
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authUser");
-    setToken(null);
-    setUser(null);
-  }, []);
+    const logout = useCallback(() => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('authUser');
+        setToken(null);
+        setUser(null);
+    }, []);
 
   const updateUser = useCallback((newUserData) => {
     setUser(newUserData);
@@ -89,5 +87,9 @@ export const AuthProvider = ({ children }) => {
     updateUser,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    );
 };

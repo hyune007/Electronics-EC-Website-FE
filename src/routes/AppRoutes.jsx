@@ -70,8 +70,7 @@ export default function AppRoutes({ location }) {
           path="/profile"
           element={
             <ProtectedRoute
-              allowedRoles={[ROLES.CUSTOMER, ROLES.EMPLOYEE, ROLES.ADMIN]}
-            >
+              allowedRoles={[ROLES.CUSTOMER, ROLES.EMPLOYEE, ROLES.ADMIN]}>
               <Profile />
             </ProtectedRoute>
           }
@@ -93,7 +92,7 @@ export default function AppRoutes({ location }) {
         <Route path="products" element={<ProductManage />} />
         <Route path="brands" element={<BrandManage />} />
         <Route path="staff" element={<EmployeeManage />} />
-        <Route path="imports" element={<ImportManage />} />
+        <Route path="imports" element={<ImportManage />}  />
         <Route path="vouchers" element={<VoucherManage />} />
 
         {/* Admin only */}

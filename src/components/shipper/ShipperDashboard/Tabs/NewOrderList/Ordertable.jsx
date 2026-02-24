@@ -1,7 +1,34 @@
-import React from "react";
-import orders from "../../../../../mocks/mockOrderShipper";
-const ordersList = orders.newOrder;
+import React, { useState, useEffect } from "react";
+import { getAllBills, updateBill } from "../../../../../services/billService";
 export default function OrderTable({ onSelectOrder, selectedOrder }) {
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(value);
+  const [ordersList, setOrdersList] = useState([]);
+
+  useEffect(() => {
+    const fetchBills = async () => {
+      const res = await getAllBills();
+      setOrdersList(res.data.filter(b => b.status === "Đơn đang chờ giao"));
+    };
+    fetchBills();
+  }, []);
+
+  const handleAccept = async (e, orderId) => {
+    e.stopPropagation();
+    try {
+      await updateBill(orderId, "Đang giao");
+      setOrdersList((prev) =>
+        prev.filter((order) => order.id !== orderId)
+      );
+      alert("Đã nhận đơn hàng");
+    } catch (err) {
+      console.error(err);
+      alert("Không thể nhận đơn hàng");
+    }
+  };
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-neutral-200">
       <div className="p-4 font-bold flex items-center justify-between">
@@ -18,11 +45,13 @@ export default function OrderTable({ onSelectOrder, selectedOrder }) {
                 className={`border-t cursor-pointer transition hover:bg-neutral-100 ${selectedOrder?.id === order.id ? "bg-blue-50 dark:bg-slate-800" : ""}`}
               >
                 <td className="p-3 text-primary font-bold">{order.id}</td>
-                <td className="p-3">{order.name}</td>
-                <td className="p-3">{order.address}</td>
-                <td className="p-3 font-bold">{order.price}</td>
+                <td className="p-3">{order.customer.name}</td>
+                <td className="p-3">{order.address.detailAddress}, {order.address.ward}, {order.address.city}</td>
+                <td className="p-3 font-bold">{formatCurrency(order.totalAmount)}</td>
                 <td className="p-3">
-                  <button className="bg-primary text-white px-3 py-1 rounded-md shadow-sm hover:opacity-95">
+                  <button
+                    onClick={(e) => handleAccept(e, order.id)}
+                    className="bg-primary text-white px-3 py-1 rounded-md shadow-sm hover:opacity-95">
                     Nhận
                   </button>
                 </td>
@@ -40,13 +69,15 @@ export default function OrderTable({ onSelectOrder, selectedOrder }) {
           >
             <div className="flex-1">
               <div className="text-sm font-semibold text-primary">
-                {order.id} • {order.name}
+                {order.id} • {order.customer.name}
               </div>
-              <div className="text-xs text-slate-400">{order.address}</div>
+              <div className="text-xs text-slate-400">{order.address.detailAddress}, {order.address.ward}, {order.address.city}</div>
             </div>
             <div className="flex-shrink-0 text-right">
-              <div className="font-bold">{order.price}</div>
-              <button className="mt-2 w-full bg-primary text-white px-3 py-1 rounded-md text-sm">
+              <div className="font-bold">{formatCurrency(order.totalAmount)}</div>
+              <button
+                onClick={(e) => handleAccept(e, order.id)}
+                className="mt-2 w-full bg-primary text-white px-3 py-1 rounded-md text-sm">
                 Nhận
               </button>
             </div>
