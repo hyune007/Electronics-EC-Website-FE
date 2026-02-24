@@ -27,8 +27,6 @@ function FocusMarker({ position, selectedOrderId }) {
 
   useEffect(() => {
     if (!position) return;
-
-    // Khi chọn đơn hàng, zoom và đưa marker vào giữa map
     map.flyTo(position, 18, {
       duration: 1.5,
     });

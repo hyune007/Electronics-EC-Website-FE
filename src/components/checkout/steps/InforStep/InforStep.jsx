@@ -137,7 +137,7 @@ export default function InforStep({ onSubmit }) {
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
-                placeholder="Nguyễn Văn A"
+                placeholder="Nguyễn Trường Huy"
                 className={inputStyle}
                 required
               />

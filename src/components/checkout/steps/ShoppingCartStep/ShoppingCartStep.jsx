@@ -1,8 +1,13 @@
-// import { useState } from "react";
 import { useCart } from "../../../../contexts/CartContext";
+import { useAuth } from "../../../../hooks/useAuth";
+import { useState } from "react";
+import NotiAuth from "../../../common/NotiAuth";
+import { NavLink } from "react-router-dom";
 
 export default function ShoppingCartStep({ onProceed }) {
   const { cart, removeFromCart, updateQuantity } = useCart();
+  const { isAuthenticated, isCustomer } = useAuth();
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const subtotal = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
@@ -15,6 +20,14 @@ export default function ShoppingCartStep({ onProceed }) {
 
   const handleDelete = (id) => {
     removeFromCart(id);
+  };
+
+  const handleProceed = () => {
+    if (!isAuthenticated || !isCustomer) {
+      setShowLoginPrompt(true);
+      return;
+    }
+    onProceed?.();
   };
 
   return (
@@ -93,12 +106,15 @@ export default function ShoppingCartStep({ onProceed }) {
         ))}
 
         <div className="pt-4">
-          <button className="flex items-center gap-2 text-primary font-bold text-sm">
+          <NavLink
+            to="/products"
+            className="flex items-center gap-2 text-primary font-bold text-sm"
+          >
             <span className="material-symbols-outlined text-lg">
               arrow_back
             </span>
             Quay lại mua sắm sản phẩm khác
-          </button>
+          </NavLink>
         </div>
       </div>
 
@@ -123,7 +139,6 @@ export default function ShoppingCartStep({ onProceed }) {
                 <p className="text-2xl font-black text-primary">
                   {total.toLocaleString()}₫
                 </p>
-            
               </div>
             </div>
           </div>
@@ -131,13 +146,18 @@ export default function ShoppingCartStep({ onProceed }) {
           <button
             type="button"
             className="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-md font-bold flex items-center justify-center gap-2"
-            onClick={onProceed}
+            onClick={handleProceed}
           >
             Tiến hành đặt hàng
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
         </div>
       </aside>
+
+      <NotiAuth
+        open={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+      />
     </div>
   );
 }

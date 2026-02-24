@@ -89,9 +89,8 @@ export default function PaymentStep({ shippingInfo, onEditShipping }) {
 
           <div className="p-6 space-y-4">
             {[
-              { id: "bank", label: "Chuyển khoản ngân hàng" },
+              { id: "bank", label: "Chuyển khoản ngân hàng/ Ví điện tử" },
               { id: "cod", label: "Thanh toán khi nhận hàng (COD)" },
-              { id: "wallet", label: "Ví điện tử (MoMo / ZaloPay)" },
             ].map((method) => (
               <div
                 key={method.id}
@@ -122,7 +121,7 @@ export default function PaymentStep({ shippingInfo, onEditShipping }) {
         </section>
       </div>
 
-      {/* RIGHT */}
+      {/* đơn hàng */}
       <aside className="lg:col-span-4 lg:sticky lg:top-24">
         <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm">
           <div className="px-6 py-4 border-b">
@@ -156,11 +155,6 @@ export default function PaymentStep({ shippingInfo, onEditShipping }) {
             <div className="flex justify-between text-sm">
               <span>Tạm tính</span>
               <span>{formatCurrency(subtotal)}</span>
-            </div>
-
-            <div className="flex justify-between text-sm">
-              <span>Mã giảm giá</span>
-              <span className="text-red-500">-{formatCurrency(discount)}</span>
             </div>
 
             <div className="flex justify-between font-bold text-lg border-t pt-3">

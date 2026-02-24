@@ -6,13 +6,17 @@ import BreadcrumbNav from "../../../components/customer/product/ProductNav/Bread
 import vi from "../../../i18n/vi.js";
 import { getProductById } from "../../../services/customer/productService.js";
 import { useCart } from "../../../contexts/CartContext";
+import { useAuth } from "../../../hooks/useAuth";
+import NotiAuth from "../../../components/common/NotiAuth";
 
 export default function ProductDetail() {
   const { addToCart } = useCart();
+  const { isAuthenticated, isCustomer } = useAuth();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const imgRef = useRef();
   const handleQuantityChange = (type) => {
     setQuantity((prev) => {
@@ -165,7 +169,19 @@ export default function ProductDetail() {
                 {vi.product.addToCart}
               </button>
             </div>
-            <button className="w-full py-1 border-2 border-primary text-primary dark:text-white dark:border-white rounded-xl font-bold hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-primary transition-all">
+            <button
+              type="button"
+              className="w-full py-1 border-2 border-primary text-primary dark:text-white dark:border-white rounded-xl font-bold hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-primary transition-all"
+              onClick={() => {
+                if (!isAuthenticated || !isCustomer) {
+                  setShowLoginPrompt(true);
+                  return;
+                }
+
+                flyToCart();
+                addToCart(product, quantity);
+              }}
+            >
               {vi.product.buyNow}
             </button>
           </div>
@@ -194,6 +210,10 @@ export default function ProductDetail() {
       <div className="border-t border-slate-200 dark:border-slate-800 pt-16">
         <ProductTabs />
       </div>
+      <NotiAuth
+        open={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+      />
     </main>
   );
 }

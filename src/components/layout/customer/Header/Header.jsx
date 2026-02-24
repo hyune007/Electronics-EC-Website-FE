@@ -21,7 +21,7 @@ export default function Header() {
   const [showSubmenu, setShowSubmenu] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   // Hiệu ứng
-  const { cart } = useCart();
+  const { cart, clearCart } = useCart();
   const badgeRef = useRef(null);
 
   const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -42,6 +42,7 @@ export default function Header() {
       localStorage.removeItem(`customerInfo_${decoded.sub}`);
     }
     localStorage.removeItem("customerInfo");
+    clearCart();
     logout();
     setShowDropdown(false);
     navigate("/login");

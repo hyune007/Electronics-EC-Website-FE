@@ -1,9 +1,17 @@
-import { useEffect } from "react";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState,useEffect } from "react";
+import { useAuth } from "../hooks/useAuth";
+import {
+  getCartByCustomer,
+  createCartItem,
+  updateCartItem,
+  deleteCartItem,
+} from "../services/customer/shoppingCartService";
 
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
+  const { user, isAuthenticated, isCustomer } = useAuth();
+
   const [cart, setCart] = useState(() => {
     const stored = localStorage.getItem("cart");
     return stored ? JSON.parse(stored) : [];
@@ -12,7 +20,71 @@ export function CartProvider({ children }) {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product, quantity) => {
+  // đồng bộ giỏ hàng theo tài khoản nếu đã đăng nhập
+  useEffect(() => {
+    const syncCartFromServer = async () => {
+      if (!isAuthenticated || !isCustomer || !user?.id) return;
+
+      try {
+        // giỏ hàng của guét
+        const guestRaw = localStorage.getItem("cart");
+        const guestCart = guestRaw ? JSON.parse(guestRaw) : [];
+
+        const res = await getCartByCustomer(user.id);
+        const rows = Array.isArray(res.data) ? res.data : [];
+
+        if (rows.length === 0 && guestCart.length > 0) {
+          // giỏ hàng của guest khi đăng nhập
+          const createdItems = [];
+
+          for (const item of guestCart) {
+            try {
+              const resp = await createCartItem({
+                customer: { id: user.id },
+                product: { id: item.id },
+                quantity: item.quantity,
+              });
+              const saved = resp.data;
+              createdItems.push({
+                cartItemId: saved.id,
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                image: item.image,
+              });
+            } catch (e) {
+              void e;
+            }
+          }
+
+          setCart(createdItems);
+          return;
+        }
+
+        const serverCart = rows.map((row) => ({
+          cartItemId: row.id,
+          id: row.product.id,
+          name: row.product.name,
+          price: row.product.price,
+          quantity: row.quantity,
+          image: `http://localhost:8080${row.product.image}`,
+        }));
+
+        setCart(serverCart);
+      } catch (err) {
+        console.error("Không thể load giỏ hàng từ server", err);
+      }
+    };
+
+    syncCartFromServer();
+  }, [isAuthenticated, isCustomer, user?.id]);
+
+  const addToCart = async (product, quantity) => {
+    // xem giỏ hàng đã có sản phẩm chưa
+    const existingItem = cart.find((item) => item.id === product.id);
+    const newQty = existingItem ? existingItem.quantity + quantity : quantity;
+
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
 
@@ -32,27 +104,91 @@ export function CartProvider({ children }) {
           price: product.price,
           quantity,
           image: `http://localhost:8080${product.image}`,
+          cartItemId: null,
         },
       ];
     });
+
+    // nếu đã đăng nhập khách hàng thì lưu
+    if (isAuthenticated && isCustomer && user?.id) {
+      try {
+        if (existingItem?.cartItemId) {
+          await updateCartItem(existingItem.cartItemId, {
+            id: existingItem.cartItemId,
+            customer: { id: user.id },
+            product: { id: product.id },
+            quantity: newQty,
+          });
+        } else {
+          const res = await createCartItem({
+            customer: { id: user.id },
+            product: { id: product.id },
+            quantity: newQty,
+          });
+
+          const saved = res.data;
+          setCart((prev) =>
+            prev.map((item) =>
+              item.id === product.id && item.cartItemId == null
+                ? { ...item, cartItemId: saved.id }
+                : item,
+            ),
+          );
+        }
+      } catch (err) {
+        void err;
+      }
+    }
   };
 
-  const removeFromCart = (id) => {
+  const removeFromCart = async (id) => {
     setCart((prev) => prev.filter((item) => item.id !== id));
+
+    if (isAuthenticated && isCustomer && user?.id) {
+      const item = cart.find((x) => x.id === id);
+      if (item?.cartItemId) {
+        try {
+          await deleteCartItem(item.cartItemId);
+        } catch (err) {
+          void err;
+        }
+      }
+    }
   };
 
-  const updateQuantity = (id, newQty) => {
+  const updateQuantity = async (id, newQty) => {
     if (newQty < 1) return;
+
     setCart((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, quantity: newQty } : item,
       ),
     );
+
+    if (isAuthenticated && isCustomer && user?.id) {
+      const item = cart.find((x) => x.id === id);
+      if (item?.cartItemId) {
+        try {
+          await updateCartItem(item.cartItemId, {
+            id: item.cartItemId,
+            customer: { id: user.id },
+            product: { id },
+            quantity: newQty,
+          });
+        } catch (err) {
+          void err;
+        }
+      }
+    }
+  };
+
+  const clearCart = () => {
+    setCart([]);
   };
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity }}
+      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart }}
     >
       {children}
     </CartContext.Provider>
