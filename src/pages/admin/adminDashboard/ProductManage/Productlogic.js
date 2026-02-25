@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { getProductsByPage, createProduct, updateProduct, deleteProduct } from "../../../../services/productService";
 import { getAllBrands } from "../../../../services/brandService";
+import { getAllCategories } from "../../../../services/categoryService";
 
 // Cache helpers
 const CACHE_KEY_PREFIX = "product_page_v2_";
@@ -71,18 +72,8 @@ export function useProductManageLogic() {
     
     const [brands, setBrands] = useState([]);
     const [allBrands, setAllBrands] = useState([]); // Lưu tất cả brands
-    const [categories] = useState([
-        { id: "LSP01", name: "Điện thoại" },
-        { id: "LSP02", name: "Laptop" },
-        { id: "LSP03", name: "Tablet" },
-        { id: "LSP04", name: "Màn hình" },
-        { id: "LSP05", name: "Bàn phím" },
-        { id: "LSP06", name: "Chuột" },
-        { id: "LSP07", name: "Tai nghe" },
-        { id: "LSP08", name: "Loa" },
-        { id: "LSP09", name: "Webcam" },
-        { id: "LSP10", name: "Phụ kiện" }
-    ]);
+    const [categories, setCategories] = useState([]);
+    const [allCategories, setAllCategories] = useState([]); // Lưu tất cả categories
 
     /* ================= LOAD BRANDS ================= */
     useEffect(() => {
@@ -108,6 +99,35 @@ export function useProductManageLogic() {
             }
         };
         loadBrands();
+    }, []);
+
+    /* ================= LOAD CATEGORIES ================= */
+    useEffect(() => {
+        const loadCategories = async () => {
+            try {
+                const categoryList = await getAllCategories();
+                console.log("=== Categories loaded from backend ===");
+                console.log("Total categories:", categoryList.length);
+                console.log("Categories:", categoryList);
+                
+                if (categoryList.length === 0) {
+                    console.warn("WARNING: No categories loaded! Please add categories first.");
+                }
+                
+                // Map dm_id -> id and dm_name -> name for consistency
+                const mappedCategories = categoryList.map(c => ({
+                    id: c.dm_id,
+                    name: c.dm_name
+                }));
+                
+                setAllCategories(mappedCategories);
+                setCategories(mappedCategories);
+            } catch (err) {
+                console.error("Failed to load categories:", err);
+                alert("Không tải được danh sách danh mục. Vui lòng kiểm tra API.");
+            }
+        };
+        loadCategories();
     }, []);
 
     /* ================= NO BRAND FILTER ================= */

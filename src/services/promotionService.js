@@ -1,8 +1,19 @@
 const API_URL = "http://localhost:8080/api/promotion";
 
+// Helper to get auth token
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` })
+    };
+}
+
 export async function getAllPromotions() {
     try {
-        const res = await fetch(`${API_URL}/all`);
+        const res = await fetch(`${API_URL}/all`, {
+            headers: getAuthHeaders()
+        });
         if (!res.ok) throw new Error("Không lấy được danh sách voucher");
 
         const data = await res.json();
@@ -24,7 +35,9 @@ export async function getAllPromotions() {
 
 export async function getPromotionById(id) {
     try {
-        const res = await fetch(`${API_URL}/${id}`);
+        const res = await fetch(`${API_URL}/${id}`, {
+            headers: getAuthHeaders()
+        });
         if (!res.ok) throw new Error("Không tìm thấy voucher");
 
         const data = await res.json();
@@ -47,7 +60,7 @@ export async function createPromotion(promotion) {
     try {
         const res = await fetch(`${API_URL}/save`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
                 id: promotion.km_id,
                 name: promotion.km_name,
@@ -82,7 +95,7 @@ export async function updatePromotion(id, promotion) {
     try {
         const res = await fetch(`${API_URL}/update/${id}`, {
             method: "PUT",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders(),
             body: JSON.stringify({
                 id: promotion.km_id,
                 name: promotion.km_name,
@@ -116,7 +129,8 @@ export async function updatePromotion(id, promotion) {
 export async function deletePromotion(id) {
     try {
         const res = await fetch(`${API_URL}/delete/${id}`, {
-            method: "DELETE"
+            method: "DELETE",
+            headers: getAuthHeaders()
         });
 
         if (!res.ok) {

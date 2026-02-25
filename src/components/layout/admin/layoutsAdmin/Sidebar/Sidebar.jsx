@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ROUTE_MAP } from "../../../../../routes/routesConfig/admin/routeMap";
 import {
   Menu,
@@ -13,14 +13,38 @@ import {
   Warehouse,
   TicketPercent,
 } from "lucide-react";
+import { useAuth } from "../../../../../hooks/useAuth";
+import { useCart } from "../../../../../contexts/CartContext";
+import { jwtDecode } from "jwt-decode";
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [highlight, setHighlight] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { clearCart } = useCart();
 
   const handleSelect = (rect) => {
     setHighlight(rect);
+  };
+
+  const handleLogout = () => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        localStorage.removeItem(`customerInfo_${decoded.sub}`);
+      } catch (error) {
+        console.error("Error decoding token:", error);
+      }
+    }
+    localStorage.removeItem("customerInfo");
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("authUser");
+    clearCart();
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -175,6 +199,7 @@ export default function Sidebar() {
       {/* ================= LOGOUT ================= */}
       <div className="px-4 pb-6">
         <button
+          onClick={handleLogout}
           className="
                         w-full h-11
                         flex items-center gap-3 px-3

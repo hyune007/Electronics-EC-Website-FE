@@ -1,6 +1,15 @@
 const API_URL = "http://localhost:8080/api/imports";
 const BASE_URL = "http://localhost:8080";
 
+// Helper to get auth token
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` })
+    };
+}
+
 function resolveImageUrl(url, categoryId, productId) {
     if (!url || typeof url !== "string") {
         if (categoryId && productId) {
@@ -35,7 +44,9 @@ function resolveImageUrl(url, categoryId, productId) {
 
 /* ================= GET ALL ================= */
 export async function getAllImports() {
-    const res = await fetch(`${API_URL}/all`);
+    const res = await fetch(`${API_URL}/all`, {
+        headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error("Không lấy được danh sách nhập kho");
 
     return (await res.json()).map(i => ({
@@ -66,7 +77,7 @@ export async function createImport(importData) {
     
     const res = await fetch(`${API_URL}/save`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
     });
 
@@ -91,7 +102,7 @@ export async function updateImport(id, importData) {
     
     const res = await fetch(`${API_URL}/update/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
     });
 
@@ -105,7 +116,8 @@ export async function updateImport(id, importData) {
 /* ================= DELETE ================= */
 export async function deleteImport(id) {
     const res = await fetch(`${API_URL}/delete/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAuthHeaders()
     });
 
     if (!res.ok) {

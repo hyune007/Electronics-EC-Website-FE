@@ -1,8 +1,19 @@
 const API_URL = "http://localhost:8080/api/employees";
 
+// Helper to get auth token
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` })
+    };
+}
+
 /* ================= GET ALL ================= */
 export async function getAllEmployees(page = 0, search = "") {
-    const res = await fetch(`${API_URL}/all?p=${page}&q=${search}`);
+    const res = await fetch(`${API_URL}/all?p=${page}&q=${search}`, {
+        headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error("Không lấy được danh sách nhân viên");
 
     const data = await res.json();
@@ -44,7 +55,7 @@ export async function createEmployee(emp) {
 
     const res = await fetch(`${API_URL}/save`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
     });
 
@@ -74,7 +85,7 @@ export async function updateEmployee(id, emp) {
 
     const res = await fetch(`${API_URL}/update/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
     });
 
@@ -88,7 +99,8 @@ export async function updateEmployee(id, emp) {
 /* ================= DELETE ================= */
 export async function deleteEmployee(id) {
     const res = await fetch(`${API_URL}/delete/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAuthHeaders()
     });
 
     if (!res.ok) {

@@ -1,8 +1,19 @@
 const API_URL = "http://localhost:8080/api/customer";
 
+// Helper to get auth token
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` })
+    };
+}
+
 /* ================= GET ALL ================= */
 export async function getAllCustomers() {
-    const res = await fetch(`${API_URL}/all`);
+    const res = await fetch(`${API_URL}/all`, {
+        headers: getAuthHeaders()
+    });
     if (!res.ok) throw new Error("Không lấy được danh sách khách hàng");
 
     const data = await res.json();
@@ -38,7 +49,7 @@ export async function createCustomer(customer) {
     
     const res = await fetch(`${API_URL}/save`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
     });
 
@@ -54,7 +65,7 @@ export async function createCustomer(customer) {
 export async function updateCustomer(id, customer) {
     const res = await fetch(`${API_URL}/update/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
             id,
             name: customer.kh_name,
@@ -73,7 +84,8 @@ export async function updateCustomer(id, customer) {
 /* ================= DELETE ================= */
 export async function deleteCustomer(id) {
     const res = await fetch(`${API_URL}/delete/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAuthHeaders()
     });
 
     if (!res.ok) throw new Error("Xóa khách hàng thất bại");

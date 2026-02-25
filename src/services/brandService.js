@@ -1,8 +1,19 @@
 const API_URL = "http://localhost:8080/api/brand";
 
+// Helper to get auth token
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` })
+    };
+}
+
 export async function getAllBrands() {
     try {
-        const res = await fetch(`${API_URL}/all`);
+        const res = await fetch(`${API_URL}/all`, {
+            headers: getAuthHeaders()
+        });
         if (!res.ok) throw new Error("Không lấy được danh sách hãng");
 
         const data = await res.json();
@@ -27,7 +38,7 @@ export async function createBrand(brand) {
     
     const res = await fetch(`${API_URL}/save`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
     });
 
@@ -42,7 +53,7 @@ export async function createBrand(brand) {
 export async function updateBrand(id, brand) {
     const res = await fetch(`${API_URL}/update/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
             id,
             name: brand.hang_name
@@ -54,7 +65,8 @@ export async function updateBrand(id, brand) {
 
 export async function deleteBrand(id) {
     const res = await fetch(`${API_URL}/delete/${id}`, {
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAuthHeaders()
     });
 
     if (!res.ok) throw new Error("Xóa thất bại");

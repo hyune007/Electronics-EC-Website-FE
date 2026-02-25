@@ -1,9 +1,9 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
-import { mockOrder } from "../../../../mocks/mockOrder.js";
+import { getAllBills, updateBill } from "../../../../services/billService.js";
 
 // Cache helpers
-const CACHE_KEY = "order_data";
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const CACHE_KEY = "order_data_api";
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes (shorter for orders)
 
 function getCachedOrders() {
     try {
@@ -47,13 +47,14 @@ function clearOrderCache() {
 
 export function useOrderLogic() {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 12;
 
   /* ================= LOAD DATA ================= */
-  const loadOrders = useCallback(() => {
+  const loadOrders = useCallback(async () => {
     // Try cache first
     const cachedOrders = getCachedOrders();
     if (cachedOrders) {
@@ -61,14 +62,52 @@ export function useOrderLogic() {
       return;
     }
 
-    // Load from mock and cache
-    setCachedOrders(mockOrder);
-    setOrders(mockOrder);
+    // Load from API
+    try {
+      setLoading(true);
+      const response = await getAllBills();
+      const bills = response.data || [];
+      
+      // Map backend data to frontend format
+      const mappedOrders = bills.map(bill => ({
+        order_id: bill.id || "",
+        customer_name: bill.customer?.name || "N/A",
+        customer_id: bill.customer?.id || "",
+        total_amount: bill.totalAmount || 0,
+        status: bill.status || "PENDING",
+        created_at: bill.createdAt ? new Date(bill.createdAt).toISOString().slice(0, 10) : "",
+        payment_method: bill.paymentMethod || "",
+        address_id: bill.address?.id || "",
+        employee_id: bill.employee?.id || ""
+      }));
+      
+      setCachedOrders(mappedOrders);
+      setOrders(mappedOrders);
+    } catch (error) {
+      console.error("Failed to load orders:", error);
+      alert("Không thể tải danh sách đơn hàng. Vui lòng kiểm tra kết nối API.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  /* ================= UPDATE STATUS ================= */
+  const handleUpdateStatus = async (orderId, newStatus) => {
+    try {
+      await updateBill(orderId, newStatus);
+      // Clear cache and reload
+      clearOrderCache();
+      await loadOrders();
+      alert("Cập nhật trạng thái đơn hàng thành công!");
+    } catch (error) {
+      console.error("Failed to update order status:", error);
+      alert("Không thể cập nhật trạng thái đơn hàng.");
+    }
+  };
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
@@ -109,6 +148,7 @@ export function useOrderLogic() {
   }, [search, statusFilter]);
 
   return {
+    loading,
     search,
     setSearch,
     statusFilter,
@@ -121,5 +161,7 @@ export function useOrderLogic() {
     handlePageChange,
     handlePreviousPage,
     handleNextPage,
+    handleUpdateStatus,
+    reloadOrders: loadOrders
   };
 }

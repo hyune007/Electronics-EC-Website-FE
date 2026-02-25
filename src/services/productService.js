@@ -1,6 +1,15 @@
 const API_URL = "http://localhost:8080/api/product";
 const BASE_URL = "http://localhost:8080";
 
+// Helper to get auth token
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return {
+        "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` })
+    };
+}
+
 function resolveImageUrl(url, categoryId, productId) {
     if (!url || typeof url !== "string") {
         if (categoryId && productId) {
@@ -35,7 +44,9 @@ function resolveImageUrl(url, categoryId, productId) {
 
 /* ================= GET PRODUCTS BY PAGE (OPTIMIZED) ================= */
 export async function getProductsByPage(pageNum = 0, pageSize = 8) {
-    const res = await fetch(`${API_URL}/all?p=${pageNum}&size=${pageSize}`);
+    const res = await fetch(`${API_URL}/all?p=${pageNum}&size=${pageSize}`, {
+        headers: getAuthHeaders()
+    });
 
     if (!res.ok) {
         throw new Error("Không lấy được danh sách sản phẩm");
@@ -74,7 +85,9 @@ export async function getAllProducts() {
     const allProducts = [];
 
     while (hasNext) {
-        const res = await fetch(`${API_URL}/all?p=${page}`);
+        const res = await fetch(`${API_URL}/all?p=${page}`, {
+            headers: getAuthHeaders()
+        });
 
         if (!res.ok) {
             throw new Error("Không lấy được danh sách sản phẩm");
@@ -138,7 +151,7 @@ export async function createProduct(productData) {
 
     const res = await fetch(`${API_URL}/save`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload)
     });
 
@@ -164,7 +177,7 @@ export async function updateProduct(id, productData) {
 
         method: "PUT",
 
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
 
         body: JSON.stringify({
 
@@ -208,7 +221,8 @@ export async function deleteProduct(id) {
 
     const res = await fetch(`${API_URL}/delete/${id}`, {
 
-        method: "DELETE"
+        method: "DELETE",
+        headers: getAuthHeaders()
 
     });
     if (!res.ok) {
