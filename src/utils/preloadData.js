@@ -1,6 +1,6 @@
 import { getProductsByPage } from "../services/productService";
 import { getAllBrands } from "../services/brandService";
-import { getAllCustomers } from "../services/customerService";
+import { getAllCustomers } from "../services/customerService.js";
 import { getAllEmployees } from "../services/employeeservice";
 import { getAllImports } from "../services/importService";
 import { getAllPromotions } from "../services/promotionService";

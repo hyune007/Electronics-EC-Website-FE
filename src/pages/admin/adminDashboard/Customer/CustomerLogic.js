@@ -4,7 +4,7 @@ import {
     createCustomer,
     updateCustomer,
     deleteCustomer
-} from "../../../../services/customerService";
+} from "../../../../services/customerService.js";
 import { generateNextCustomerId } from "../../../../utils/codeGenerator";
 
 // Cache helpers
