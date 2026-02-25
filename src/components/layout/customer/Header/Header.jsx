@@ -106,7 +106,6 @@ export default function Header() {
               open={showDropdown}
               onClose={() => setShowDropdown(false)}
               onLogout={() => {
-                console.log("logout");
                 setShowDropdown(false);
               }}
             />

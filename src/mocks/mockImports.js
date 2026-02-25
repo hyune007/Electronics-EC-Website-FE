@@ -1,20 +1,106 @@
-export const mockImport = [
+export const mockImports = [
     {
-        ip_id: "IP001",
+        nk_id: "NK001",
         sp_id: "SP001",
-        ip_quantity: 50,
-        ip_date: "2025-01-10"
+        sp_name: "iPhone 14 Pro Max",
+        sp_brand: "Apple",
+        sp_category: "Điện thoại",
+        sp_price: 30000000,
+        sp_stock: 50,
+        sp_image: "/photos/products/LSP01/SP001.jpg",
+        sp_description: "Điện thoại cao cấp từ Apple",
+        nk_quantity: 109,
+        nk_date: "2026-01-16"
     },
     {
-        ip_id: "IP002",
+        nk_id: "NK002",
         sp_id: "SP002",
-        ip_quantity: 120,
-        ip_date: "2025-01-15"
+        sp_name: "Samsung Galaxy S24 Ultra",
+        sp_brand: "Samsung",
+        sp_category: "Điện thoại",
+        sp_price: 28000000,
+        sp_stock: 75,
+        sp_image: "/photos/products/LSP01/SP002.jpg",
+        sp_description: "Điện thoại flagship từ Samsung",
+        nk_quantity: 85,
+        nk_date: "2026-01-15"
     },
     {
-        ip_id: "IP003",
+        nk_id: "NK003",
         sp_id: "SP003",
-        ip_quantity: 30,
-        ip_date: "2025-01-20"
+        sp_name: "Laptop Dell XPS 13",
+        sp_brand: "Dell",
+        sp_category: "Laptop",
+        sp_price: 25000000,
+        sp_stock: 30,
+        sp_image: "/photos/products/LSP02/SP003.jpg",
+        sp_description: "Laptop ultrabook cao cấp",
+        nk_quantity: 45,
+        nk_date: "2026-01-14"
+    },
+    {
+        nk_id: "NK004",
+        sp_id: "SP004",
+        sp_name: "iPad Pro 12.9",
+        sp_brand: "Apple",
+        sp_category: "Máy tính bảng",
+        sp_price: 22000000,
+        sp_stock: 60,
+        sp_image: "/photos/products/LSP03/SP004.jpg",
+        sp_description: "Máy tính bảng chuyên nghiệp",
+        nk_quantity: 35,
+        nk_date: "2026-01-13"
+    },
+    {
+        nk_id: "NK005",
+        sp_id: "SP005",
+        sp_name: "AirPods Pro 2",
+        sp_brand: "Apple",
+        sp_category: "Tai nghe",
+        sp_price: 5500000,
+        sp_stock: 120,
+        sp_image: "/photos/products/LSP04/SP005.jpg",
+        sp_description: "Tai nghe không dây cao cấp",
+        nk_quantity: 200,
+        nk_date: "2026-01-12"
+    },
+    {
+        nk_id: "NK006",
+        sp_id: "SP006",
+        sp_name: "Sony WH-1000XM5",
+        sp_brand: "Sony",
+        sp_category: "Tai nghe",
+        sp_price: 7500000,
+        sp_stock: 40,
+        sp_image: "/photos/products/LSP04/SP006.jpg",
+        sp_description: "Tai nghe chống ồn hàng đầu",
+        nk_quantity: 60,
+        nk_date: "2026-01-11"
+    },
+    {
+        nk_id: "NK007",
+        sp_id: "SP007",
+        sp_name: "MacBook Air M2",
+        sp_brand: "Apple",
+        sp_category: "Laptop",
+        sp_price: 27000000,
+        sp_stock: 25,
+        sp_image: "/photos/products/LSP02/SP007.jpg",
+        sp_description: "Laptop mỏng nhẹ mạnh mẽ",
+        nk_quantity: 30,
+        nk_date: "2026-01-10"
+    },
+    {
+        nk_id: "NK008",
+        sp_id: "SP008",
+        sp_name: "Samsung Galaxy Watch 6",
+        sp_brand: "Samsung",
+        sp_category: "Đồng hồ thông minh",
+        sp_price: 8500000,
+        sp_stock: 80,
+        sp_image: "/photos/products/LSP05/SP008.jpg",
+        sp_description: "Đồng hồ thông minh đa năng",
+        nk_quantity: 95,
+        nk_date: "2026-01-09"
     }
 ];

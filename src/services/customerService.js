@@ -21,22 +21,32 @@ export async function getAllCustomers() {
 
 /* ================= CREATE ================= */
 export async function createCustomer(customer) {
+    // Thử nhiều format khác nhau cho backend
+    const payload = {
+        id: customer.kh_id, // Luôn gửi ID
+        username: customer.kh_mail, // Backend có thể dùng username = email
+        name: customer.kh_name,
+        password: customer.kh_password,
+        phone: customer.kh_phone,
+        email: customer.kh_mail,
+        role: {
+            id: customer.kh_role_id ?? "ROLE_CUSTOMER"
+        }
+    };
+    
+    console.log("Creating customer with payload:", payload);
+    
     const res = await fetch(`${API_URL}/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id: customer.kh_id,
-            name: customer.kh_name,
-            password: customer.kh_password,
-            phone: customer.kh_phone,
-            email: customer.kh_mail,
-            role: {
-                id: customer.kh_role_id ?? "ROLE_CUSTOMER"
-            }
-        })
+        body: JSON.stringify(payload)
     });
 
-    if (!res.ok) throw new Error("Thêm khách hàng thất bại");
+    if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Backend error:", errorText);
+        throw new Error(`Thêm khách hàng thất bại: ${errorText}`);
+    }
     return res.json();
 }
 
