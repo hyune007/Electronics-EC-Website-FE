@@ -1,4 +1,4 @@
-import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Briefcase, Shield, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Briefcase, Shield, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEmployeeLogic } from "./EmployeeLogic.js";
 import EmployeeForm from "./EmployeeForm.jsx";
 import { useState, useEffect } from "react";
@@ -196,10 +196,15 @@ export default function EmployeeManage() {
                                             </button>
                                             <button
                                                 onClick={() => nv.handleDelete(e.nv_id)}
-                                                className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                                disabled={nv.deletingId === e.nv_id}
+                                                className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 title="Xóa"
                                             >
-                                                <Trash2 size={16} />
+                                                {nv.deletingId === e.nv_id ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : (
+                                                    <Trash2 size={16} />
+                                                )}
                                             </button>
                                         </div>
                                     </td>

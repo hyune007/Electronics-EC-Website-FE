@@ -58,6 +58,8 @@ export function useBrandLogic() {
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [, setIsSubmitting] = useState(false);
+    const [, setDeletingId] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 12;
 
@@ -154,11 +156,14 @@ export function useBrandLogic() {
             return;
         }
 
+        setIsSubmitting(true);
         try {
             // Tự động generate ID nếu đang tạo mới
             let brandId = form.hang_id;
             if (!editing) {
-                brandId = generateNextBrandId(brands);
+                // Fetch fresh data để tránh duplicate ID
+                const allBrands = await getAllBrands();
+                brandId = generateNextBrandId(allBrands);
                 console.log("Generated brand ID:", brandId);
             }
             
@@ -187,9 +192,12 @@ export function useBrandLogic() {
             await fetchBrands();
             
             setOpenForm(false);
+            alert(editing ? "✅ Cập nhật thương hiệu thành công!" : "✅ Thêm thương hiệu thành công!");
         } catch (err) {
             console.error(err);
-            alert("Lưu hãng thất bại: " + (err.message || ""));
+            alert("❌ Lưu hãng thất bại: " + (err.message || ""));
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -197,15 +205,19 @@ export function useBrandLogic() {
     const handleDelete = async (id) => {
         if (!confirm("Xóa hãng này?")) return;
 
+        setDeletingId(id);
         try {
             await deleteBrand(id);
             
             // Clear cache and reload
             clearBrandCache();
             await fetchBrands();
+            alert("✅ Xóa thương hiệu thành công!");
         } catch (err) {
             console.error(err);
-            alert("Xóa thất bại");
+            alert("❌ Xóa hãng thất bại: " + (err.message || ""));
+        } finally {
+            setDeletingId(null);
         }
     };
 

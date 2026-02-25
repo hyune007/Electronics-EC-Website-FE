@@ -11,42 +11,29 @@ import { preloadAllData, shouldPreload } from "../../../../utils/preloadData";
 export default function Dashboard() {
   const [revenue, setRevenue] = useState(0);
   const [mounted, setMounted] = useState(false);
-  const [preloadOpen, setPreloadOpen] = useState(false);
-  const [preloadProgress, setPreloadProgress] = useState(0);
-  const [preloadPhase, setPreloadPhase] = useState("idle");
-  const [preloadError, setPreloadError] = useState("");
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Load ngầm dữ liệu trong background
   useEffect(() => {
     if (!shouldPreload()) return;
 
-    let cancelled = false;
-    setPreloadOpen(true);
-    setPreloadProgress(0);
-    setPreloadPhase("loading-initial");
-    setPreloadError("");
-
+    console.log("🔄 Starting background data preload...");
+    
     preloadAllData({
       onProgress: (value) => {
-        if (!cancelled) setPreloadProgress(value);
+        if (value === 100) {
+          console.log("✅ Preload completed!");
+        }
       },
       onPhaseChange: (phase) => {
-        if (!cancelled) setPreloadPhase(phase);
+        console.log("📊 Preload phase:", phase);
       }
     }).catch((err) => {
-      console.error("Preload failed:", err);
-      if (!cancelled) {
-        setPreloadPhase("error");
-        setPreloadError("Không thể preload dữ liệu. Vui lòng kiểm tra API.");
-      }
+      console.error("❌ Preload failed:", err);
     });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   useEffect(() => {
@@ -83,54 +70,6 @@ export default function Dashboard() {
 
   return (
     <div className={`fade-in min-h-full ${mounted ? 'slide-up' : ''}`}>
-      {preloadOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/55 backdrop-blur-sm p-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl overflow-hidden">
-            <div className="p-6 border-b border-neutral-100 bg-gradient-to-r from-indigo-50 to-amber-50">
-              <h2 className="text-xl font-bold text-neutral-900">Dang toi uu du lieu lan dau</h2>
-              <p className="text-sm text-neutral-600 mt-1">
-                Tai truoc 50% du lieu quan trong de su dung nhanh hon.
-              </p>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-neutral-700">
-                  {preloadPhase === "loading-initial" && "Dang tai du lieu chinh"}
-                  {preloadPhase === "loading-background" && "Dang tai tiep trong nen"}
-                  {preloadPhase === "done" && "Hoan tat"}
-                  {preloadPhase === "error" && "Co loi xay ra"}
-                </span>
-                <span className="text-sm font-semibold text-indigo-600">{preloadProgress}%</span>
-              </div>
-
-              <div className="h-3 w-full rounded-full bg-neutral-100 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-amber-500 transition-all duration-500"
-                  style={{ width: `${preloadProgress}%` }}
-                />
-              </div>
-
-              {preloadError && (
-                <div className="text-sm text-red-600">{preloadError}</div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between p-6 border-t border-neutral-100 bg-neutral-50">
-              <span className="text-xs text-neutral-500">
-                Sau khi dat 50%, du lieu con lai se tiep tuc tai ngam.
-              </span>
-              <button
-                onClick={() => setPreloadOpen(false)}
-                disabled={preloadProgress < 50}
-                className="px-5 py-2.5 rounded-xl text-white bg-indigo-600 disabled:opacity-60 disabled:cursor-not-allowed hover:bg-indigo-700 transition-all"
-              >
-                Bat dau su dung
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Header */}
       <div className="mb-8">
         <div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
     getAllCustomers,
     createCustomer,
@@ -15,16 +15,16 @@ function getCachedCustomers() {
     try {
         const data = localStorage.getItem(CACHE_KEY);
         if (!data) return null;
-
+        
         const parsed = JSON.parse(data);
         const now = Date.now();
-
+        
         // Check if cache is still valid
         if (now - parsed.timestamp > CACHE_DURATION) {
             localStorage.removeItem(CACHE_KEY);
             return null;
         }
-
+        
         return parsed.customers;
     } catch (err) {
         console.error("Error reading cache:", err);
@@ -56,10 +56,12 @@ export function useCustomerLogic() {
     const [search, setSearch] = useState("");
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 12;
 
 
     const emptyForm = {
-        kh_id: "",
+        kh_id: null,
         kh_name: "",
         kh_password: "",
         kh_phone: "",
@@ -83,7 +85,7 @@ export function useCustomerLogic() {
             console.log("Fetching customers from API...");
             const data = await getAllCustomers();
 
-      console.log("RAW API:", data);
+            console.log("RAW API:", data);
 
             const mapped = data.map((c) => ({
                 kh_id: c.kh_id,
@@ -103,8 +105,10 @@ export function useCustomerLogic() {
     }, []);
 
     useEffect(() => {
-        fetchCustomers();
-    }, [fetchCustomers]);
+        // Defer the call to avoid synchronous setState inside the effect
+        const t = setTimeout(() => fetchCustomers(), 0);
+        return () => clearTimeout(t);
+     }, [fetchCustomers]);
 
     /* ================= FILTER ================= */
     const filteredCustomers = useMemo(() => {
@@ -139,48 +143,56 @@ export function useCustomerLogic() {
 
     // Reset page when search changes
     useEffect(() => {
-        setCurrentPage(0);
-    }, [search]);
+        // Defer setState to next tick to avoid cascading render warning
+        const t = setTimeout(() => setCurrentPage(0), 0);
+        return () => clearTimeout(t);
+     }, [search]);
 
     /* ================= SUBMIT ================= */
     const handleSubmit = async () => {
         console.log("Customer form data before validation:", form);
-
+        
         // Validate required fields
         if (!form.kh_name || !form.kh_name.trim()) {
             alert("Vui lòng nhập họ tên khách hàng");
             return;
         }
-
+        
         if (!editing && (!form.kh_password || !form.kh_password.trim())) {
             alert("Vui lòng nhập mật khẩu");
             return;
         }
-
+        
         if (!form.kh_phone || !form.kh_phone.trim()) {
             alert("Vui lòng nhập số điện thoại");
             return;
         }
-
+        
         if (!form.kh_mail || !form.kh_mail.trim()) {
             alert("Vui lòng nhập email");
             return;
         }
-
+        
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(form.kh_mail)) {
             alert("Định dạng email không hợp lệ");
             return;
         }
-
+        
         // Tự động generate ID nếu đang tạo mới
         let customerId = form.kh_id;
         if (!editing) {
-            customerId = generateNextCustomerId(customers);
+            // Fetch fresh data để tránh duplicate ID
+            const freshData = await getAllCustomers();
+            const mapped = freshData.map(c => ({
+                kh_id: c.id || c.kh_id,
+                kh_name: c.name || c.kh_name
+            }));
+            customerId = generateNextCustomerId(mapped);
             console.log("Generated customer ID:", customerId);
         }
-
+        
         const payload = {
             kh_id: customerId,
             kh_name: form.kh_name,
@@ -189,7 +201,7 @@ export function useCustomerLogic() {
             kh_mail: form.kh_mail,
             kh_role_id: form.kh_role || "ROLE_CUSTOMER",
         };
-
+        
         console.log("Customer payload after validation:", payload);
 
         try {
@@ -202,13 +214,14 @@ export function useCustomerLogic() {
             }
 
             setOpenForm(false);
-
+            
             // Clear cache and reload
             clearCustomerCache();
             await fetchCustomers();
+            alert(editing ? "✅ Cập nhật khách hàng thành công!" : "✅ Thêm khách hàng thành công!");
         } catch (err) {
             console.error("Lỗi lưu khách hàng:", err);
-            alert(editing ? "Cập nhật khách hàng thất bại: " + err.message : "Thêm khách hàng thất bại: " + err.message);
+            alert(editing ? "❌ Cập nhật khách hàng thất bại: " + err.message : "❌ Thêm khách hàng thất bại: " + err.message);
         }
     };
 
@@ -216,11 +229,17 @@ export function useCustomerLogic() {
     /* ================= DELETE ================= */
     const handleDelete = async (id) => {
         if (window.confirm("Xóa khách hàng này?")) {
-            await deleteCustomer(id);
-
-            // Clear cache and reload
-            clearCustomerCache();
-            await fetchCustomers();
+            try {
+                await deleteCustomer(id);
+                
+                // Clear cache and reload
+                clearCustomerCache();
+                await fetchCustomers();
+                alert("✅ Xóa khách hàng thành công!");
+            } catch (err) {
+                console.error("Delete customer failed:", err);
+                alert("❌ Xóa khách hàng thất bại: " + (err.message || ""));
+            }
         }
     };
 
