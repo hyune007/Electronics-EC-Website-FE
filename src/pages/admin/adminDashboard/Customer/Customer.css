@@ -200,3 +200,11 @@ input.readonly {
         transform: scale(1);
     }
 }
+
+
+
+.readonly {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}

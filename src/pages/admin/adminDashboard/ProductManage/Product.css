@@ -1,111 +1,256 @@
-.product-manage {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+/* Product Management Styles - Standard CSS (Tailwind v4 Compatible) */
+
+/* Button Styles */
+.btn-primary {
+  padding: 0.75rem 1.5rem;
+  background-color: #6366f1;
+  color: white;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
 }
 
-/* ===== TOOLBAR ===== */
-.toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+.btn-primary:hover {
+  background-color: #4f46e5;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* SEARCH */
-.search-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 320px;
-    padding: 10px 14px;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    background: #fff;
+.btn-primary:active {
+  transform: scale(0.98);
 }
 
-.search-box svg {
-    color: #9ca3af;
-    flex-shrink: 0;
-}
-
-.search-box input {
-    border: none;
-    outline: none;
-    width: 100%;
-    font-size: 14px;
-}
-
-/* ADD BUTTON */
 .btn-add {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 18px;
-    background: #111827;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    border-radius: 12px;
-    cursor: pointer;
-    white-space: nowrap;
+  padding: 0.75rem 1.5rem;
+  background-color: #6366f1;
+  color: white;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
 }
 
 .btn-add:hover {
-    background: #000;
+  background-color: #4f46e5;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-
-.product-manage {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+.btn-add:active {
+  transform: scale(0.98);
 }
 
-/* TOOLBAR giữ nguyên */
+/* Card Styles */
+.card {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+  transition: all 0.2s;
+}
 
-/* === TABLE SCROLL === */
+.card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Search Box */
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s;
+}
+
+.search-box:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Table Styles */
+.table-container {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #f3f4f6;
+  overflow: hidden;
+}
+
 .table-wrap {
-    flex: 1;                 /* chiếm phần còn lại */
-    overflow-y: auto;        /* cho phép scroll */
-    background: #fff;
-    border-radius: 12px;
+  overflow-x: auto;
 }
 
-/* Giữ header cố định */
-.table-wrap table {
-    width: 100%;
-    border-collapse: collapse;
+.table-header {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #f3f4f6;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-.table-wrap thead {
-    position: sticky;
-    top: 0;
-    background: #f3f4f6;
-    z-index: 10;
+.table-row {
+  transition: background-color 0.15s;
 }
 
-th, td {
-    padding: 12px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
+.table-row:hover {
+  background-color: #f9fafb;
 }
 
-/* ACTION */
+/* Badge Styles */
+.badge-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.badge-success {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.badge-warning {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badge-danger {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  border-radius: 50%;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #6366f1;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Animations */
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Legacy Compatibility */
+.product-manage {
+  min-height: 100%;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .action button {
-    padding: 6px;
-    margin: 0 4px;
-    cursor: pointer;
+  padding: 0.5rem;
+  transition: all 0.2s;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 0.5rem;
+}
+
+.action button:hover {
+  background-color: #f3f4f6;
 }
 
 .action .danger {
-    background: #ef4444;
-    color: #fff;
+  background-color: #ef4444;
+  color: white;
+}
+
+.action .danger:hover {
+  background-color: #dc2626;
 }
 
 .empty {
-    text-align: center;
-    padding: 32px;
-    color: #999;
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+/* Table Layout */
+.table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 1rem 1.5rem;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
 }
