@@ -53,8 +53,8 @@ export async function createPromotion(promotion) {
                 name: promotion.km_name,
                 description: promotion.km_description,
                 discountPercentage: parseInt(promotion.km_percent),
-                startDate: promotion.km_start_date,
-                endDate: promotion.km_end_date
+                startDate: new Date(promotion.km_start_date).toISOString(),
+                endDate: new Date(promotion.km_end_date).toISOString()
             })
         });
 
@@ -88,8 +88,8 @@ export async function updatePromotion(id, promotion) {
                 name: promotion.km_name,
                 description: promotion.km_description,
                 discountPercentage: parseInt(promotion.km_percent),
-                startDate: promotion.km_start_date,
-                endDate: promotion.km_end_date
+                startDate: new Date(promotion.km_start_date).toISOString(),
+                endDate: new Date(promotion.km_end_date).toISOString()
             })
         });
 
