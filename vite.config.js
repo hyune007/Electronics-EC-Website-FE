@@ -13,9 +13,7 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    allowedHosts: [
-      'electronics-ec-website-fe.onrender.com'
-    ],
-    host: true,
+    allowedHosts: 'all',
+    // host: true,
   },
 });
