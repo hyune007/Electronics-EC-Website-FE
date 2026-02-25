@@ -1,7 +1,7 @@
 import { Menu, Bell, User, Search, Settings, LogOut } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useState } from "react";
-import { ROUTE_TITLE_MAP } from "../../../../routes/routesConfig/routeTitle.js";
+import { ROUTE_TITLE_MAP } from "../../../../routes/routesConfig/admin/routeTitle.js";
 
 export default function Header() {
     const location = useLocation();

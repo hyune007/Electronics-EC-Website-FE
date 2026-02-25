@@ -108,13 +108,113 @@ export async function getAllProducts() {
         page++;
     }
 
-// Sau này BE làm xong chỉ việc sửa file này
-export const getAllProducts = async () => {
-    // MOCK TẠM
-    const { MOCK_PRODUCTS } = await import("../mocks/mockProducts");
-    return MOCK_PRODUCTS;
+    return allProducts;
+}
 
-    // SAU NÀY BE
-    // const res = await fetch("http://localhost:8080/api/products");
-    // return res.json();
-};
+
+
+
+
+/* ================= CREATE ================= */
+
+export async function createProduct(productData) {
+
+    const payload = {
+        id: productData.id, // Luôn gửi ID
+        name: productData.name,
+        price: Number(productData.price),
+        stock: Number(productData.stock),
+        description: productData.description || null, // Gửi null thay vì empty string
+        image: productData.image || null, // Gửi null thay vì empty string
+        brand: { id: productData.brandId },
+        category: { id: productData.categoryId }
+    };
+
+    console.log("=== Creating Product ===");
+    console.log("Full productData received:", productData);
+    console.log("Payload to send:", JSON.stringify(payload, null, 2));
+    console.log("Brand ID:", productData.brandId, "Type:", typeof productData.brandId);
+    console.log("Category ID:", productData.categoryId, "Type:", typeof productData.categoryId);
+
+    const res = await fetch(`${API_URL}/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        console.error("=== Backend Error ===");
+        console.error("Status:", res.status);
+        console.error("Error message:", errorText);
+        console.error("Request payload was:", JSON.stringify(payload, null, 2));
+        throw new Error(`Không tạo được sản phẩm: ${errorText}`);
+    }
+
+    return res.json();
+}
+
+
+
+/* ================= UPDATE ================= */
+
+export async function updateProduct(id, productData) {
+
+    const res = await fetch(`${API_URL}/update/${id}`, {
+
+        method: "PUT",
+
+        headers: { "Content-Type": "application/json" },
+
+        body: JSON.stringify({
+
+            name: productData.name,
+
+            price: Number(productData.price),
+
+            stock: Number(productData.stock),
+
+            description: productData.description,
+
+            image: productData.image,
+
+            brand: { id: productData.brandId },
+
+            category: { id: productData.categoryId }
+
+        })
+
+    });
+
+
+
+    if (!res.ok) {
+
+        throw new Error("Không cập nhật được sản phẩm");
+
+    }
+
+
+
+    return res.json();
+
+}
+
+
+
+/* ================= DELETE ================= */
+
+export async function deleteProduct(id) {
+
+    const res = await fetch(`${API_URL}/delete/${id}`, {
+
+        method: "DELETE"
+
+    });
+    if (!res.ok) {
+
+        throw new Error("Không xoá được sản phẩm");
+
+    }
+
+}
