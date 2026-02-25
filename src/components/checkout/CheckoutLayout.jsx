@@ -50,6 +50,7 @@ export default function CheckoutLayout() {
               <PaymentStep
                 shippingInfo={shippingInfo}
                 onEditShipping={() => setView("infor")}
+                onComplete={() => setView("complete")}
               />
             )}
             {view === "complete" && <CompleteStep />}

@@ -13,7 +13,9 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    allowedHosts: 'all',
-    host: true,
+    allowedHosts: [
+      'botchiest-unexperimented-vivienne.ngrok-free.dev'
+    ]
+    // host: true,
   },
 });
