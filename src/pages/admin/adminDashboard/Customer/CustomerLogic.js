@@ -105,8 +105,10 @@ export function useCustomerLogic() {
     }, []);
 
     useEffect(() => {
-        fetchCustomers();
-    }, [fetchCustomers]);
+        // Defer the call to avoid synchronous setState inside the effect
+        const t = setTimeout(() => fetchCustomers(), 0);
+        return () => clearTimeout(t);
+     }, [fetchCustomers]);
 
     /* ================= FILTER ================= */
     const filteredCustomers = useMemo(() => {
@@ -141,8 +143,10 @@ export function useCustomerLogic() {
 
     // Reset page when search changes
     useEffect(() => {
-        setCurrentPage(0);
-    }, [search]);
+        // Defer setState to next tick to avoid cascading render warning
+        const t = setTimeout(() => setCurrentPage(0), 0);
+        return () => clearTimeout(t);
+     }, [search]);
 
     /* ================= SUBMIT ================= */
     const handleSubmit = async () => {
@@ -179,7 +183,13 @@ export function useCustomerLogic() {
         // Tự động generate ID nếu đang tạo mới
         let customerId = form.kh_id;
         if (!editing) {
-            customerId = generateNextCustomerId(customers);
+            // Fetch fresh data để tránh duplicate ID
+            const freshData = await getAllCustomers();
+            const mapped = freshData.map(c => ({
+                kh_id: c.id || c.kh_id,
+                kh_name: c.name || c.kh_name
+            }));
+            customerId = generateNextCustomerId(mapped);
             console.log("Generated customer ID:", customerId);
         }
         
@@ -208,9 +218,10 @@ export function useCustomerLogic() {
             // Clear cache and reload
             clearCustomerCache();
             await fetchCustomers();
+            alert(editing ? "✅ Cập nhật khách hàng thành công!" : "✅ Thêm khách hàng thành công!");
         } catch (err) {
             console.error("Lỗi lưu khách hàng:", err);
-            alert(editing ? "Cập nhật khách hàng thất bại: " + err.message : "Thêm khách hàng thất bại: " + err.message);
+            alert(editing ? "❌ Cập nhật khách hàng thất bại: " + err.message : "❌ Thêm khách hàng thất bại: " + err.message);
         }
     };
 
@@ -218,11 +229,17 @@ export function useCustomerLogic() {
     /* ================= DELETE ================= */
     const handleDelete = async (id) => {
         if (window.confirm("Xóa khách hàng này?")) {
-            await deleteCustomer(id);
-            
-            // Clear cache and reload
-            clearCustomerCache();
-            await fetchCustomers();
+            try {
+                await deleteCustomer(id);
+                
+                // Clear cache and reload
+                clearCustomerCache();
+                await fetchCustomers();
+                alert("✅ Xóa khách hàng thành công!");
+            } catch (err) {
+                console.error("Delete customer failed:", err);
+                alert("❌ Xóa khách hàng thất bại: " + (err.message || ""));
+            }
         }
     };
 

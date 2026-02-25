@@ -1,11 +1,11 @@
-﻿import { X, UserCircle, Eye, EyeOff, Phone, Mail, Hash, MapPin, Calendar, ShieldCheck } from "lucide-react";
+﻿import { X, UserCircle, Eye, EyeOff, Phone, Mail, Hash, MapPin, Calendar, ShieldCheck, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export default function EmployeeForm({ open, onClose, onSubmit }) {
     const [showPassword, setShowPassword] = useState(false);
     if (!open) return null;
 
-    const { form, setForm, handleSubmit } = onSubmit;
+    const { form, setForm, handleSubmit, isSubmitting } = onSubmit;
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 fade-in">
@@ -215,10 +215,20 @@ export default function EmployeeForm({ open, onClose, onSubmit }) {
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className="px-6 py-2.5 text-white bg-indigo-600 rounded-xl font-medium hover:bg-indigo-700 transition-all duration-200 hover:shadow-lg active:scale-[0.98] flex items-center gap-2"
+                        disabled={isSubmitting}
+                        className="px-6 py-2.5 text-white bg-indigo-600 rounded-xl font-medium hover:bg-indigo-700 transition-all duration-200 hover:shadow-lg active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <UserCircle size={18} />
-                        {form.nv_id ? "Cập nhật" : "Thêm nhân viên"}
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin" />
+                                Đang xử lý...
+                            </>
+                        ) : (
+                            <>
+                                <UserCircle size={18} />
+                                {form.nv_id ? "Cập nhật" : "Thêm nhân viên"}
+                            </>
+                        )}
                     </button>
                 </div>
             </div>

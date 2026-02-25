@@ -1,9 +1,9 @@
-﻿import { X, Package, Calendar, Hash } from "lucide-react";
+﻿import { X, Package, Calendar, Hash, Loader2 } from "lucide-react";
 
 export default function ImportForm({ open, onClose, onSubmit }) {
     if (!open) return null;
 
-    const { form, setForm, handleSubmit, products } = onSubmit;
+    const { form, setForm, handleSubmit, products, isSubmitting } = onSubmit;
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 fade-in">
@@ -130,10 +130,20 @@ export default function ImportForm({ open, onClose, onSubmit }) {
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className="px-6 py-2.5 text-white bg-indigo-600 rounded-xl font-medium hover:bg-indigo-700 transition-all duration-200 hover:shadow-lg active:scale-[0.98] flex items-center gap-2"
+                        disabled={isSubmitting}
+                        className="px-6 py-2.5 text-white bg-indigo-600 rounded-xl font-medium hover:bg-indigo-700 transition-all duration-200 hover:shadow-lg active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        <Package size={18} />
-                        {form.nk_id ? "Cập nhật" : "Lưu"}
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 size={18} className="animate-spin" />
+                                Đang xử lý...
+                            </>
+                        ) : (
+                            <>
+                                <Package size={18} />
+                                {form.nk_id ? "Cập nhật" : "Lưu"}
+                            </>
+                        )}
                     </button>
                 </div>
             </div>

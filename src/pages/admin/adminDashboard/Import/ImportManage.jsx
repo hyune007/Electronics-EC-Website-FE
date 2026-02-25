@@ -1,4 +1,4 @@
-import { Plus, Pencil, Trash2, Search, Package, Calendar, TrendingUp } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Package, Calendar, TrendingUp, Loader2 } from "lucide-react";
 import { useImportLogic } from "./ImportLogic";
 import ImportForm from "./ImportForm";
 import { useState, useEffect } from "react";
@@ -197,10 +197,15 @@ export default function ImportManage() {
                                             </button>
                                             <button
                                                 onClick={() => ip.handleDelete(i.nk_id)}
-                                                className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                                disabled={ip.deletingId === i.nk_id}
+                                                className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 title="Xóa"
                                             >
-                                                <Trash2 size={16} />
+                                                {ip.deletingId === i.nk_id ? (
+                                                    <Loader2 size={16} className="animate-spin" />
+                                                ) : (
+                                                    <Trash2 size={16} />
+                                                )}
                                             </button>
                                         </div>
                                     </td>

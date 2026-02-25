@@ -21,6 +21,8 @@ export function useImportLogic() {
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [deletingId, setDeletingId] = useState(null);
 
     const emptyForm = {
         nk_id: "",
@@ -113,10 +115,12 @@ export function useImportLogic() {
         console.log("Quantity:", form.nk_quantity);
         console.log("Date:", form.nk_date);
 
+        setIsSubmitting(true);
         try {
             if (editing) {
                 console.log("Updating import with ID:", editing.nk_id);
                 await updateImport(editing.nk_id, form);
+                alert("✅ Cập nhật nhập kho thành công!");
             } else {
                 const generatedId = generateImportId();
                 const newForm = {
@@ -131,12 +135,14 @@ export function useImportLogic() {
                 // Validate that ID is not null/empty
                 if (!newForm.nk_id || newForm.nk_id.trim() === '') {
                     alert("Lỗi: Không thể tạo ID nhập kho");
+                    setIsSubmitting(false);
                     return;
                 }
                 
                 // Validate that product ID is selected
                 if (!newForm.sp_id || newForm.sp_id.trim() === '') {
                     alert("Lỗi: Vui lòng chọn sản phẩm");
+                    setIsSubmitting(false);
                     return;
                 }
                 
@@ -144,13 +150,16 @@ export function useImportLogic() {
                 console.log("About to send newForm:", newForm);
                 
                 await createImport(newForm);
+                alert("✅ Thêm phiếu nhập kho thành công!");
             }
 
             setOpenForm(false);
             fetchImports();
         } catch (err) {
             console.error("Lỗi lưu nhập kho:", err);
-            alert(editing ? "Cập nhật nhập kho thất bại" : "Thêm nhập kho thất bại");
+            alert("❌ " + (editing ? "Cập nhật nhập kho thất bại" : "Thêm nhập kho thất bại"));
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -158,17 +167,23 @@ export function useImportLogic() {
     const handleDelete = async (id) => {
         if (!confirm("Xóa phiếu nhập kho này?")) return;
 
+        setDeletingId(id);
         try {
             await deleteImport(id);
+            alert("✅ Xóa phiếu nhập kho thành công!");
             fetchImports();
         } catch (err) {
             console.error("Lỗi xóa nhập kho:", err);
-            alert("Xóa nhập kho thất bại");
+            alert("❌ Xóa nhập kho thất bại: " + err.message);
+        } finally {
+            setDeletingId(null);
         }
     };
 
     return {
         loading,
+        isSubmitting,
+        deletingId,
         search,
         setSearch,
         openForm,

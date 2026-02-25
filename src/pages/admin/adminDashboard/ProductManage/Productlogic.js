@@ -1,12 +1,6 @@
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import {
-    getProductsByPage,
-    createProduct,
-    updateProduct,
-    deleteProduct
-} from "../../../../services/productService";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { getProductsByPage, createProduct, updateProduct, deleteProduct } from "../../../../services/productService";
 import { getAllBrands } from "../../../../services/brandService";
-import { generateNextProductId } from "../../../../utils/codeGenerator";
 
 // Cache helpers
 const CACHE_KEY_PREFIX = "product_page_v2_";
@@ -41,19 +35,6 @@ function setCachedPage(pageNum, data) {
         }));
     } catch (err) {
         console.error("Error writing cache:", err);
-    }
-}
-
-function clearAllProductCache() {
-    try {
-        const keys = Object.keys(localStorage);
-        keys.forEach(key => {
-            if (key.startsWith(CACHE_KEY_PREFIX)) {
-                localStorage.removeItem(key);
-            }
-        });
-    } catch (err) {
-        console.error("Error clearing cache:", err);
     }
 }
 
@@ -196,44 +177,6 @@ export function useProductManageLogic() {
             setLoading(false);
         }
     }, [search, pageSize]);
-
-    /* ================= PREFETCH NEXT 3 PAGES ================= */
-    const prefetchNextPages = useCallback(async (currentPage) => {
-        const totalPages = Math.ceil(totalElements / pageSize);
-        
-        // Prefetch next 3 pages
-        for (let offset = 1; offset <= 3; offset++) {
-            const nextPage = currentPage + offset;
-            
-            // Don't prefetch if already on last page or already cached
-            if (nextPage > totalPages || cacheRef.current[`page_${nextPage}`]) {
-                continue;
-            }
-
-            try {
-                const res = await getProductsByPage(nextPage - 1, pageSize);
-                const mapped = res.products.map(p => ({
-                    sp_id: p.id,
-                    sp_name: p.name,
-                    sp_price: p.price ?? 0,
-                    sp_stock: p.stock ?? 0,
-                    sp_desc: p.description ?? "",
-                    sp_image: p.image ?? "",
-                    sp_brand_id: p.brand?.id ?? "",
-                    sp_brand_name: p.brand?.name ?? "",
-                    sp_category_id: p.category?.id ?? "",
-                    sp_category_name: p.category?.name ?? ""
-                }));
-
-                cacheRef.current[`page_${nextPage}`] = {
-                    products: mapped,
-                    totalElements: res.totalElements
-                };
-            } catch (err) {
-                console.error("Prefetch page failed:", err);
-            }
-        }
-    }, [totalElements, pageSize]);
 
     /* ================= BACKGROUND LOADING ================= */
     const loadAllInBackground = useCallback(async () => {
@@ -442,7 +385,12 @@ export function useProductManageLogic() {
         }
         
         // Validate brand exists in loaded brands
-        const brandExists = brands.find(b => b.hang_id === form.brandId);
+        // Some brand objects may use different property names for id (hang_id, id, hangId)
+        const brandExists = brands.find(b => (
+            b.hang_id === form.brandId ||
+            b.id === form.brandId ||
+            b.hangId === form.brandId
+        ));
         if (!brandExists) {
             alert("Thương hiệu không hợp lệ hoặc không tồn tại trong hệ thống. Vui lòng chọn lại.");
             console.error("Brand ID not found in brands list:", form.brandId);
