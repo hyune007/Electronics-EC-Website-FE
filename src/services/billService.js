@@ -14,4 +14,6 @@ export const createBill = ({ customerId, employeeId, addressId, paymentMethod })
   });
 
 export const updateBill = (id, status) =>
-  api.put(`${API}/updatate-status/${id}?status=${encodeURIComponent(status)}`);
+  api.put(`${API}/update-status/${id}`, null, {
+    params: { status },
+  });

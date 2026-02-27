@@ -100,15 +100,17 @@ export default function PaymentStep({
   };
 
   const handleCancelPayment = async () => {
+    setShowPaymentPopup(false);
+    setPollingEnabled(false);
+
     if (!billId) {
-      setShowPaymentPopup(false);
+      setSepaySession(null);
+      setBillId(null);
       return;
     }
 
     try {
-      await updateBill(billId, "Đã hủy");
-      setPollingEnabled(false);
-      setShowPaymentPopup(false);
+      await updateBill(billId, "Đơn đã hủy");
       setSepaySession(null);
       setBillId(null);
     } catch {
@@ -312,9 +314,13 @@ export default function PaymentStep({
                   alt="SePay QR"
                   className="w-64 h-64 object-contain"
                 />
-                <div className="mt-3 text-sm font-semibold text-amber-600">
-                  {paid ? "Đã thanh toán" : "Chờ thanh toán..."}
-                </div>
+        <div
+          className={`mt-3 text-sm font-semibold ${
+            paid ? "text-green-600" : "text-amber-600"
+          }`}
+        >
+          {paid ? "Đã thanh toán" : "Chờ thanh toán..."}
+        </div>
               </div>
               <div className="space-y-3 text-sm">
                 <div>

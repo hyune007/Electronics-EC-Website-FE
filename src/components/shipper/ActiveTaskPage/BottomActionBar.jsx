@@ -26,7 +26,7 @@ export default function BottomActionBar({ order }) {
   const handleReject = async (e, orderId) => {
     e.stopPropagation();
     try {
-      await updateBill(orderId, "Đã hủy");
+      await updateBill(orderId, "Đơn đã hủy");
       alert("Đã hủy đơn hàng");
       navigate("/shipper-dashboard");
     } catch (err) {
