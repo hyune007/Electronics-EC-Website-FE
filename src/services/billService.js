@@ -13,7 +13,7 @@ export const createBill = ({ customerId, employeeId, addressId, paymentMethod })
     params: { customerId, employeeId, addressId, paymentMethod },
   });
 
-export const updateBill = (id, status) =>
+export const updateBill = (id, status, employeeId) =>
   api.put(`${API}/update-status/${id}`, null, {
-    params: { status },
+    params: { status, employeeId },
   });
