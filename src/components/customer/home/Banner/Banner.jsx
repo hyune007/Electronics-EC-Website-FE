@@ -20,7 +20,7 @@ const links = [laptopLenovo, laptopAsusRog, laptopAcerNitro5, iphone, samsung];
 
 export default function Banner({ variant = "home" }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true }, [
-    Autoplay({ delay: 3000 }),
+    Autoplay({ delay: 4000 }),
   ]);
 
   useEffect(() => {
