@@ -5,6 +5,9 @@ import ProductCard from "../ProductCard/ProductCard.jsx";
 import BreadcrumbNav from "../ProductNav/BreadcrumbNav/BreadcrumbNav.jsx";
 // import { div } from "framer-motion/client";
 import { useSearchParams } from "react-router-dom";
+import { useProductCache } from "../../../../contexts/ProductCacheContext.jsx";
+
+const PAGE_SIZE = 12;
 export default function ProductList({
   page,
   setPage,
@@ -23,6 +26,7 @@ export default function ProductList({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [searchParams] = useSearchParams();
+  const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
 
   useEffect(() => {
     const categoryFromUrl = searchParams.get("category");
@@ -30,6 +34,10 @@ export default function ProductList({
       setCategory(categoryFromUrl);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    prefetchAllProducts().catch(() => {});
+  }, [prefetchAllProducts]);
 
   const CATEGORIES = [
     { id: "LSP01", name: "Điện thoại" },
@@ -75,51 +83,128 @@ export default function ProductList({
   useEffect(() => {
     let mounted = true;
 
+    const parseLabelToRange = (label) => {
+      if (!label) return null;
+      const DASH_RE = /[\u2012\u2013\u2014\u2015\-]/;
+      const hasTren = /Trên/.test(label);
+
+      if (hasTren) {
+        const after = label.split(/Trên/i)[1] || label;
+        const numStr = (after.match(/\d[\d\.\s]*/)?.[0] || "").replace(
+          /[\.\s]/g,
+          "",
+        );
+        const num = numStr ? Number(numStr) : 0;
+        if (num >= 20000) return { min: 20000, max: 100000 };
+        return { min: num, max: null };
+      }
+
+      const parts = label.split(DASH_RE).map((s) => (s || "").trim());
+      if (parts.length < 2) return null;
+      const leftNum = (parts[0].match(/\d[\d\.\s]*/)?.[0] || "").replace(
+        /[\.\s]/g,
+        "",
+      );
+      const rightNum = (parts[1].match(/\d[\d\.\s]*/)?.[0] || "").replace(
+        /[\.\s]/g,
+        "",
+      );
+      const min = leftNum ? Number(leftNum) : 0;
+      const max = rightNum ? Number(rightNum) : null;
+      if (Number.isNaN(min)) return null;
+      if (max !== null && Number.isNaN(max)) return null;
+      return { min, max };
+    };
+
+    const mappedRanges = (priceRanges || [])
+      .map(parseLabelToRange)
+      .filter(Boolean);
+
+    const useCacheIfReady = () => {
+      if (allProducts === null) return false;
+
+      setLoading(true);
+      setError(false);
+
+      const toNumber = (value) => {
+        if (typeof value === "number") return value;
+        const parsed = Number((value ?? "").toString().replace(/[^\d.-]/g, ""));
+        return Number.isFinite(parsed) ? parsed : 0;
+      };
+
+      const brandIds = new Set(
+        (brands || []).map((b) => BRAND_NAME_TO_ID[b] || b),
+      );
+
+      const filtered = allProducts.filter((p) => {
+        if (category && p.category?.id !== category) return false;
+
+        if (keyword && !p.name?.toLowerCase().includes(keyword.toLowerCase())) {
+          return false;
+        }
+
+        if (brandIds.size) {
+          const pid = p.brand?.id || p.brand?.code || p.brand?.name;
+          if (!pid || !brandIds.has(pid)) return false;
+        }
+
+        const priceValue = toNumber(p.price);
+
+        if (mappedRanges.length) {
+          return mappedRanges.some(({ min, max }) => {
+            const minVal = min ?? 0;
+            const maxVal =
+              typeof max === "number" ? max : Number.MAX_SAFE_INTEGER;
+            return priceValue >= minVal && priceValue <= maxVal;
+          });
+        }
+
+        if (typeof minPrice === "number" && priceValue < minPrice) return false;
+        if (typeof maxPrice === "number" && priceValue > maxPrice) return false;
+
+        return true;
+      });
+
+      if (priceSort === "asc") {
+        filtered.sort((a, b) => toNumber(a.price) - toNumber(b.price));
+      } else if (priceSort === "desc") {
+        filtered.sort((a, b) => toNumber(b.price) - toNumber(a.price));
+      }
+
+      const total =
+        filtered.length === 0 ? 0 : Math.ceil(filtered.length / PAGE_SIZE);
+      const nextPage = total === 0 ? 0 : Math.min(page, total - 1);
+      const start = nextPage * PAGE_SIZE;
+      const slice = filtered.slice(start, start + PAGE_SIZE);
+
+      if (mounted) {
+        if (nextPage !== page) setPage(nextPage);
+        setProducts(slice);
+        setTotalPages(total);
+        setLoading(false);
+      }
+
+      return true;
+    };
+
+    const handledByCache = useCacheIfReady();
+    if (handledByCache)
+      return () => {
+        mounted = false;
+      };
+
+    if (loadingAll && allProducts === null) {
+      setLoading(true);
+      return () => {
+        mounted = false;
+      };
+    }
+
     const timer = setTimeout(() => {
       if (!mounted) return;
 
       setLoading(true);
       setError(false);
-
-      const parseLabelToRange = (label) => {
-        if (!label) return null;
-        // chuẩn hóa dấu gạch
-        const DASH_RE = /[\u2012\u2013\u2014\u2015\-]/;
-        const hasTren = /Trên/.test(label);
-
-        if (hasTren) {
-          // trích xuất mã số đầu tiên sau 'Trên'
-          const after = label.split(/Trên/i)[1] || label;
-          const numStr = (after.match(/\d[\d\.\s]*/)?.[0] || "").replace(
-            /[\.\s]/g,
-            "",
-          );
-          const num = numStr ? Number(numStr) : 0;
-          if (num >= 20000) return { min: 20000, max: 100000 };
-          return { min: num, max: null };
-        }
-
-        // được chia thành các phần trái/phải bằng các ký tự giống dấu gạch ngang.
-        const parts = label.split(DASH_RE).map((s) => (s || "").trim());
-        if (parts.length < 2) return null;
-        const leftNum = (parts[0].match(/\d[\d\.\s]*/)?.[0] || "").replace(
-          /[\.\s]/g,
-          "",
-        );
-        const rightNum = (parts[1].match(/\d[\d\.\s]*/)?.[0] || "").replace(
-          /[\.\s]/g,
-          "",
-        );
-        const min = leftNum ? Number(leftNum) : 0;
-        const max = rightNum ? Number(rightNum) : null;
-        if (Number.isNaN(min)) return null;
-        if (max !== null && Number.isNaN(max)) return null;
-        return { min, max };
-      };
-
-      const mappedRanges = (priceRanges || [])
-        .map(parseLabelToRange)
-        .filter(Boolean);
 
       const params = {
         p: page,
@@ -201,6 +286,8 @@ export default function ProductList({
     priceRanges,
     minPrice,
     maxPrice,
+    allProducts,
+    loadingAll,
   ]);
 
   const currentCategory = CATEGORIES.find((c) => c.id === category) || null;

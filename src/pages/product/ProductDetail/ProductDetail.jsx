@@ -8,10 +8,12 @@ import { getProductById } from "../../../services/customer/productService.js";
 import { useCart } from "../../../contexts/CartContext";
 import { useAuth } from "../../../hooks/useAuth";
 import NotiAuth from "../../../components/common/NotiAuth";
+import { useProductCache } from "../../../contexts/ProductCacheContext.jsx";
 
 export default function ProductDetail() {
   const { addToCart } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
+  const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -61,25 +63,62 @@ export default function ProductDetail() {
   };
 
   useEffect(() => {
+    prefetchAllProducts().catch(() => {});
+  }, [prefetchAllProducts]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const cached = () => {
+      if (!allProducts) return false;
+      const hit = allProducts.find((p) => String(p.id) === String(id));
+      if (!hit) return false;
+      if (mounted) {
+        setProduct(hit);
+        setLoading(false);
+      }
+      return true;
+    };
+
+    if (cached()) {
+      return () => {
+        mounted = false;
+      };
+    }
+
+    if (loadingAll && !allProducts) {
+      setLoading(true);
+      return () => {
+        mounted = false;
+      };
+    }
+
     async function loadProduct() {
       setLoading(true);
       try {
         const res = await getProductById(id);
+        if (!mounted) return;
         setProduct(res.data);
       } catch (err) {
+        if (!mounted) return;
         setProduct(null);
         console.log("Không tìm thấy sản phẩm", err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
+
     loadProduct();
-  }, [id]);
+
+    return () => {
+      mounted = false;
+    };
+  }, [id, allProducts, loadingAll]);
 
   if (loading) {
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <BreadcrumbNav />
+        <BreadcrumbNav suppressFetch />
         <div className="flex justify-center items-center min-h-[300px]">
           <span>Đang tải thông tin sản phẩm...</span>
         </div>
@@ -90,7 +129,7 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <BreadcrumbNav />
+        <BreadcrumbNav suppressFetch />
         <div className="flex justify-center items-center min-h-[300px]">
           <span>Không tìm thấy sản phẩm.</span>
         </div>
@@ -100,13 +139,17 @@ export default function ProductDetail() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-20">
-      <BreadcrumbNav />
+      <BreadcrumbNav product={product} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <div className="space-y-4">
           <div className="w-full max-w-sm mx-auto aspect-square bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-700 flex items-center justify-center p-4">
             <img
               ref={imgRef}
-              src={`http://localhost:8080${product.image}`}
+              src={
+                product?.image?.startsWith("http")
+                  ? product.image
+                  : `http://localhost:8080${product.image || ""}`
+              }
               alt={product.name}
               className="w-full h-full object-contain"
             />
@@ -208,7 +251,7 @@ export default function ProductDetail() {
         </div>
       </div>
       <div className="border-t border-slate-200 dark:border-slate-800 pt-16">
-        <ProductTabs />
+        <ProductTabs product={product} />
       </div>
       <NotiAuth
         open={showLoginPrompt}

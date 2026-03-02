@@ -6,6 +6,7 @@ import "./styles/theme/themeColor.css";
 import { CartProvider } from "./contexts/CartContext";
 import App from "./App.jsx";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
+import { ProductCacheProvider } from "./contexts/ProductCacheContext.jsx";
 
 const savedTheme = localStorage.getItem("theme");
 
@@ -20,7 +21,9 @@ createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <App />
+          <ProductCacheProvider>
+            <App />
+          </ProductCacheProvider>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

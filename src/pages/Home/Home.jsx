@@ -5,9 +5,9 @@ import "./Home.css";
 import vi from "../../i18n/vi";
 import ProductCard from "../../components/customer/product/ProductCard/ProductCard.jsx";
 import LoadScreen from "../../components/common/LoadScreen.jsx";
-import { useEffect, useState } from "react";
-import { getProducts } from "../../services/customer/productService.js";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useProductCache } from "../../contexts/ProductCacheContext.jsx";
 const HOME_SLIDE_SIZE = 7;
 export default function Home() {
   const scroller1 = useDragScroll();
@@ -15,29 +15,32 @@ export default function Home() {
   const scroller3 = useDragScroll();
   const navigate = useNavigate();
   useRevealOnScroll();
+  const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
   const [popularComputers, setPopularComputers] = useState([]);
   const [latestPhones, setLatestPhones] = useState([]);
   const [graphicsMonitors, setGraphicsMonitors] = useState([]);
-  const [loadingPC, setLoadingPC] = useState(true);
-  const [loadingPhone, setLoadingPhone] = useState(true);
-  const [loadingMonitor, setLoadingMonitor] = useState(true);
 
   useEffect(() => {
-    setLoadingPC(true);
-    setLoadingPhone(true);
-    setLoadingMonitor(true);
-    getProducts({ p: 0, size: HOME_SLIDE_SIZE, category: "LSP02" })
-      .then((res) => setPopularComputers(res.data.content || []))
-      .finally(() => setLoadingPC(false));
+    prefetchAllProducts().catch(() => {});
+  }, [prefetchAllProducts]);
 
-    getProducts({ p: 0, size: HOME_SLIDE_SIZE, category: "LSP01" })
-      .then((res) => setLatestPhones(res.data.content || []))
-      .finally(() => setLoadingPhone(false));
+  useEffect(() => {
+    if (!allProducts?.length) return;
 
-    getProducts({ p: 0, size: HOME_SLIDE_SIZE, category: "LSP08" })
-      .then((res) => setGraphicsMonitors(res.data.content || []))
-      .finally(() => setLoadingMonitor(false));
-  }, []);
+    const pick = (categoryId) =>
+      allProducts
+        .filter((p) => p.category?.id === categoryId)
+        .slice(0, HOME_SLIDE_SIZE);
+
+    setPopularComputers(pick("LSP02"));
+    setLatestPhones(pick("LSP01"));
+    setGraphicsMonitors(pick("LSP08"));
+  }, [allProducts]);
+
+  const loadingHome = useMemo(
+    () => loadingAll || !allProducts?.length,
+    [loadingAll, allProducts],
+  );
   return (
     <div className="w-full min-h-screen bg-neutral-100 dark:bg-[#0b0f1a] py-15 text-neutral-900 dark:text-neutral-100 transition-colors">
       <div className="max-w-[1250px] mx-auto pb-20 space-y-14 px-3">
@@ -189,7 +192,7 @@ export default function Home() {
                        pt-3 pb-6 -mx-6 px-6 reveal-on-scroll"
             style={{ "--reveal-delay": "240ms" }}
           >
-            {loadingPC ? (
+            {loadingHome ? (
               <LoadScreen show={true} className="py-8 w-full" size={10} />
             ) : popularComputers.length === 0 ? (
               <div className="w-full text-center text-neutral-400 py-8">
@@ -229,7 +232,7 @@ export default function Home() {
                        pt-3 pb-6 -mx-6 px-6 reveal-on-scroll"
             style={{ "--reveal-delay": "240ms" }}
           >
-            {loadingPhone ? (
+            {loadingHome ? (
               <LoadScreen show={true} className="py-8 w-full" size={10} />
             ) : latestPhones.length === 0 ? (
               <div className="w-full text-center text-neutral-400 py-8">
@@ -267,7 +270,7 @@ export default function Home() {
                        pt-3 pb-6 -mx-6 px-6 reveal-on-scroll"
             style={{ "--reveal-delay": "240ms" }}
           >
-            {loadingMonitor ? (
+            {loadingHome ? (
               <LoadScreen show={true} className="py-8 w-full" size={10} />
             ) : graphicsMonitors.length === 0 ? (
               <div className="w-full text-center text-neutral-400 py-8">

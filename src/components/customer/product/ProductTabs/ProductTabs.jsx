@@ -4,7 +4,7 @@ import ReviewTab from "./tab/ReviewTab/ReviewTab.jsx";
 import ReviewSummary from "./tab/ReviewTab/ReviewSummary.jsx";
 import vi from "../../../../i18n/vi.js";
 
-export default function ProductTabs() {
+export default function ProductTabs({ product }) {
   const [activeTab, setActiveTab] = useState("desc");
 
   const tabClass = (tab) =>
@@ -39,7 +39,7 @@ export default function ProductTabs() {
         ) : (
           <>
             <div className="lg:col-span-2">
-              <DescribeProductTab />
+              <DescribeProductTab product={product} />
             </div>
             <div className="space-y-8">
               <ReviewSummary />
