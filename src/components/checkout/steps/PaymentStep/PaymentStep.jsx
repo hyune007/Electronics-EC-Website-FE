@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useCart } from "../../../../contexts/CartContext";
 import { decodeJwtPayload } from "../../../../utils/jwt";
-import { createBill, updateBill } from "../../../../services/billService";
+import { createBill, updateBill, getShippingFee } from "../../../../services/billService";
 import {
   createSePaySession,
   getSePayStatus,
@@ -24,6 +24,7 @@ export default function PaymentStep({
   const [pollingEnabled, setPollingEnabled] = useState(true);
 
   const [localShippingInfo, setLocalShippingInfo] = useState(null);
+  const [shippingFee, setShippingFee] = useState(0);
   useEffect(() => {
     if (!shippingInfo) {
       const cached = localStorage.getItem("checkoutShippingInfo");
@@ -35,12 +36,27 @@ export default function PaymentStep({
 
   const info = shippingInfo || localShippingInfo || {};
 
+  useEffect(() => {
+    if (!info?.address?.id) return;
+
+    const fetchShippingFee = async () => {
+      try {
+        const res = await getShippingFee(info.address.id);
+        setShippingFee(res.data);
+      } catch {
+        setShippingFee(0);
+      }
+    };
+
+    fetchShippingFee();
+  }, [info?.address?.id]);
+
   const discount = 0;
   const subtotal = cart.reduce(
     (total, item) => total + item.price * item.quantity,
     0,
   );
-  const total = subtotal - discount;
+  const total = subtotal - discount + shippingFee;
 
   const formatCurrency = (value) => value.toLocaleString("vi-VN") + "đ";
 
@@ -176,7 +192,7 @@ export default function PaymentStep({
               <p className="text-xs text-slate-500 font-semibold">Địa chỉ</p>
               <p className="font-medium leading-relaxed">
                 {info.address
-                  ? `${info.address.detailAddress}, ${info.address.ward}, ${info.address.city}`
+                  ? `${info.address.detailAddress}, ${info.address.ward}, ${info.address.district}, ${info.address.city}`
                   : "Chưa chọn địa chỉ"}
               </p>
             </div>
@@ -208,19 +224,17 @@ export default function PaymentStep({
               <div
                 key={method.id}
                 onClick={() => setPaymentMethod(method.id)}
-                className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                  paymentMethod === method.id
-                    ? "border-primary bg-primary/5"
-                    : "border-slate-200 hover:bg-slate-50"
-                }`}
+                className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === method.id
+                  ? "border-primary bg-primary/5"
+                  : "border-slate-200 hover:bg-slate-50"
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      paymentMethod === method.id
-                        ? "border-primary"
-                        : "border-slate-300"
-                    }`}
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === method.id
+                      ? "border-primary"
+                      : "border-slate-300"
+                      }`}
                   >
                     {paymentMethod === method.id && (
                       <div className="w-2.5 h-2.5 bg-primary rounded-full"></div>
@@ -271,6 +285,11 @@ export default function PaymentStep({
               <span>{formatCurrency(subtotal)}</span>
             </div>
 
+            <div className="flex justify-between text-sm">
+              <span>Phí vận chuyển</span>
+              <span>{formatCurrency(shippingFee)}</span>
+            </div>
+
             <div className="flex justify-between font-bold text-lg border-t pt-3">
               <span>Tổng cộng</span>
               <span className="text-primary">{formatCurrency(total)}</span>
@@ -314,13 +333,12 @@ export default function PaymentStep({
                   alt="SePay QR"
                   className="w-64 h-64 object-contain"
                 />
-        <div
-          className={`mt-3 text-sm font-semibold ${
-            paid ? "text-green-600" : "text-amber-600"
-          }`}
-        >
-          {paid ? "Đã thanh toán" : "Chờ thanh toán..."}
-        </div>
+                <div
+                  className={`mt-3 text-sm font-semibold ${paid ? "text-green-600" : "text-amber-600"
+                    }`}
+                >
+                  {paid ? "Đã thanh toán" : "Chờ thanh toán..."}
+                </div>
               </div>
               <div className="space-y-3 text-sm">
                 <div>

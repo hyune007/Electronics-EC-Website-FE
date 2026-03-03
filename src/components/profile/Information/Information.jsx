@@ -203,7 +203,7 @@ export default function Information() {
                   </option>
                   {addresses.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {`${a.detailAddress} - ${a.ward} - ${a.city}`}
+                      {`${a.detailAddress} - ${a.ward} - ${a.district} - ${a.city}`}
                     </option>
                   ))}
                 </>

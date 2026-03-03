@@ -8,6 +8,9 @@ export const getAllBills = () =>
 export const getBillsByCustomer = (customerId) =>
   api.get(`${API}/customer/${customerId}`);
 
+export const getShippingFee = (addressId) =>
+  api.get(`${API}/shipping-fee/${addressId}`);
+
 export const createBill = ({ customerId, employeeId, addressId, paymentMethod }) =>
   api.post(`${API}/create`, null, {
     params: { customerId, employeeId, addressId, paymentMethod },

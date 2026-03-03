@@ -207,6 +207,8 @@ const vi = {
         title: "Thêm địa chỉ mới",
         city: "Thành phố",
         selectCity: "-- Chọn thành phố --",
+        district: "Quận",
+        districtPlaceholder: "Tên quận/huyện",
         ward: "Phường",
         wardPlaceholder: "Tên phường",
         street: "Tên đường",
@@ -218,6 +220,7 @@ const vi = {
       },
       error: {
         cityRequired: "Vui lòng chọn tỉnh / thành phố",
+        districtRequired: "Vui lòng nhập quận / huyện",
         wardRequired: "Vui lòng nhập phường / xã",
         detailInvalid: "Địa chỉ chi tiết phải có ít nhất 5 ký tự",
       },

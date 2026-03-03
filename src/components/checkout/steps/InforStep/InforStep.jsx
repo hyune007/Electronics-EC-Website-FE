@@ -3,9 +3,11 @@ import { useCart } from "../../../../contexts/CartContext";
 import { decodeJwtPayload } from "../../../../utils/jwt";
 import { getCustomerById } from "../../../../services/customer/customerService";
 import { getAddresses } from "../../../../services/customer/addressService";
+import { getShippingFee } from "../../../../services/billService";
 
 export default function InforStep({ onSubmit }) {
   const { cart } = useCart();
+  const [shippingFee, setShippingFee] = useState(0);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -29,7 +31,7 @@ export default function InforStep({ onSubmit }) {
     0,
   );
   const discount = 0;
-  const total = subtotal - discount;
+  const total = subtotal - discount + shippingFee;
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -90,6 +92,25 @@ export default function InforStep({ onSubmit }) {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (!formData.addressId) {
+      setShippingFee(0);
+      return;
+    }
+
+    const fetchShippingFee = async () => {
+      try {
+        const res = await getShippingFee(formData.addressId);
+        setShippingFee(res.data);
+      } catch (err) {
+        console.error("Shipping fee error:", err);
+        setShippingFee(0);
+      }
+    };
+
+    fetchShippingFee();
+  }, [formData.addressId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -175,7 +196,7 @@ export default function InforStep({ onSubmit }) {
                   <option value="">Chọn địa chỉ</option>
                   {addresses.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {`${a.city} - ${a.ward} - ${a.detailAddress}`}
+                      {`${a.detailAddress} - ${a.ward} - ${a.district} - ${a.city}`}
                     </option>
                   ))}
                 </>
@@ -241,6 +262,11 @@ export default function InforStep({ onSubmit }) {
             <div className="flex justify-between text-sm">
               <span>Mã giảm giá</span>
               <span className="text-red-500">-{formatCurrency(discount)}</span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span>Phí vận chuyển</span>
+              <span className="text-red-500">+{formatCurrency(shippingFee)}</span>
             </div>
 
             <div className="flex justify-between font-bold text-lg border-t pt-3">

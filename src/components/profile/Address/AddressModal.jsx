@@ -8,6 +8,7 @@ export default function AddressModal({ open, onClose, onSave }) {
   const [errors, setErrors] = useState({});
   const [addr, setAddr] = useState({
     city: "",
+    district: "",
     ward: "",
     street: "",
     detail: "",
@@ -21,6 +22,10 @@ export default function AddressModal({ open, onClose, onSave }) {
 
     if (!addr.city) {
       e.city = vi.profile.address.error.cityRequired;
+    }
+
+    if (!addr.district.trim()) {
+      e.district = vi.profile.address.error.districtRequired;
     }
 
     if (!addr.ward.trim()) {
@@ -54,7 +59,7 @@ export default function AddressModal({ open, onClose, onSave }) {
             <select
               value={addr.city}
               onChange={(e) => {
-                setAddr({ ...addr, city: e.target.value });
+                setAddr({ ...addr, city: e.target.value});
                 setErrors({ ...errors, city: null });
               }}
               className={`w-full border rounded-md p-2 ${errors.city ? "border-red-500" : ""
@@ -69,6 +74,24 @@ export default function AddressModal({ open, onClose, onSave }) {
             </select>
             {errors.city && (
               <p className="text-xs text-red-500 mt-1">{errors.city}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm dark:text-slate-300 mb-1">
+              {vi.profile.address.modal.district}
+            </label>
+            <input
+              value={addr.district}
+              onChange={(e) => {
+                setAddr({ ...addr, district: e.target.value });
+                setErrors({ ...errors, district: null });
+              }}
+              className={`w-full border rounded-md p-2 ${errors.district ? "border-red-500" : ""
+                }`}
+            />
+            {errors.district && (
+              <p className="text-xs text-red-500 mt-1">{errors.district}</p>
             )}
           </div>
 

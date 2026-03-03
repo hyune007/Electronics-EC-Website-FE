@@ -36,6 +36,7 @@ export default function Address() {
       setLoading(true);
       const payload = {
         city: addr.city,
+        district: addr.district,
         ward: addr.ward,
         detailAddress: addr.detail,
         customer: {
@@ -109,7 +110,7 @@ export default function Address() {
               >
                 <div>
                   <div className="font-semibold">
-                    {`${a.detailAddress} - ${a.ward} - ${a.city}`}
+                    {`${a.detailAddress} - ${a.ward} - ${a.district} - ${a.city}`}
                   </div>
                 </div>
 
