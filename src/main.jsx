@@ -17,7 +17,7 @@ if (savedTheme === "dark") {
 }
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
+  // <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
@@ -27,5 +27,5 @@ createRoot(document.getElementById("root")).render(
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
-  </StrictMode>,
+  // </StrictMode>,
 );

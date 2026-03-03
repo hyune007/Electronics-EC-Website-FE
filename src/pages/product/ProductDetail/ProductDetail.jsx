@@ -16,6 +16,7 @@ export default function ProductDetail() {
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [reviewStats, setReviewStats] = useState({ average: 0, total: 0 });
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
@@ -165,13 +166,20 @@ export default function ProductDetail() {
             </h1>
             <div className="flex items-center gap-4 mb-4">
               <div className="flex items-center text-yellow-500">
-                <span className="material-symbols-outlined filled">star</span>
-                <span className="material-symbols-outlined filled">star</span>
-                <span className="material-symbols-outlined filled">star</span>
-                <span className="material-symbols-outlined filled">star</span>
-                <span className="material-symbols-outlined">star_half</span>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <span
+                    key={star}
+                    className={`material-symbols-outlined ${
+                      star <= Math.round(reviewStats.average) ? "filled" : ""
+                    }`}
+                  >
+                    star
+                  </span>
+                ))}
               </div>
-              <span className="text-slate-500 text-xs">4.8 (0 Đánh giá)</span>
+              <span className="text-slate-500 text-xs">
+                {reviewStats.average.toFixed(1)} ({reviewStats.total} Đánh giá)
+              </span>
               <span className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700"></span>
               <span className="text-green-600 dark:text-green-400 text-xs font-semibold">
                 Còn hàng
@@ -251,7 +259,13 @@ export default function ProductDetail() {
         </div>
       </div>
       <div className="border-t border-slate-200 dark:border-slate-800 pt-16">
-        <ProductTabs product={product} />
+        <ProductTabs
+          product={product}
+          onStatsChange={(stats) =>
+            setReviewStats(stats || { average: 0, total: 0 })
+          }
+          onRequireAuth={() => setShowLoginPrompt(true)}
+        />
       </div>
       <NotiAuth
         open={showLoginPrompt}

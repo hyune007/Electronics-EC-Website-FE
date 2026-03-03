@@ -1,12 +1,23 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { createPortal } from "react-dom";
 
 export default function NotiAuth({ open, onClose }) {
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl p-6 max-w-sm w-full text-center space-y-4">
+  const modal = (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+    >
+      <div
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-xl p-6 max-w-sm w-[90%] mx-auto text-center space-y-4 z-10">
         <h3 className="text-lg font-bold">Cần đăng nhập để tiếp tục</h3>
         <p className="text-sm text-slate-600 dark:text-slate-300">
           Để tiến hành đặt hàng, bạn vui lòng đăng nhập hoặc đăng ký tại đây.
@@ -37,4 +48,6 @@ export default function NotiAuth({ open, onClose }) {
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

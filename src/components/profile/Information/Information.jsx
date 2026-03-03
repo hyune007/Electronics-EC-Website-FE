@@ -4,7 +4,10 @@ import {
   getCustomerById,
   updateCustomerInfor,
 } from "../../../services/customer/customerService";
-import { getAddresses, setDefault } from "../../../services/customer/addressService";
+import {
+  getAddresses,
+  setDefault,
+} from "../../../services/customer/addressService";
 import vi from "../../../i18n/vi";
 import LoadingCircle from "../../common/LoadScreen";
 
@@ -55,7 +58,7 @@ export default function Information() {
         const addresses = addrRes.data || [];
         setAddresses(addresses);
 
-        const def = addresses.find(a => a.default);
+        const def = addresses.find((a) => a.default);
         const defaultAddressId = def ? def.id : "";
         setDefaultAddress(defaultAddressId);
 
@@ -65,7 +68,7 @@ export default function Information() {
             ...freshCustomer,
             addresses,
             defaultAddressId,
-          })
+          }),
         );
       } catch (err) {
         console.error(err);
