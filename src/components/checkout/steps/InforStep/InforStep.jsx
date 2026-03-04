@@ -8,6 +8,7 @@ import { getShippingFee } from "../../../../services/billService";
 export default function InforStep({ onSubmit }) {
   const { cart } = useCart();
   const [shippingFee, setShippingFee] = useState(0);
+  const [customerId, setCustomerId] = useState(null);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -35,10 +36,12 @@ export default function InforStep({ onSubmit }) {
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
-    const customerId = token ? decodeJwtPayload(token)?.sub : null;
-    if (!customerId) return;
+    const id = token ? decodeJwtPayload(token)?.sub : null;
+    if (!id) return;
+    
+    setCustomerId(id);
 
-    const cacheKey = `customerInfo_${customerId}`;
+    const cacheKey = `customerInfo_${id}`;
 
     const applyCustomerData = (customer, addrList = []) => {
       const def = addrList.find((a) => a.default);
@@ -101,7 +104,7 @@ export default function InforStep({ onSubmit }) {
 
     const fetchShippingFee = async () => {
       try {
-        const res = await getShippingFee(formData.addressId);
+        const res = await getShippingFee(customerId, formData.addressId);
         setShippingFee(res.data);
       } catch (err) {
         console.error("Shipping fee error:", err);

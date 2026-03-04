@@ -25,7 +25,15 @@ export default function PaymentStep({
 
   const [localShippingInfo, setLocalShippingInfo] = useState(null);
   const [shippingFee, setShippingFee] = useState(0);
+  const [customerId, setCustomerId] = useState(null);
+
   useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    const id = token ? decodeJwtPayload(token)?.sub : null;
+    if (!id) return;
+
+    setCustomerId(id);
+
     if (!shippingInfo) {
       const cached = localStorage.getItem("checkoutShippingInfo");
       if (cached) {
@@ -41,7 +49,7 @@ export default function PaymentStep({
 
     const fetchShippingFee = async () => {
       try {
-        const res = await getShippingFee(info.address.id);
+        const res = await getShippingFee(customerId, info.address.id);
         setShippingFee(res.data);
       } catch {
         setShippingFee(0);
@@ -76,8 +84,6 @@ export default function PaymentStep({
       return;
     }
 
-    const token = localStorage.getItem("authToken");
-    const customerId = token ? decodeJwtPayload(token)?.sub : null;
     if (!customerId) {
       setError("Vui lòng đăng nhập lại");
       return;
