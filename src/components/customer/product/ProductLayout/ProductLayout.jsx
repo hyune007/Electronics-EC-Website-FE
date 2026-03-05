@@ -8,15 +8,28 @@ import Banner from "../../home/Banner/Banner.jsx";
 export default function ProductLayout() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [keyword, setKeyword] = useState("");
-  const [brands, setBrands] = useState([]);
+  const [keyword, setKeyword] = useState(() => searchParams.get("q") || "");
+  const [brands, setBrands] = useState(() => {
+    const brandsFromUrl = searchParams.get("brand");
+    if (!brandsFromUrl) return [];
+
+    return brandsFromUrl
+      .split(",")
+      .map((brand) => brand.trim())
+      .filter(Boolean);
+  });
   const [priceRanges, setPriceRanges] = useState([]);
   const [minPrice, setMinPrice] = useState(null);
   const [maxPrice, setMaxPrice] = useState(null);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(() => {
+    const fromUrl = Number(searchParams.get("p") || 1);
+    return Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl - 1 : 0;
+  });
   const [priceSort, setPriceSort] = useState("");
-  const [category, setCategory] = useState(null);
+  const [category, setCategory] = useState(
+    () => searchParams.get("category") || null,
+  );
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -45,6 +58,7 @@ export default function ProductLayout() {
     minPrice,
     maxPrice,
     priceSort,
+    setSearchParams,
   ]);
 
   useEffect(() => {
