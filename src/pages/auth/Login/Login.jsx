@@ -280,7 +280,7 @@ export default function Login() {
                       theme="outline"
                       size="large"
                       shape="rectangular"
-                      text="continue_with"
+                      text="signin_with"
                       width="320"
                       logo_alignment="left"
                     />
