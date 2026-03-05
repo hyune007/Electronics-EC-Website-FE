@@ -1,5 +1,6 @@
 import { Search, Package, User, Calendar, DollarSign, CheckCircle, Clock, XCircle, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { useOrderLogic } from "./OrderLogic.js";
+import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
 import { useState, useEffect } from "react";
 import "./Order.css";
 
@@ -244,44 +245,16 @@ export default function OrderManage() {
 
             {/* Pagination */}
             {om.filteredOrders.length > 0 && (
-                <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-neutral-600">
-                        Hiển thị {(om.currentPage * om.itemsPerPage) + 1} đến {Math.min((om.currentPage + 1) * om.itemsPerPage, om.filteredOrders.length)} của {om.filteredOrders.length} đơn hàng
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={om.handlePreviousPage}
-                            disabled={om.currentPage === 0}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                        
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: om.totalPages }, (_, i) => i).map(page => (
-                                <button
-                                    key={page}
-                                    onClick={() => om.handlePageChange(page)}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        om.currentPage === page
-                                            ? 'bg-primary-500 text-white'
-                                            : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
-                                    }`}
-                                >
-                                    {page + 1}
-                                </button>
-                            ))}
-                        </div>
-                        
-                        <button
-                            onClick={om.handleNextPage}
-                            disabled={om.currentPage === om.totalPages - 1}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
-                </div>
+                <PaginationComponent
+                    currentPage={om.currentPage}
+                    totalPages={om.totalPages}
+                    itemsPerPage={om.itemsPerPage}
+                    totalItems={om.filteredOrders.length}
+                    onPageChange={om.handlePageChange}
+                    onPreviousPage={om.handlePreviousPage}
+                    onNextPage={om.handleNextPage}
+                    itemLabel="đơn hàng"
+                />
             )}
         </div>
     );

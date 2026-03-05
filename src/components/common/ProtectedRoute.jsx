@@ -1,8 +1,8 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 
-// TODO: [DEVELOPMENT ONLY] Đặt thành false để bật lại bảo vệ route khi API admin hoàn thiện
-const BYPASS_AUTH = true;
+// Security: Bật kiểm tra xác thực và phân quyền
+const BYPASS_AUTH = false;
 
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     const { isAuthenticated, isLoading, hasRole } = useAuth();

@@ -22,8 +22,11 @@ export default function Sidebar() {
   const [highlight, setHighlight] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { clearCart } = useCart();
+  
+  const isAdmin = user?.roleId === "ROLE_ADMIN";
+  const isEmployee = user?.roleId === "ROLE_EMPLOYEE";
 
   const handleSelect = (rect) => {
     setHighlight(rect);
@@ -131,15 +134,19 @@ export default function Sidebar() {
             isOpen={isOpen}
           />
 
-          <SidebarItem
-            icon={<Users />}
-            label="Quản lí khách hàng"
-            to={ROUTE_MAP.customers}
-            onSelect={handleSelect}
-            activePath={location.pathname}
-            isOpen={isOpen}
-          />
+          {/* Khách hàng - ADMIN ONLY */}
+          {isAdmin && (
+            <SidebarItem
+              icon={<Users />}
+              label="Quản lí khách hàng"
+              to={ROUTE_MAP.customers}
+              onSelect={handleSelect}
+              activePath={location.pathname}
+              isOpen={isOpen}
+            />
+          )}
 
+          {/* Đơn hàng - ADMIN + EMPLOYEE */}
           <SidebarItem
             icon={<Package />}
             label="Quản lí đơn hàng"
@@ -149,50 +156,65 @@ export default function Sidebar() {
             isOpen={isOpen}
           />
 
-          <SidebarItem
-            icon={<DollarSign />}
-            label="Quản lí sản phẩm"
-            to={ROUTE_MAP.products}
-            onSelect={handleSelect}
-            activePath={location.pathname}
-            isOpen={isOpen}
-          />
+          {/* Sản phẩm - ADMIN ONLY */}
+          {isAdmin && (
+            <SidebarItem
+              icon={<DollarSign />}
+              label="Quản lí sản phẩm"
+              to={ROUTE_MAP.products}
+              onSelect={handleSelect}
+              activePath={location.pathname}
+              isOpen={isOpen}
+            />
+          )}
 
-          <SidebarItem
-            icon={<ShoppingBag />}
-            label="Quản lí hãng"
-            to={ROUTE_MAP.brands}
-            onSelect={handleSelect}
-            activePath={location.pathname}
-            isOpen={isOpen}
-          />
+          {/* Hãng - ADMIN ONLY */}
+          {isAdmin && (
+            <SidebarItem
+              icon={<ShoppingBag />}
+              label="Quản lí hãng"
+              to={ROUTE_MAP.brands}
+              onSelect={handleSelect}
+              activePath={location.pathname}
+              isOpen={isOpen}
+            />
+          )}
 
-          <SidebarItem
-            icon={<UserCog />}
-            label="Quản lí nhân viên"
-            to={ROUTE_MAP.staff}
-            onSelect={handleSelect}
-            activePath={location.pathname}
-            isOpen={isOpen}
-          />
+          {/* Nhân viên - ADMIN ONLY */}
+          {isAdmin && (
+            <SidebarItem
+              icon={<UserCog />}
+              label="Quản lí nhân viên"
+              to={ROUTE_MAP.staff}
+              onSelect={handleSelect}
+              activePath={location.pathname}
+              isOpen={isOpen}
+            />
+          )}
 
-          <SidebarItem
-            icon={<Warehouse />}
-            label="Quản lí nhập kho"
-            to={ROUTE_MAP.imports}
-            onSelect={handleSelect}
-            activePath={location.pathname}
-            isOpen={isOpen}
-          />
+          {/* Nhập kho - ADMIN ONLY */}
+          {isAdmin && (
+            <SidebarItem
+              icon={<Warehouse />}
+              label="Quản lí nhập kho"
+              to={ROUTE_MAP.imports}
+              onSelect={handleSelect}
+              activePath={location.pathname}
+              isOpen={isOpen}
+            />
+          )}
 
-          <SidebarItem
-            icon={<TicketPercent />}
-            label="Quản lí voucher"
-            to={ROUTE_MAP.vouchers}
-            onSelect={handleSelect}
-            activePath={location.pathname}
-            isOpen={isOpen}
-          />
+          {/* Voucher - ADMIN ONLY */}
+          {isAdmin && (
+            <SidebarItem
+              icon={<TicketPercent />}
+              label="Quản lí voucher"
+              to={ROUTE_MAP.vouchers}
+              onSelect={handleSelect}
+              activePath={location.pathname}
+              isOpen={isOpen}
+            />
+          )}
         </nav>
       </div>
 

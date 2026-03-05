@@ -12,15 +12,24 @@ import {
 import ProductForm from "./ProductForm.jsx";
 import { useProductManageLogic } from "./Productlogic.js";
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../../../hooks/useAuth.js";
+import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
 import "./Product.css";
 
 export default function ProductManage() {
     const pm = useProductManageLogic();
     const [mounted, setMounted] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Kiểm tra quyền - chỉ ADMIN được phép
+    if (user?.roleId !== "ROLE_ADMIN") {
+        return <Navigate to="/unauthorized" replace />;
+    }
 
     return (
         <div className={`min-h-full fade-in ${mounted ? "slide-up" : ""}`}>
@@ -277,27 +286,18 @@ export default function ProductManage() {
             </div>
 
             {/* ===== PAGINATION ===== */}
-            <div className="flex justify-between items-center mt-6">
-                <button
-                    disabled={pm.page === 1}
-                    onClick={() => pm.setPage(p => p - 1)}
-                    className="px-4 py-2 border rounded-lg disabled:opacity-40 hover:bg-neutral-100"
-                >
-                    ← Trước
-                </button>
-
-                <span className="text-sm text-neutral-600">
-                    Trang {pm.page} / {pm.totalPages}
-                </span>
-
-                <button
-                    disabled={pm.page === pm.totalPages}
-                    onClick={() => pm.setPage(p => p + 1)}
-                    className="px-4 py-2 border rounded-lg disabled:opacity-40 hover:bg-neutral-100"
-                >
-                    Sau →
-                </button>
-            </div>
+            {!pm.loading && pm.products.length > 0 && (
+                <PaginationComponent
+                    currentPage={pm.page - 1}
+                    totalPages={pm.totalPages}
+                    itemsPerPage={12}
+                    totalItems={pm.totalElements}
+                    onPageChange={(page) => pm.setPage(page + 1)}
+                    onPreviousPage={() => pm.setPage(p => Math.max(1, p - 1))}
+                    onNextPage={() => pm.setPage(p => Math.min(pm.totalPages, p + 1))}
+                    itemLabel="sản phẩm"
+                />
+            )}
 
             {/* ===== MODAL ===== */}
             <ProductForm

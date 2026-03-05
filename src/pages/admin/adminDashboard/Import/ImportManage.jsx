@@ -2,14 +2,38 @@ import { Plus, Pencil, Trash2, Search, Package, Calendar, TrendingUp, Loader2 } 
 import { useImportLogic } from "./ImportLogic";
 import ImportForm from "./ImportForm";
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../../../hooks/useAuth.js";
+import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
 
 export default function ImportManage() {
     const ip = useImportLogic();
     const [mounted, setMounted] = useState(false);
+    const { user } = useAuth();
+    
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(0);
+    const itemsPerPage = 12;
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Kiểm tra quyền - chỉ ADMIN được phép
+    if (user?.roleId !== "ROLE_ADMIN") {
+        return <Navigate to="/unauthorized" replace />;
+    }
+
+    // Tính toán phân trang
+    const totalPages = Math.ceil(ip.filteredList.length / itemsPerPage);
+    const paginatedList = ip.filteredList.slice(
+        currentPage * itemsPerPage,
+        (currentPage + 1) * itemsPerPage
+    );
+
+    const handlePageChange = (page) => setCurrentPage(page);
+    const handlePreviousPage = () => setCurrentPage(p => Math.max(0, p - 1));
+    const handleNextPage = () => setCurrentPage(p => Math.min(totalPages - 1, p + 1));
 
     return (
         <div className={`fade-in min-h-full ${mounted ? 'slide-up' : ''}`}>
@@ -133,7 +157,7 @@ export default function ImportManage() {
                                 </tr>
                             )}
 
-                            {!ip.loading && ip.filteredList.map((i, index) => (
+                            {!ip.loading && paginatedList.map((i, index) => (
                                 <tr key={i.nk_id} className="table-row" style={{ animationDelay: `${index * 50}ms` }}>
                                     <td className="px-6 py-4">
                                         <span className="font-mono text-sm text-neutral-900 bg-neutral-100 px-2 py-1 rounded-lg">
@@ -227,6 +251,20 @@ export default function ImportManage() {
                     </table>
                 </div>
             </div>
+
+            {/* Pagination */}
+            {!ip.loading && ip.filteredList.length > 0 && (
+                <PaginationComponent
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    itemsPerPage={itemsPerPage}
+                    totalItems={ip.filteredList.length}
+                    onPageChange={handlePageChange}
+                    onPreviousPage={handlePreviousPage}
+                    onNextPage={handleNextPage}
+                    itemLabel="phiếu nhập"
+                />
+            )}
 
             {/* MODAL */}
             <ImportForm

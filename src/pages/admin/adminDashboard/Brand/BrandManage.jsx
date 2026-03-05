@@ -2,15 +2,24 @@ import { Plus, Pencil, Trash2, Search, Building2, TrendingUp, Award, Package, Ch
 import { useBrandLogic } from "./BrandLogic.js";
 import BrandForm from "./BrandForm.jsx";
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../../../hooks/useAuth.js";
+import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
 import "./Brand.css";
 
 export default function BrandManage() {
     const bm = useBrandLogic();
     const [mounted, setMounted] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Kiểm tra quyền - chỉ ADMIN được phép
+    if (user?.roleId !== "ROLE_ADMIN") {
+        return <Navigate to="/unauthorized" replace />;
+    }
 
     return (
         <div className={`fade-in min-h-full ${mounted ? 'slide-up' : ''}`}>
@@ -178,44 +187,16 @@ export default function BrandManage() {
 
             {/* Pagination */}
             {bm.filteredBrands.length > 0 && (
-                <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-neutral-600">
-                        Hiển thị {(bm.currentPage * bm.itemsPerPage) + 1} đến {Math.min((bm.currentPage + 1) * bm.itemsPerPage, bm.filteredBrands.length)} của {bm.filteredBrands.length} thương hiệu
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={bm.handlePreviousPage}
-                            disabled={bm.currentPage === 0}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                        
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: bm.totalPages }, (_, i) => i).map(page => (
-                                <button
-                                    key={page}
-                                    onClick={() => bm.handlePageChange(page)}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        bm.currentPage === page
-                                            ? 'bg-primary-500 text-white'
-                                            : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
-                                    }`}
-                                >
-                                    {page + 1}
-                                </button>
-                            ))}
-                        </div>
-                        
-                        <button
-                            onClick={bm.handleNextPage}
-                            disabled={bm.currentPage === bm.totalPages - 1}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
-                </div>
+                <PaginationComponent
+                    currentPage={bm.currentPage}
+                    totalPages={bm.totalPages}
+                    itemsPerPage={bm.itemsPerPage}
+                    totalItems={bm.filteredBrands.length}
+                    onPageChange={bm.handlePageChange}
+                    onPreviousPage={bm.handlePreviousPage}
+                    onNextPage={bm.handleNextPage}
+                    itemLabel="thương hiệu"
+                />
             )}
 
             {/* MODAL */}
