@@ -1,6 +1,7 @@
-const API_URL = "http://localhost:8080/api/product";
-const BASE_URL = "http://localhost:8080";
-
+// const API_URL = "http://localhost:8080/api/product";
+// const BASE_URL = "http://localhost:8080";
+const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/product";
+const BASE_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app";
 // Helper to get auth token
 function getAuthHeaders() {
     const token = localStorage.getItem('authToken');

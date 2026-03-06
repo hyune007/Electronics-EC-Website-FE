@@ -45,7 +45,7 @@ export default function PaymentStep({
   const info = shippingInfo || localShippingInfo || {};
 
   useEffect(() => {
-    if (!info?.address?.id) return;
+    if (!info?.address?.id || !customerId) return;
 
     const fetchShippingFee = async () => {
       try {
@@ -57,7 +57,7 @@ export default function PaymentStep({
     };
 
     fetchShippingFee();
-  }, [info?.address?.id]);
+  }, [info?.address?.id, customerId]);
 
   const discount = 0;
   const subtotal = cart.reduce(

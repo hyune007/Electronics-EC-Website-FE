@@ -68,7 +68,8 @@ export function CartProvider({ children }) {
           name: row.product.name,
           price: row.product.price,
           quantity: row.quantity,
-          image: `http://localhost:8080${row.product.image}`,
+          // image: `http://localhost:8080${row.product.image}`,
+          image: `https://ec-website-be-312564370609.asia-southeast1.run.app${row.product.image}`,
         }));
 
         setCart(serverCart);
@@ -103,7 +104,8 @@ export function CartProvider({ children }) {
           name: product.name,
           price: product.price,
           quantity,
-          image: `http://localhost:8080${product.image}`,
+          // image: `http://localhost:8080${product.image}`,
+          image: `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}`,
           cartItemId: null,
         },
       ];

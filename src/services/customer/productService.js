@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:8080/api/product",
+  // baseURL: "http://localhost:8080/api/product",
+  baseURL: "https://ec-website-be-312564370609.asia-southeast1.run.app/api/product",
 });
 
 export const getProducts = (params) => API.get("/all", { params });

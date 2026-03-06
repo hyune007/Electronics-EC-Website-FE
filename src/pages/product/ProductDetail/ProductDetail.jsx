@@ -149,7 +149,8 @@ export default function ProductDetail() {
               src={
                 product?.image?.startsWith("http")
                   ? product.image
-                  : `http://localhost:8080${product.image || ""}`
+                  // : `http://localhost:8080${product.image || ""}`
+                  : `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image || ""}`
               }
               alt={product.name}
               className="w-full h-full object-contain"
