@@ -85,8 +85,8 @@ export default function InforStep({ onSubmit }) {
     (async () => {
       try {
         const [customer, addrRes] = await Promise.all([
-          getCustomerById(customerId),
-          getAddresses(customerId),
+          getCustomerById(id),
+          getAddresses(id),
         ]);
 
         applyCustomerData(customer, addrRes.data || []);
@@ -97,7 +97,7 @@ export default function InforStep({ onSubmit }) {
   }, []);
 
   useEffect(() => {
-    if (!formData.addressId) {
+    if (!formData.addressId || !customerId) {
       setShippingFee(0);
       return;
     }
@@ -113,7 +113,7 @@ export default function InforStep({ onSubmit }) {
     };
 
     fetchShippingFee();
-  }, [formData.addressId]);
+  }, [formData.addressId, customerId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
