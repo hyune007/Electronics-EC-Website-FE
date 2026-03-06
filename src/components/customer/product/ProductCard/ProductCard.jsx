@@ -43,7 +43,7 @@ export default function ProductCard({ product }) {
 
   if (!product) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800">
+      <div className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-primary/40 dark:border-primary/30">
         <div className="h-44 bg-gray-50 dark:bg-gray-800 animate-pulse" />
         <div className="p-4">
           <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2 animate-pulse" />
@@ -85,11 +85,12 @@ export default function ProductCard({ product }) {
         </div>
       )}
 
-      <div onClick={() => navigate(`/product-detail/${product.id}`)}
+      <div
+        onClick={() => navigate(`/product-detail/${product.id}`)}
         className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden
-                border border-gray-100 dark:border-gray-800
-                group flex flex-col
-                transition-transform duration-300 hover:scale-105 hover:shadow-lg"
+          border border-primary/80 dark:border-primary/60 hover:border-primary hover:border-2
+          group flex flex-col
+          transition-transform duration-300 hover:scale-105 hover:shadow-lg"
       >
         <div className="h-44 bg-white relative overflow-hidden">
           <img
@@ -97,7 +98,8 @@ export default function ProductCard({ product }) {
             className="w-full h-full py-2 object-contain
                  group-hover:scale-105 transition-transform duration-300"
             src={
-              product?.image ? `http://localhost:8080${product.image}` : demoImg
+              // product?.image ? `http://localhost:8080${product.image}` : demoImg
+              product?.image ? `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}` : demoImg
             }
           />
         </div>

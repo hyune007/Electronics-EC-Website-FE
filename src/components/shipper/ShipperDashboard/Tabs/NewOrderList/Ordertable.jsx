@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getAllBills, updateBill } from "../../../../../services/billService";
+import { jwtDecode } from "jwt-decode";
 export default function OrderTable({ onSelectOrder, selectedOrder }) {
   const formatCurrency = (value) =>
     new Intl.NumberFormat("vi-VN", {
@@ -7,6 +8,15 @@ export default function OrderTable({ onSelectOrder, selectedOrder }) {
       currency: "VND",
     }).format(value);
   const [ordersList, setOrdersList] = useState([]);
+  const [employeeId, setEmployeeId] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    const decoded = jwtDecode(token);
+    setEmployeeId(decoded.sub);
+  }, []);
 
   useEffect(() => {
     const fetchBills = async () => {
@@ -19,7 +29,7 @@ export default function OrderTable({ onSelectOrder, selectedOrder }) {
   const handleAccept = async (e, orderId) => {
     e.stopPropagation();
     try {
-      await updateBill(orderId, "Đang giao");
+      await updateBill(orderId, "Đang giao", employeeId);
       setOrdersList((prev) =>
         prev.filter((order) => order.id !== orderId)
       );

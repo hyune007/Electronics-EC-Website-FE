@@ -4,25 +4,35 @@ import { useState, useEffect } from "react";
 // import vi from "../../../../i18n/vi.js";
 import { getProductById } from "../../../../../../services/customer/productService.js";
 
-export default function DescribeProductTab() {
+export default function DescribeProductTab({ product: propProduct }) {
   const { id } = useParams();
-  const [product, setProduct] = useState(null);
-  const [, setLoading] = useState(true);
+  const [product, setProduct] = useState(propProduct || null);
+  const [, setLoading] = useState(!propProduct);
+
   useEffect(() => {
+    if (propProduct) {
+      setProduct(propProduct);
+      return;
+    }
+
+    let mounted = true;
     async function loadProduct() {
       setLoading(true);
       try {
         const res = await getProductById(id);
-        setProduct(res.data);
+        if (mounted) setProduct(res.data);
       } catch (err) {
-        setProduct(null);
+        if (mounted) setProduct(null);
         console.log("Không tìm thấy sản phẩm", err);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     loadProduct();
-  }, [id]);
+    return () => {
+      mounted = false;
+    };
+  }, [id, propProduct]);
 
   return (
     <div className="lg:col-span-2 prose prose-slate dark:prose-invert max-w-none">

@@ -3,25 +3,36 @@ import { getProductById } from "../../../../../services/customer/productService.
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 
-export default function BreadcrumbNav({ category }) {
+export default function BreadcrumbNav({
+  category,
+  product: propProduct,
+  suppressFetch = false,
+}) {
   const { id } = useParams();
-  const [product, setProduct] = useState(null);
-  const [, setLoading] = useState(true);
+  const [product, setProduct] = useState(propProduct || null);
+
   useEffect(() => {
+    if (propProduct) {
+      setProduct(propProduct);
+      return;
+    }
+    if (suppressFetch || !id) return;
+
+    let mounted = true;
     async function loadProduct() {
-      setLoading(true);
       try {
         const res = await getProductById(id);
-        setProduct(res.data);
+        if (mounted) setProduct(res.data);
       } catch (err) {
-        setProduct(null);
+        if (mounted) setProduct(null);
         console.log("Không tìm thấy sản phẩm", err);
-      } finally {
-        setLoading(false);
       }
     }
     loadProduct();
-  }, [id]);
+    return () => {
+      mounted = false;
+    };
+  }, [id, propProduct, suppressFetch]);
   return (
     <nav aria-label="Breadcrumb" className="flex mb-8 text-xs text-slate-500">
       <ol className="inline-flex items-center space-x-1 md:space-x-3">

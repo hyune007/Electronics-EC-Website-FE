@@ -123,23 +123,11 @@ export default function ShoppingCartStep({ onProceed }) {
           <h2 className="text-lg font-bold border-b pb-4">Tóm tắt đơn hàng</h2>
 
           <div className="space-y-3 pt-2">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between font-bold">
               <span>Tạm tính</span>
-              <span>{total.toLocaleString()}₫</span>
-            </div>
-
-            <div className="flex justify-between text-sm">
-              <span>Phí vận chuyển (COD)</span>
-              <span className="text-green-600 font-medium">Miễn phí</span>
-            </div>
-
-            <div className="pt-4 border-t border-dashed flex justify-between items-end">
-              <span className="font-bold">Tổng thanh toán</span>
-              <div className="text-right">
-                <p className="text-2xl font-black text-primary">
-                  {total.toLocaleString()}₫
-                </p>
-              </div>
+              <p className="text-xl font-black">
+                {total.toLocaleString()}₫
+              </p>
             </div>
           </div>
 

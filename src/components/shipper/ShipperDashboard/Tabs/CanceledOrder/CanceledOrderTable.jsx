@@ -7,7 +7,7 @@ export default function CanceledOrderTable({ onSelectOrder, selectedOrder }) {
   useEffect(() => {
     const fetchBills = async () => {
       const res = await getAllBills();
-      setOrdersList(res.data.filter(b => b.status === "Đã hủy"));
+      setOrdersList(res.data.filter(b => b.status === "Đơn đã hủy"));
     };
     fetchBills();
   }, []);

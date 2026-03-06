@@ -5,7 +5,7 @@ import {
     updateImport,
     deleteImport
 } from "../../../../services/importService";
-import { getAllProducts } from "../../../../services/ProductService";
+import { getAllProducts } from "../../../../services/productService";
 
 export function useImportLogic() {
     const [list, setList] = useState([]);

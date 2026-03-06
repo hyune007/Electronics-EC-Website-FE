@@ -1,12 +1,13 @@
 import "./Login.css";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { GoogleLogin } from "@react-oauth/google";
 import vi from "../../../i18n/vi.js";
 import useTheme from "../../../hooks/useTheme";
 import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
 import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx";
 import BrandLogo from "../../../components/common/BrandLogo.jsx";
-import { login as loginApi, loginEmployee as loginEmployeeApi } from "../../../services/authService.js";
+import { login as loginApi, loginEmployee as loginEmployeeApi, loginWithGoogle as loginWithGoogleApi } from "../../../services/authService.js";
 import { useAuth } from "../../../hooks/useAuth";
 import { decodeJwtPayload } from "../../../utils/jwt.js";
 
@@ -20,6 +21,7 @@ export default function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // Redirect based on role if already authenticated
   useEffect(() => {
@@ -82,6 +84,46 @@ export default function Login() {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGoogleLoginSuccess = async (credentialResponse) => {
+    setErrorMessage("");
+    setIsGoogleLoading(true);
+
+    try {
+      const response = await loginWithGoogleApi(credentialResponse.credential);
+
+      if (!response || !response.token) {
+        setErrorMessage("Đăng nhập Google thất bại. Vui lòng thử lại.");
+        return;
+      }
+
+      // Store auth data
+      login(response);
+
+      // Redirect based on role
+      const payload = decodeJwtPayload(response.token);
+      const roleId = payload?.roleId;
+      if (roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        const from = location.state?.from?.pathname || "/";
+        navigate(from, { replace: true });
+      }
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data ||
+        error?.message ||
+        "Đăng nhập Google thất bại. Vui lòng thử lại.";
+      setErrorMessage(message);
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleLoginError = () => {
+    setErrorMessage("Đăng nhập Google thất bại. Vui lòng thử lại.");
   };
 
   return (
@@ -226,31 +268,23 @@ export default function Login() {
                   </span>
                   <div className="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
                 </div>
-                <div className="mt-8">
-                  <button
-                    className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold py-2.5 px-4 rounded-xl shadow-sm transition-all transform active:scale-[0.99]"
-                    type="button"
-                  >
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path
-                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                        fill="#4285F4"
-                      ></path>
-                      <path
-                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                        fill="#34A853"
-                      ></path>
-                      <path
-                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                        fill="#FBBC05"
-                      ></path>
-                      <path
-                        d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                        fill="#EA4335"
-                      ></path>
-                    </svg>
-                    <span>{vi.auth.login.continueWithGoogle}</span>
-                  </button>
+                <div className="mt-8 flex justify-center">
+                  {isGoogleLoading ? (
+                    <div className="w-full flex items-center justify-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 font-semibold py-2.5 px-4 rounded-xl">
+                      Đang xử lý...
+                    </div>
+                  ) : (
+                    <GoogleLogin
+                      onSuccess={handleGoogleLoginSuccess}
+                      onError={handleGoogleLoginError}
+                      theme="outline"
+                      size="large"
+                      shape="rectangular"
+                      text="signin_with"
+                      width="320"
+                      logo_alignment="left"
+                    />
+                  )}
                 </div>
                 <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800 text-center">
                   <p className="text-xs text-gray-500 dark:text-gray-400">

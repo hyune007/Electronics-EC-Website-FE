@@ -1,9 +1,19 @@
 import React from "react";
 import { updateBill } from "../../../services/billService";
 import { useNavigate } from "react-router-dom";
+import { jwtDecode } from "jwt-decode";
 
 export default function BottomActionBar({ order }) {
   const navigate = useNavigate();
+  const [employeeId, setEmployeeId] = React.useState(null);
+
+  React.useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    const decoded = jwtDecode(token);
+    setEmployeeId(decoded.sub);
+  }, []);
 
   const formatCurrency = (value = 0) =>
     new Intl.NumberFormat("vi-VN", {
@@ -14,7 +24,7 @@ export default function BottomActionBar({ order }) {
   const handleComplete = async (e, orderId) => {
     e.stopPropagation();
     try {
-      await updateBill(orderId, "Đã giao");
+      await updateBill(orderId, "Đã giao", employeeId);
       alert("Đã hoàn thành đơn hàng");
       navigate("/shipper-dashboard");
     } catch (err) {
@@ -26,7 +36,7 @@ export default function BottomActionBar({ order }) {
   const handleReject = async (e, orderId) => {
     e.stopPropagation();
     try {
-      await updateBill(orderId, "Đã hủy");
+      await updateBill(orderId, "Đơn đã hủy", employeeId);
       alert("Đã hủy đơn hàng");
       navigate("/shipper-dashboard");
     } catch (err) {
@@ -41,7 +51,7 @@ export default function BottomActionBar({ order }) {
         <div className="w-full sm:w-auto">
           <div className="text-xs text-slate-400">COD</div>
           <div className="font-bold text-xl">
-            {formatCurrency(order?.totalAmount)}
+            {formatCurrency(order?.paymentMethod !== "Chuyển khoản ngân hàng" ? order.totalAmount : 0)}
           </div>
         </div>
 

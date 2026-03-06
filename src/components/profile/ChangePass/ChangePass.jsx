@@ -40,42 +40,44 @@ export default function ChangePass() {
     } catch (error) {
       console.error(error);
       alert("Đổi mật khẩu thất bại");
-    }finally {
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <>    <LoadingCircle show={loading} />
-    <div className="rounded-2xl shadow-sm border p-6 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
-      <div className="flex items-start gap-4 mb-6">
-        <div className="p-3 rounded-lg bg-[var(--accent-light)] dark:bg-slate-700 dark:text-slate-100">
-          <span className="material-symbols-outlined">lock</span>
+    <>
+      {" "}
+      <LoadingCircle show={loading} />
+      <div className="rounded-2xl shadow-sm border p-6 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
+        <div className="flex items-start gap-4 mb-6">
+          <div className="p-3 rounded-lg bg-[var(--accent-light)] dark:bg-slate-700 dark:text-slate-100">
+            <span className="material-symbols-outlined">lock</span>
+          </div>
+
+          <div className="flex-1">
+            <h1 className="text-2xl font-semibold">
+              {vi.profile.changePass.title}
+            </h1>
+            <p className="text-sm mt-1 dark:text-slate-300">
+              {vi.profile.changePass.desc}
+            </p>
+          </div>
+
+          <button
+            onClick={() => setOpen(true)}
+            className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-md font-semibold shadow hover:opacity-95"
+          >
+            {vi.profile.changePass.button}
+          </button>
         </div>
 
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold">
-            {vi.profile.changePass.title}
-          </h1>
-          <p className="text-sm mt-1 dark:text-slate-300">
-            {vi.profile.changePass.desc}
-          </p>
-        </div>
-
-        <button
-          onClick={() => setOpen(true)}
-          className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-md font-semibold shadow hover:opacity-95"
-        >
-          {vi.profile.changePass.button}
-        </button>
+        <ChangePassModal
+          open={open}
+          onClose={() => setOpen(false)}
+          onSubmit={handleChangePassword}
+        />
       </div>
-
-      <ChangePassModal
-        open={open}
-        onClose={() => setOpen(false)}
-        onSubmit={handleChangePassword}
-      />
-    </div>
     </>
   );
 }

@@ -8,10 +8,15 @@ export const getAllBills = () =>
 export const getBillsByCustomer = (customerId) =>
   api.get(`${API}/customer/${customerId}`);
 
+export const getShippingFee = (customerId, addressId) =>
+  api.get(`${API}/shipping-fee/${customerId}/${addressId}`);
+
 export const createBill = ({ customerId, employeeId, addressId, paymentMethod }) =>
   api.post(`${API}/create`, null, {
     params: { customerId, employeeId, addressId, paymentMethod },
   });
 
-export const updateBill = (id, status) =>
-  api.put(`${API}/updatate-status/${id}?status=${encodeURIComponent(status)}`);
+export const updateBill = (id, status, employeeId) =>
+  api.put(`${API}/update-status/${id}`, null, {
+    params: { status, employeeId },
+  });

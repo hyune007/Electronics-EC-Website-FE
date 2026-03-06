@@ -2,6 +2,8 @@ import "./AuthLeft.css";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { ROUTE_TITLE_MAP } from "../../../../routes/routesConfig/customer/routeTitle.js";
+import logoWhite from "../../../../assets/logo/UBrainTech_white.png";
+import logoFavicon from "../../../../assets/logo/UBrainTech_logo_title.jpg";
 
 export default function AuthLeft() {
   const location = useLocation();
@@ -18,7 +20,7 @@ export default function AuthLeft() {
         link.rel = 'icon';
         document.getElementsByTagName('head')[0].appendChild(link);
       }
-      link.href = '/src/assets/logo/UBrainTech_logo_title.jpg';
+      link.href = logoFavicon;
     } catch (e) {
       void e;
     }
@@ -32,7 +34,7 @@ export default function AuthLeft() {
           <a href="/home" className="block">
             <div className="w-[190px] h-[100px] overflow-hidden">
               <img
-                src="src/assets/logo/UBrainTech_white.png"
+                src={logoWhite}
                 alt="UBrain Tech"
                 className="w-full h-full object-cover"
               />

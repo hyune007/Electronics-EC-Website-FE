@@ -6,6 +6,12 @@ export async function login({ email, password }) {
     return response.data;
 }
 
+// Google OAuth
+export async function loginWithGoogle(idToken) {
+    const response = await api.post('/api/auth/google', { idToken });
+    return response.data;
+}
+
 export async function register({ name, email, password, phone }) {
     const response = await api.post('/api/auth/register', {
         name,
