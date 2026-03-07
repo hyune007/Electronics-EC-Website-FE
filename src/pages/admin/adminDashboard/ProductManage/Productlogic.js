@@ -5,38 +5,13 @@ import { getAllCategories } from "../../../../services/categoryService";
 
 // Cache helpers
 const CACHE_KEY_PREFIX = "product_page_v2_";
-const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 function getCachedPage(pageNum) {
-    try {
-        const data = localStorage.getItem(`${CACHE_KEY_PREFIX}${pageNum}`);
-        if (!data) return null;
-        
-        const parsed = JSON.parse(data);
-        const now = Date.now();
-        
-        // Check if cache is still valid
-        if (now - parsed.timestamp > CACHE_DURATION) {
-            localStorage.removeItem(`${CACHE_KEY_PREFIX}${pageNum}`);
-            return null;
-        }
-        
-        return parsed;
-    } catch (err) {
-        console.error("Error reading cache:", err);
-        return null;
-    }
+    return null; // Disable localStorage read cache for admin panels to prevent stale data
 }
 
 function setCachedPage(pageNum, data) {
-    try {
-        localStorage.setItem(`${CACHE_KEY_PREFIX}${pageNum}`, JSON.stringify({
-            ...data,
-            timestamp: Date.now()
-        }));
-    } catch (err) {
-        console.error("Error writing cache:", err);
-    }
+    // Disable localStorage write cache
 }
 
 export function useProductManageLogic() {
@@ -69,7 +44,16 @@ export function useProductManageLogic() {
         brandId: "",
         categoryId: ""
     });
-    
+
+    const [allProducts, setAllProducts] = useState([]); // To keep all products for stats and search
+
+    // Global Stats state
+    const [globalStats, setGlobalStats] = useState({
+        totalValue: 0,
+        totalStock: 0,
+        lowStock: 0
+    });
+
     const [brands, setBrands] = useState([]);
     const [allBrands, setAllBrands] = useState([]); // Lưu tất cả brands
     const [categories, setCategories] = useState([]);
@@ -81,16 +65,16 @@ export function useProductManageLogic() {
             try {
                 // Clear cache trước khi load
                 localStorage.removeItem('brand_data');
-                
+
                 const brandList = await getAllBrands();
                 console.log("=== Brands loaded from backend ===");
                 console.log("Total brands:", brandList.length);
                 console.log("Brands:", brandList);
-                
+
                 if (brandList.length === 0) {
                     console.warn("WARNING: No brands loaded! Please add brands first.");
                 }
-                
+
                 setAllBrands(brandList);
                 setBrands(brandList);
             } catch (err) {
@@ -109,17 +93,17 @@ export function useProductManageLogic() {
                 console.log("=== Categories loaded from backend ===");
                 console.log("Total categories:", categoryList.length);
                 console.log("Categories:", categoryList);
-                
+
                 if (categoryList.length === 0) {
                     console.warn("WARNING: No categories loaded! Please add categories first.");
                 }
-                
+
                 // Map dm_id -> id and dm_name -> name for consistency
                 const mappedCategories = categoryList.map(c => ({
                     id: c.dm_id,
                     name: c.dm_name
                 }));
-                
+
                 setAllCategories(mappedCategories);
                 setCategories(mappedCategories);
             } catch (err) {
@@ -138,128 +122,133 @@ export function useProductManageLogic() {
     /* ================= LOAD PRODUCTS BY PAGE ================= */
     const loadProductsPage = useCallback(async (pageNum, isSearch = false) => {
         try {
-            // If search is active but no search term, don't load
-            if (!isSearch && search.trim() === "") {
-                setLoading(true);
-                
-                // Check cache first
-                const cacheKey = `page_${pageNum}`;
-                
-                // Try localStorage cache first
-                const cachedPage = getCachedPage(pageNum);
-                if (cachedPage) {
-                    setProducts(cachedPage.products);
-                    setTotalElements(cachedPage.totalElements);
-                    cacheRef.current[cacheKey] = cachedPage;
-                    setLoading(false);
-                    return;
-                }
-                
-                // Check memory cache
-                if (cacheRef.current[cacheKey]) {
-                    setProducts(cacheRef.current[cacheKey].products);
-                    setTotalElements(cacheRef.current[cacheKey].totalElements);
-                    setLoading(false);
-                    return;
-                }
+            setLoading(true);
 
-                const res = await getProductsByPage(pageNum - 1, pageSize);
-                
-                // Map data to UI format
-                const mapped = res.products.map(p => ({
-                    sp_id: p.id,
-                    sp_name: p.name,
-                    sp_price: p.price ?? 0,
-                    sp_stock: p.stock ?? 0,
-                    sp_desc: p.description ?? "",
-                    sp_image: p.image ?? "",
-                    sp_brand_id: p.brand?.id ?? "",
-                    sp_brand_name: p.brand?.name ?? "",
-                    sp_category_id: p.category?.id ?? "",
-                    sp_category_name: p.category?.name ?? ""
-                }));
+            // If search is active, do local filtering from allProducts
+            if (isSearch || search.trim() !== "") {
+                const keyword = search.toLowerCase().trim();
+                const filtered = allProducts.filter(p =>
+                    String(p.sp_name || "").toLowerCase().includes(keyword) ||
+                    String(p.sp_id || "").toLowerCase().includes(keyword)
+                );
 
-                const pageData = {
-                    products: mapped,
-                    totalElements: res.totalElements
-                };
+                // Calculate total pages for filtered
+                setTotalElements(filtered.length);
 
-                // Cache to both memory and localStorage
-                cacheRef.current[cacheKey] = pageData;
-                setCachedPage(pageNum, pageData);
-
-                setProducts(mapped);
-                setTotalElements(res.totalElements);
+                // Slice for pagination
+                const startIdx = (pageNum - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+                setProducts(filtered.slice(startIdx, endIdx));
+                setLoading(false);
+                return;
             }
+
+            // Normal load
+            const cacheKey = `page_${pageNum}`;
+
+            // Try localStorage cache first
+            const cachedPage = getCachedPage(pageNum);
+            if (cachedPage) {
+                setProducts(cachedPage.products);
+                setTotalElements(cachedPage.totalElements);
+                cacheRef.current[cacheKey] = cachedPage;
+                setLoading(false);
+                return;
+            }
+
+            // Check memory cache
+            if (cacheRef.current[cacheKey]) {
+                setProducts(cacheRef.current[cacheKey].products);
+                setTotalElements(cacheRef.current[cacheKey].totalElements);
+                setLoading(false);
+                return;
+            }
+
+            const res = await getProductsByPage(pageNum - 1, pageSize);
+
+            // Map data to UI format
+            const mapped = res.products.map(p => ({
+                sp_id: p.id,
+                sp_name: p.name,
+                sp_price: p.price ?? 0,
+                sp_stock: p.stock ?? 0,
+                sp_desc: p.description ?? "",
+                sp_image: p.image ?? "",
+                sp_raw_image: p.raw_image ?? "",
+                sp_brand_id: p.brand?.id ?? "",
+                sp_brand_name: p.brand?.name ?? "",
+                sp_category_id: p.category?.id ?? "",
+                sp_category_name: p.category?.name ?? ""
+            }));
+
+            const pageData = {
+                products: mapped,
+                totalElements: res.totalElements
+            };
+
+            // Cache to both memory and localStorage
+            cacheRef.current[cacheKey] = pageData;
+            setCachedPage(pageNum, pageData);
+
+            setProducts(mapped);
+            setTotalElements(res.totalElements);
         } catch (err) {
             console.error("Load products failed:", err);
         } finally {
             setLoading(false);
         }
-    }, [search, pageSize]);
+    }, [search, pageSize, allProducts]);
 
     /* ================= BACKGROUND LOADING ================= */
     const loadAllInBackground = useCallback(async () => {
-        // Wait for first page to load and get total
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Get total pages from first page data
-        const firstPageCache = cacheRef.current["page_1"];
-        if (!firstPageCache) return;
-        
-        const totalPages = Math.ceil(firstPageCache.totalElements / pageSize);
-        
-        console.log("🔄 Starting background load for", totalPages, "pages");
-            
-            // Load remaining pages in background
-            for (let p = 2; p <= totalPages; p++) {
-                // Don't block UI - use requestIdleCallback if available, otherwise setTimeout
-                const delay = () => new Promise(resolve => {
-                    if (typeof requestIdleCallback !== 'undefined') {
-                        requestIdleCallback(() => resolve(), { timeout: 500 });
-                    } else {
-                        setTimeout(resolve, 50);
-                    }
-                });
-                
-                await delay();
-                
-                // Skip if already cached (memory or localStorage)
-                if (cacheRef.current[`page_${p}`]) continue;
-                const cachedPage = getCachedPage(p);
-                if (cachedPage) {
-                    cacheRef.current[`page_${p}`] = cachedPage;
-                    continue;
-                }
-                
-                try {
-                    const res = await getProductsByPage(p - 1, pageSize);
-                    const mapped = res.products.map(prod => ({
-                        sp_id: prod.id,
-                        sp_name: prod.name,
-                        sp_price: prod.price ?? 0,
-                        sp_stock: prod.stock ?? 0,
-                        sp_desc: prod.description ?? "",
-                        sp_image: prod.image ?? "",
-                        sp_brand_id: prod.brand?.id ?? "",
-                        sp_brand_name: prod.brand?.name ?? "",
-                        sp_category_id: prod.category?.id ?? "",
-                        sp_category_name: prod.category?.name ?? ""
-                    }));
+        try {
+            await new Promise(resolve => setTimeout(resolve, 500));
+            // Tải tuần tự qua các trang để tính thống kê và search, tránh việc BE giới hạn size
+            let allLoadedProducts = [];
+            let currentPage = 0;
+            let hasMore = true;
 
-                    const pageData = {
-                        products: mapped,
-                        totalElements: res.totalElements
-                    };
+            while (hasMore) {
+                const res = await getProductsByPage(currentPage, 50);
+                allLoadedProducts = [...allLoadedProducts, ...res.products];
 
-                    cacheRef.current[`page_${p}`] = pageData;
-                    setCachedPage(p, pageData);
-                } catch (err) {
-                    console.error(`Background load page ${p} failed:`, err);
+                if (res.isLast || res.products.length === 0) {
+                    hasMore = false;
+                } else {
+                    currentPage++;
                 }
             }
-        console.log("✅ Background load completed");
-    }, [pageSize]);
+
+            const mappedAll = allLoadedProducts.map(prod => ({
+                ...prod,
+                sp_id: prod.id,
+                sp_name: prod.name,
+                sp_price: Number(prod.price ?? 0),
+                sp_stock: Number(prod.stock ?? 0),
+                sp_desc: prod.description ?? "",
+                sp_image: prod.image ?? "",
+                sp_raw_image: prod.raw_image ?? "",
+                sp_brand_id: prod.brand?.id ?? "",
+                sp_brand_name: prod.brand?.name ?? "",
+                sp_category_id: prod.category?.id ?? "",
+                sp_category_name: prod.category?.name ?? ""
+            }));
+
+            // Xóa trùng lặp (nếu có) do sai sót logic BE
+            const uniqueProducts = Array.from(new Map(mappedAll.map(p => [p.sp_id, p])).values());
+            setAllProducts(uniqueProducts);
+
+            // Calculate global stats
+            setGlobalStats({
+                totalValue: uniqueProducts.reduce((s, p) => s + (p.sp_price * p.sp_stock), 0),
+                totalStock: uniqueProducts.reduce((s, p) => s + p.sp_stock, 0),
+                lowStock: uniqueProducts.filter(p => p.sp_stock < 10).length
+            });
+            console.log("✅ Background load completed. Total Loaded:", uniqueProducts.length);
+        } catch (err) {
+            console.error("Background load failed:", err);
+        }
+    }, []);
 
     /* ================= INITIAL LOAD ================= */
     useEffect(() => {
@@ -276,15 +265,17 @@ export function useProductManageLogic() {
     /* ================= HANDLE SEARCH ================= */
     useEffect(() => {
         if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-        
-        // Debounce search for 300ms
+
+        // Debounce search for 500ms
         searchTimeoutRef.current = setTimeout(() => {
             setSearch(searchInput);
+            setPage(1); // Reset page on new search
             if (searchInput.trim() === "") {
-                setPage(1);
                 loadProductsPage(1, false);
+            } else {
+                loadProductsPage(1, true);
             }
-        }, 300);
+        }, 500);
 
         return () => {
             if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
@@ -301,53 +292,53 @@ export function useProductManageLogic() {
     const openAdd = async () => {
         try {
             setEditing(null);
-            
+
             console.log("=== Opening Add Product Form ===");
             console.log("Available brands (", brands.length, "):", brands);
             console.log("Available categories (", categories.length, "):", categories);
-            
+
             if (brands.length === 0) {
                 alert("Chưa có thương hiệu nào! Vui lòng thêm thương hiệu trước khi thêm sản phẩm.");
                 return;
             }
-            
+
             // Tự động generate ID từ SP201
             setIsGeneratingId(true);
             let nextId = "SP201"; // Default starting point
-            
+
             try {
                 // Fetch page đầu tiên để lấy totalElements
                 const firstPageRes = await getProductsByPage(0, pageSize);
                 const total = firstPageRes.totalElements || 0;
-                
+
                 // Tính page cuối cùng
                 const lastPageIndex = Math.max(0, Math.ceil(total / pageSize) - 1);
-                
+
                 // Fetch 3 trang cuối để tìm ID cao nhất (thay vì fetch tất cả)
                 const pagesToFetch = [];
                 for (let i = Math.max(0, lastPageIndex - 2); i <= lastPageIndex; i++) {
                     pagesToFetch.push(getProductsByPage(i, pageSize));
                 }
-                
+
                 const results = await Promise.all(pagesToFetch);
                 const recentProducts = results.flatMap(res => res.products || []);
-                
+
                 // Tìm ID cao nhất
                 const productIds = recentProducts
                     .map(p => p.id)
                     .filter(id => /^SP\d+$/.test(id))
                     .map(id => parseInt(id.replace('SP', ''), 10))
                     .filter(num => !isNaN(num));
-                
+
                 let maxId = Math.max(...productIds, 200); // Minimum 200
                 nextId = `SP${String(maxId + 1).padStart(3, '0')}`;
-                
+
                 console.log("🎯 Auto-generated next ID:", nextId, "from last", pagesToFetch.length, "pages (", recentProducts.length, "products )");
             } catch (err) {
                 console.error("Failed to generate ID:", err);
                 // Tiếp tục với default SP201
             }
-            
+
             setForm({
                 id: nextId,
                 name: "",
@@ -375,7 +366,7 @@ export function useProductManageLogic() {
             price: p.sp_price,
             stock: p.sp_stock,
             description: p.sp_desc,
-            image: p.sp_image,
+            image: p.sp_raw_image, // Lấy đường dẫn gốc thay vì đường dẫn đã gán localhost
             brandId: p.sp_brand_id,
             categoryId: p.sp_category_id
         });
@@ -386,24 +377,24 @@ export function useProductManageLogic() {
         console.log("=== Product Form Submission ===");
         console.log("Form data before validation:", form);
         console.log("Editing mode:", editing);
-        
+
         // Validate required fields
         if (!form.name || !form.name.trim()) {
             alert("Vui lòng nhập tên sản phẩm");
             return;
         }
-        
+
         if (!form.price || Number(form.price) <= 0) {
             alert("Vui lòng nhập giá sản phẩm hợp lệ");
             return;
         }
-        
+
         if (!form.brandId || form.brandId === "") {
             alert("Vui lòng chọn thương hiệu");
             console.log("Brand validation failed. brandId:", form.brandId);
             return;
         }
-        
+
         // Validate brand exists in loaded brands
         // Some brand objects may use different property names for id (hang_id, id, hangId)
         const brandExists = brands.find(b => (
@@ -417,13 +408,13 @@ export function useProductManageLogic() {
             console.log("Available brands:", brands);
             return;
         }
-        
+
         if (!form.categoryId || form.categoryId === "") {
             alert("Vui lòng chọn danh mục");
             console.log("Category validation failed. categoryId:", form.categoryId);
             return;
         }
-        
+
         // Validate ID
         let productId = form.id;
         if (!editing) {
@@ -431,22 +422,47 @@ export function useProductManageLogic() {
                 alert("Vui lòng nhập mã sản phẩm");
                 return;
             }
-            
+
             // Kiểm tra format ID (SPxxx)
             if (!/^SP\d{3,}$/.test(productId)) {
                 alert("Mã sản phẩm phải có định dạng SPxxx (ví dụ: SP201, SP202,...)");
                 return;
             }
         }
-        
+
+        let finalImage = form.image;
+        if (finalImage) {
+            // Nếu phát hiện có chứa link http/https bên trong chuỗi bị nối
+            const httpIndex = finalImage.indexOf("http://");
+            const httpsIndex = finalImage.indexOf("https://");
+
+            if (httpIndex >= 0) {
+                finalImage = finalImage.substring(httpIndex);
+            } else if (httpsIndex >= 0) {
+                finalImage = finalImage.substring(httpsIndex);
+            } else {
+                // Chỉ cắt tiền tố thư mục đối với ảnh cục bộ
+                const matchIndex = finalImage.lastIndexOf("/photos/products/");
+                if (matchIndex >= 0) {
+                    finalImage = finalImage.substring(matchIndex);
+
+                    const expectedPrefix = `/photos/products/${form.categoryId}/`;
+                    if (finalImage.startsWith(expectedPrefix)) {
+                        finalImage = finalImage.replace(expectedPrefix, "");
+                    }
+                }
+            }
+        }
+
         const payload = {
             ...form,
-            id: productId
+            id: productId,
+            image: finalImage
         };
-        
+
         console.log("=== Payload to submit ===");
         console.log(JSON.stringify(payload, null, 2));
-        
+
         setIsSubmitting(true);
         try {
             if (editing) {
@@ -457,23 +473,33 @@ export function useProductManageLogic() {
                 alert("✅ Thêm sản phẩm thành công! Mã: " + productId);
             }
             setOpenForm(false);
-            
-            // Chỉ clear cache của 3 pages đầu (product mới sẽ ở đầu)
-            // Giữ lại cache của các page khác để không phải load lại hết
-            for (let i = 1; i <= 3; i++) {
-                delete cacheRef.current[`page_${i}`];
-                localStorage.removeItem(`${CACHE_KEY_PREFIX}${i}`);
+
+            // Clear all cache to ensure correct data and pagination
+            cacheRef.current = {};
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(CACHE_KEY_PREFIX)) {
+                    keysToRemove.push(key);
+                }
             }
-            
-            // Về page 1 và reload
-            setPage(1);
-            await loadProductsPage(1, false);
-            
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+
+            if (editing) {
+                await loadProductsPage(page, false);
+            } else {
+                // Đi tới trang cuối cùng để thấy sản phẩm vừa thêm
+                const newTotalElems = totalElements + 1;
+                const lastPage = Math.max(1, Math.ceil(newTotalElems / pageSize));
+                setPage(lastPage);
+                await loadProductsPage(lastPage, false);
+            }
+
             // Trigger lại background load cho các page chưa có cache
             setTimeout(() => loadAllInBackground(), 500);
         } catch (err) {
             console.error("Save product error:", err);
-            
+
             // Parse error message
             let errorMsg = err.message || "Lỗi không xác định";
             if (errorMsg.includes("400")) {
@@ -487,18 +513,35 @@ export function useProductManageLogic() {
 
     const handleDelete = async sp_id => {
         if (!window.confirm("Bạn chắc chắn muốn xoá sản phẩm này?")) return;
-        
+
         setDeletingId(sp_id);
         try {
             await deleteProduct(sp_id);
-            
-            // Chỉ clear cache của page hiện tại, giữ lại cache khác
-            delete cacheRef.current[`page_${page}`];
-            localStorage.removeItem(`${CACHE_KEY_PREFIX}${page}`);
-            
-            // Reload page hiện tại
-            await loadProductsPage(page, false);
+
+            // Clear all cache to ensure correct data and pagination
+            cacheRef.current = {};
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith(CACHE_KEY_PREFIX)) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+
+            // Điều chỉnh page nếu page hiện tại trống
+            const newTotalElems = Math.max(0, totalElements - 1);
+            const newTotalPages = Math.max(1, Math.ceil(newTotalElems / pageSize));
+            const targetPage = Math.min(page, newTotalPages);
+
+            if (targetPage !== page) {
+                setPage(targetPage);
+            } else {
+                await loadProductsPage(page, false);
+            }
+
             alert("✅ Xóa sản phẩm thành công!");
+            setTimeout(() => loadAllInBackground(), 500);
         } catch (err) {
             console.error("Delete product error:", err);
             alert("❌ Xoá sản phẩm thất bại");
@@ -530,6 +573,7 @@ export function useProductManageLogic() {
         deletingId,
         brands,
         categories,
+        globalStats, // Thêm export globalStats
 
         openAdd,
         openEdit,

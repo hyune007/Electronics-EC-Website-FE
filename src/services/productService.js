@@ -1,7 +1,7 @@
-// const API_URL = "http://localhost:8080/api/product";
-// const BASE_URL = "http://localhost:8080";
-const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/product";
-const BASE_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app";
+const API_URL = "http://localhost:8080/api/product";
+const BASE_URL = "http://localhost:8080";
+// const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/product";
+//const BASE_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app";
 // Helper to get auth token
 function getAuthHeaders() {
     const token = localStorage.getItem('authToken');
@@ -11,6 +11,19 @@ function getAuthHeaders() {
     };
 }
 
+function extractRawImage(url) {
+    if (!url || typeof url !== "string") return "";
+    let normalized = url.trim().replace(/\\/g, "/");
+    const httpIdx = normalized.indexOf("http://");
+    const httpsIdx = normalized.indexOf("https://");
+
+    // Nếu BE vô tình gán thêm "/photos/products/DM/https://..."
+    if (httpIdx >= 0) return normalized.substring(httpIdx);
+    if (httpsIdx >= 0) return normalized.substring(httpsIdx);
+
+    return normalized;
+}
+
 function resolveImageUrl(url, categoryId, productId) {
     if (!url || typeof url !== "string") {
         if (categoryId && productId) {
@@ -18,7 +31,7 @@ function resolveImageUrl(url, categoryId, productId) {
         }
         return "";
     }
-    let normalized = url.trim().replace(/\\/g, "/");
+    let normalized = extractRawImage(url);
 
     if (normalized.startsWith("http://") || normalized.startsWith("https://")) return normalized;
 
@@ -64,6 +77,7 @@ export async function getProductsByPage(pageNum = 0, pageSize = 8) {
             stock: Number(p.stock ?? 0),
             description: p.description ?? "",
             image: resolveImageUrl(p.image, p.category?.id, p.id),
+            raw_image: extractRawImage(p.image),
             brand: {
                 id: p.brand?.id ?? "",
                 name: p.brand?.name ?? ""
@@ -107,6 +121,7 @@ export async function getAllProducts() {
                 stock: Number(p.stock ?? 0),
                 description: p.description ?? "",
                 image: resolveImageUrl(p.image, p.category?.id, p.id),
+                raw_image: extractRawImage(p.image),
                 brand: {
                     id: p.brand?.id ?? "",
                     name: p.brand?.name ?? ""

@@ -305,15 +305,15 @@
   resolved "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.0-beta.53.tgz"
   integrity sha512-vENRlFU4YbrwVqNDZ7fLvy+JR1CRkyr01jhSiDpE1u6py3OMzQfztQU2jxykW3ALNxO4kSlqIDeYyD0Y9RcQeQ==
 
-"@rollup/rollup-win32-x64-gnu@4.55.3":
-  version "4.55.3"
-  resolved "https://registry.npmjs.org/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.55.3.tgz"
-  integrity sha512-POZHq7UeuzMJljC5NjKi8vKMFN6/5EOqcX1yGntNLp7rUTpBAXQ1hW8kWPFxYLv07QMcNM75xqVLGPWQq6TKFA==
+"@rollup/rollup-win32-x64-gnu@4.59.0":
+  version "4.59.0"
+  resolved "https://registry.npmjs.org/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.59.0.tgz"
+  integrity sha512-laBkYlSS1n2L8fSo1thDNGrCTQMmxjYY5G0WFWjFFYZkKPjsMBsgJfGf4TLxXrF6RyhI60L8TMOjBMvXiTcxeA==
 
-"@rollup/rollup-win32-x64-msvc@4.55.3":
-  version "4.55.3"
-  resolved "https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.55.3.tgz"
-  integrity sha512-aPFONczE4fUFKNXszdvnd2GqKEYQdV5oEsIbKPujJmWlCI9zEsv1Otig8RKK+X9bed9gFUN6LAeN4ZcNuu4zjg==
+"@rollup/rollup-win32-x64-msvc@4.59.0":
+  version "4.59.0"
+  resolved "https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.59.0.tgz"
+  integrity sha512-2HRCml6OztYXyJXAvdDXPKcawukWY2GpR5/nxKp4iBgiO3wcoEGkAaqctIbZcNB6KlUQBIqt8VYkNSj2397EfA==
 
 "@tailwindcss/node@4.1.18":
   version "4.1.18"
@@ -1336,37 +1336,37 @@ resolve-from@^4.0.0:
   integrity sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==
 
 rollup@^4.43.0:
-  version "4.55.3"
-  resolved "https://registry.npmjs.org/rollup/-/rollup-4.55.3.tgz"
-  integrity sha512-y9yUpfQvetAjiDLtNMf1hL9NXchIJgWt6zIKeoB+tCd3npX08Eqfzg60V9DhIGVMtQ0AlMkFw5xa+AQ37zxnAA==
+  version "4.59.0"
+  resolved "https://registry.npmjs.org/rollup/-/rollup-4.59.0.tgz"
+  integrity sha512-2oMpl67a3zCH9H79LeMcbDhXW/UmWG/y2zuqnF2jQq5uq9TbM9TVyXvA4+t+ne2IIkBdrLpAaRQAvo7YI/Yyeg==
   dependencies:
     "@types/estree" "1.0.8"
   optionalDependencies:
-    "@rollup/rollup-android-arm-eabi" "4.55.3"
-    "@rollup/rollup-android-arm64" "4.55.3"
-    "@rollup/rollup-darwin-arm64" "4.55.3"
-    "@rollup/rollup-darwin-x64" "4.55.3"
-    "@rollup/rollup-freebsd-arm64" "4.55.3"
-    "@rollup/rollup-freebsd-x64" "4.55.3"
-    "@rollup/rollup-linux-arm-gnueabihf" "4.55.3"
-    "@rollup/rollup-linux-arm-musleabihf" "4.55.3"
-    "@rollup/rollup-linux-arm64-gnu" "4.55.3"
-    "@rollup/rollup-linux-arm64-musl" "4.55.3"
-    "@rollup/rollup-linux-loong64-gnu" "4.55.3"
-    "@rollup/rollup-linux-loong64-musl" "4.55.3"
-    "@rollup/rollup-linux-ppc64-gnu" "4.55.3"
-    "@rollup/rollup-linux-ppc64-musl" "4.55.3"
-    "@rollup/rollup-linux-riscv64-gnu" "4.55.3"
-    "@rollup/rollup-linux-riscv64-musl" "4.55.3"
-    "@rollup/rollup-linux-s390x-gnu" "4.55.3"
-    "@rollup/rollup-linux-x64-gnu" "4.55.3"
-    "@rollup/rollup-linux-x64-musl" "4.55.3"
-    "@rollup/rollup-openbsd-x64" "4.55.3"
-    "@rollup/rollup-openharmony-arm64" "4.55.3"
-    "@rollup/rollup-win32-arm64-msvc" "4.55.3"
-    "@rollup/rollup-win32-ia32-msvc" "4.55.3"
-    "@rollup/rollup-win32-x64-gnu" "4.55.3"
-    "@rollup/rollup-win32-x64-msvc" "4.55.3"
+    "@rollup/rollup-android-arm-eabi" "4.59.0"
+    "@rollup/rollup-android-arm64" "4.59.0"
+    "@rollup/rollup-darwin-arm64" "4.59.0"
+    "@rollup/rollup-darwin-x64" "4.59.0"
+    "@rollup/rollup-freebsd-arm64" "4.59.0"
+    "@rollup/rollup-freebsd-x64" "4.59.0"
+    "@rollup/rollup-linux-arm-gnueabihf" "4.59.0"
+    "@rollup/rollup-linux-arm-musleabihf" "4.59.0"
+    "@rollup/rollup-linux-arm64-gnu" "4.59.0"
+    "@rollup/rollup-linux-arm64-musl" "4.59.0"
+    "@rollup/rollup-linux-loong64-gnu" "4.59.0"
+    "@rollup/rollup-linux-loong64-musl" "4.59.0"
+    "@rollup/rollup-linux-ppc64-gnu" "4.59.0"
+    "@rollup/rollup-linux-ppc64-musl" "4.59.0"
+    "@rollup/rollup-linux-riscv64-gnu" "4.59.0"
+    "@rollup/rollup-linux-riscv64-musl" "4.59.0"
+    "@rollup/rollup-linux-s390x-gnu" "4.59.0"
+    "@rollup/rollup-linux-x64-gnu" "4.59.0"
+    "@rollup/rollup-linux-x64-musl" "4.59.0"
+    "@rollup/rollup-openbsd-x64" "4.59.0"
+    "@rollup/rollup-openharmony-arm64" "4.59.0"
+    "@rollup/rollup-win32-arm64-msvc" "4.59.0"
+    "@rollup/rollup-win32-ia32-msvc" "4.59.0"
+    "@rollup/rollup-win32-x64-gnu" "4.59.0"
+    "@rollup/rollup-win32-x64-msvc" "4.59.0"
     fsevents "~2.3.2"
 
 scheduler@^0.27.0:
