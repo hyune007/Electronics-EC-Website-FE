@@ -19,16 +19,16 @@ if (savedTheme === "dark") {
 
 createRoot(document.getElementById("root")).render(
   // <StrictMode>
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <BrowserRouter>
-        <AuthProvider>
-          <CartProvider>
-            <ProductCacheProvider>
-              <App />
-            </ProductCacheProvider>
-          </CartProvider>
-        </AuthProvider>
-      </BrowserRouter>
-    </GoogleOAuthProvider>
+  <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+    <BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
+          <ProductCacheProvider>
+            <App />
+          </ProductCacheProvider>
+        </CartProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  </GoogleOAuthProvider>,
   // </StrictMode>,
 );
