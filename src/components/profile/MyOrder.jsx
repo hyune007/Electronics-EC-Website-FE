@@ -1,26 +1,80 @@
-import { useState } from "react";
-import orders from "../../mocks/mockFakeOrders";
+import { useEffect, useState } from "react";
 import vi from "../../i18n/vi";
+import { useAuth } from "../../hooks/useAuth";
+import { getBillsByCustomer } from "../../services/customer/billServiceCustomer";
 
 export default function MyOrder() {
   const [filter, setFilter] = useState("all");
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const { user } = useAuth();
+
+  useEffect(() => {
+    const fetchCustomerBills = async () => {
+      if (!user?.id) {
+        setOrders([]);
+        setIsLoading(false);
+        return;
+      }
+      try {
+        setIsLoading(true);
+        setLoadError("");
+        const response = await getBillsByCustomer(user.id);
+        const payload = response?.data;
+        let bills = [];
+        if (Array.isArray(payload)) {
+          bills = payload;
+        } else if (Array.isArray(payload?.data)) {
+          bills = payload.data;
+        }
+        const mappedOrders = bills.map((bill) => {
+          const rawDate = bill?.date;
+          const formattedDate = rawDate
+            ? new Date(rawDate).toLocaleDateString("vi-VN", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "2-digit",
+              })
+            : "--";
+          return {
+            id: bill?.id ?? "",
+            date: formattedDate,
+            total: Number(bill?.totalAmount) || 0,
+            status: String(bill?.status || "pending"),
+          };
+        });
+
+        setOrders(mappedOrders);
+      } catch (error) {
+        console.error("Failed to load customer bills:", error);
+        setLoadError("Không thể tải đơn hàng. Vui lòng thử lại sau.");
+        setOrders([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCustomerBills();
+  }, [user?.id]);
 
   const filtered = orders.filter(
     (o) => filter === "all" || o.status === filter,
   );
 
-  const formatVND = (n) =>
-    typeof n === "number"
-      ? n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " ₫"
-      : n;
+  const formatVND = (n) => {
+    const value = Number(n);
+    if (!Number.isFinite(value)) return "0 ₫";
+    return `${new Intl.NumberFormat("vi-VN").format(value)} ₫`;
+  };
 
   const badgeClassFor = (status) => {
     const map = {
-      pending: "bg-blue-100 text-blue-700 border border-blue-200",
-      confirmed: "bg-green-100 text-green-700 border border-green-200",
-      delivered: "bg-green-100 text-green-700 border border-green-200",
-      shipping: "bg-yellow-100 text-yellow-700 border border-yellow-200",
-      cancelled: "bg-red-100 text-red-700 border border-red-200",
+      "Đơn đang chờ giao":
+        "bg-yellow-100 text-yellow-700 border border-yellow-200",
+      "Đang giao": "bg-yellow-100 text-yellow-700 border border-yellow-200",
+      "Đã giao": "bg-green-100 text-green-700 border border-green-200",
+      "Đã hủy": "bg-red-100 text-red-700 border border-red-200",
     };
 
     const base =
@@ -36,19 +90,100 @@ export default function MyOrder() {
 
   const filters = [
     ["all", vi.profile.myOrder.filters.all],
-    ["pending", vi.profile.myOrder.filters.pending],
-    ["confirmed", vi.profile.myOrder.filters.confirmed],
-    ["shipping", vi.profile.myOrder.filters.shipping],
-    ["delivered", vi.profile.myOrder.filters.delivered],
-    ["cancelled", vi.profile.myOrder.filters.cancelled],
+
+    ["Đơn đang chờ giao", vi.profile.myOrder.filters.waiting_shipping],
+    ["Đang giao", vi.profile.myOrder.filters.shipping],
+    ["Đã giao", vi.profile.myOrder.filters.delivered],
+    ["Đã hủy", vi.profile.myOrder.filters.cancelled],
   ];
 
   const statusLabel = {
-    pending: "Chờ xác nhận",
-    confirmed: "Đã xác nhận",
+    waiting_shipping: "Đơn đang chờ giao",
     shipping: "Đang giao",
     delivered: "Đã giao",
     cancelled: "Đã hủy",
+  };
+
+  const showingText = `Hiển thị ${filtered.length} trên ${orders.length} đơn hàng`;
+
+  const renderBody = () => {
+    if (isLoading) {
+      return (
+        <>
+          <tr>
+            <td
+              className="px-6 py-8 text-sm text-center text-slate-500"
+              colSpan={5}
+            >
+              Đang tải đơn hàng...
+            </td>
+          </tr>
+        </>
+      );
+    }
+
+    if (loadError) {
+      return (
+        <>
+          <tr>
+            <td
+              className="px-6 py-8 text-sm text-center text-red-500"
+              colSpan={5}
+            >
+              {loadError}
+            </td>
+          </tr>
+        </>
+      );
+    }
+
+    if (!filtered.length) {
+      return (
+        <>
+          <tr>
+            <td
+              className="px-6 py-8 text-sm text-center text-slate-500"
+              colSpan={5}
+            >
+              Chưa có đơn hàng phù hợp.
+            </td>
+          </tr>
+        </>
+      );
+    }
+
+    return (
+      <>
+        {filtered.map((o) => (
+          <tr key={o.id} className="transition-colors">
+            <td className="px-6 py-5 text-sm font-medium dark:group-hover:text-slate-100">
+              {o.id}
+            </td>
+
+            <td className="px-6 py-5 text-sm dark:text-slate-300 dark:group-hover:text-slate-100">
+              {o.date}
+            </td>
+
+            <td className="px-6 py-5 text-sm">{formatVND(o.total)}</td>
+
+            <td className="px-6 py-5">
+              <span className={badgeClassFor(o.status)}>
+                {statusLabel[o.status] || o.status}
+              </span>
+            </td>
+
+            <td className="px-6 py-5 text-right">
+              <button className="text-sm font-medium dark:text-[var(--accent-light)] flex items-center gap-1 ml-auto nav-link">
+                {vi.profile.myOrder.viewDetail}
+                <span className="material-symbols-outlined text-[18px]">
+                  chevron_right
+                </span>
+              </button>
+            </td>
+          </tr>
+        ))}
+      </>
+    );
   };
 
   return (
@@ -91,7 +226,7 @@ export default function MyOrder() {
             <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
               {vi.profile.myOrder.headers.map((h, i) => (
                 <th
-                  key={i}
+                  key={h}
                   className={`px-6 py-4 text-xs font-semibold uppercase tracking-wider ${
                     i === 4 ? "text-right" : ""
                   }`}
@@ -103,43 +238,12 @@ export default function MyOrder() {
           </thead>
 
           <tbody className="divide-y divide-slate-200/40 dark:divide-slate-700/10">
-            {filtered.map((o) => (
-              <tr key={o.id} className="transition-colors">
-                <td className="px-6 py-5 text-sm font-medium dark:group-hover:text-slate-100">
-                  {o.id}
-                </td>
-
-                <td className="px-6 py-5 text-sm dark:text-slate-300 dark:group-hover:text-slate-100">
-                  {o.date}
-                </td>
-
-                <td className="px-6 py-5 text-sm">{formatVND(o.total)}</td>
-
-                <td className="px-6 py-5">
-                  <span className={badgeClassFor(o.status)}>
-                    {statusLabel[o.status]}
-                  </span>
-                </td>
-
-                <td className="px-6 py-5 text-right">
-                  <button className="text-sm font-medium dark:text-[var(--accent-light)] flex items-center gap-1 ml-auto nav-link">
-                    {vi.profile.myOrder.viewDetail}
-                    <span className="material-symbols-outlined text-[18px]">
-                      chevron_right
-                    </span>
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {renderBody()}
           </tbody>
         </table>
 
         <div className="px-6 py-4 bg-white border-t border-slate-100 dark:bg-slate-900 dark:border-t dark:border-slate-700 flex items-center justify-between">
-          <p className="text-sm dark:text-slate-300">
-            {vi.profile.myOrder.showing
-              .replace("{shown}", String(filtered.length))
-              .replace("{total}", String(orders.length))}
-          </p>
+          <p className="text-sm dark:text-slate-300">{showingText}</p>
           <div className="flex items-center gap-2">
             <button
               className="p-2 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
