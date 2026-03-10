@@ -1,4 +1,4 @@
-import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Shield, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Shield } from "lucide-react";
 import { useCustomerLogic } from "./CustomerLogic.js";
 import CustomerForm from "./CustomerForm.jsx";
 import { useState, useEffect } from "react";
@@ -11,13 +11,15 @@ export default function CustomerManage() {
     const cm = useCustomerLogic();
     const [mounted, setMounted] = useState(false);
     const { user } = useAuth();
+    const isAdmin = user?.roleId === "ROLE_ADMIN";
+    const isEmployee = user?.roleId === "ROLE_EMPLOYEE";
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    // Kiểm tra quyền - chỉ ADMIN được phép
-    if (user?.roleId !== "ROLE_ADMIN") {
+    // Theo BE security: ADMIN + EMPLOYEE truy cập, nhưng delete customer chỉ ADMIN
+    if (!isAdmin && !isEmployee) {
         return <Navigate to="/unauthorized" replace />;
     }
 
@@ -45,7 +47,7 @@ export default function CustomerManage() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-neutral-600 text-sm font-medium mb-1">Tổng Khách Hàng</p>
-                                <p className="text-2xl font-bold text-neutral-900">{cm.filteredCustomers.length}</p>
+                                <p className="text-2xl font-bold text-neutral-900">{cm.stats.total}</p>
                             </div>
                             <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
                                 <Users className="text-primary-600" size={24} />
@@ -56,9 +58,9 @@ export default function CustomerManage() {
                     <div className="card p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-neutral-600 text-sm font-medium mb-1">Đang Tìm Kiếm</p>
+                                <p className="text-neutral-600 text-sm font-medium mb-1">Kết Quả Lọc</p>
                                 <p className="text-2xl font-bold text-neutral-900">
-                                    {cm.search ? cm.filteredCustomers.length : cm.filteredCustomers.length}
+                                    {cm.stats.matched}
                                 </p>
                             </div>
                             <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -70,9 +72,9 @@ export default function CustomerManage() {
                     <div className="card p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-neutral-600 text-sm font-medium mb-1">Hôm Nay</p>
+                                <p className="text-neutral-600 text-sm font-medium mb-1">Hồ Sơ Đầy Đủ</p>
                                 <p className="text-2xl font-bold text-neutral-900">
-                                    {new Date().toLocaleDateString('vi-VN')}
+                                    {cm.stats.completionRate}%
                                 </p>
                             </div>
                             <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
@@ -95,6 +97,20 @@ export default function CustomerManage() {
                             onChange={(e) => cm.setSearch(e.target.value)}
                             className="flex-1 bg-transparent outline-none ml-3 text-neutral-900 placeholder-neutral-400"
                         />
+                    </div>
+
+                    <div className="sm:w-64">
+                        <select
+                            value={cm.sortBy}
+                            onChange={(e) => cm.setSortBy(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                        >
+                            <option value="newest">Sắp xếp: Mới nhất</option>
+                            <option value="oldest">Sắp xếp: Cũ nhất</option>
+                            <option value="name_az">Sắp xếp: Tên A-Z</option>
+                            <option value="name_za">Sắp xếp: Tên Z-A</option>
+                            <option value="email_az">Sắp xếp: Email A-Z</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -168,13 +184,15 @@ export default function CustomerManage() {
                                             >
                                                 <Pencil size={16} />
                                             </button>
-                                            <button
-                                                onClick={() => cm.handleDelete(c.kh_id)}
-                                                className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
-                                                title="Xóa"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            {isAdmin && (
+                                                <button
+                                                    onClick={() => cm.handleDelete(c.kh_id)}
+                                                    className="p-2 text-neutral-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200"
+                                                    title="Xóa"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

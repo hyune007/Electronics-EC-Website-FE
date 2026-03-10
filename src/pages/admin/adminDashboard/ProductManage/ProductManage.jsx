@@ -6,7 +6,9 @@ import {
     Package,
     TrendingUp,
     DollarSign,
-    Image
+    Image,
+    AlertTriangle,
+    ArrowDownWideNarrow,
 } from "lucide-react";
 import ProductForm from "./ProductForm.jsx";
 import { useProductManageLogic } from "./Productlogic.js";
@@ -20,13 +22,15 @@ export default function ProductManage() {
     const pm = useProductManageLogic();
     const [mounted, setMounted] = useState(false);
     const { user } = useAuth();
+    const isAdmin = user?.roleId === "ROLE_ADMIN";
+    const isEmployee = user?.roleId === "ROLE_EMPLOYEE";
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    // Kiểm tra quyền - chỉ ADMIN được phép
-    if (user?.roleId !== "ROLE_ADMIN") {
+    // Theo BE security: ADMIN + EMPLOYEE
+    if (!isAdmin && !isEmployee) {
         return <Navigate to="/unauthorized" replace />;
     }
 
@@ -59,37 +63,63 @@ export default function ProductManage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <StatCard
                         label="Tổng sản phẩm"
-                        value={pm.totalElements}
+                        value={pm.globalStats.totalProducts || pm.totalElements}
                         icon={<Package />}
+                        tone="primary"
                     />
                     <StatCard
                         label="Tổng giá trị"
                         value={`${pm.globalStats.totalValue.toLocaleString("vi-VN")} ₫`}
                         icon={<DollarSign />}
+                        tone="success"
                     />
                     <StatCard
-                        label="Tồn kho"
+                        label="Tổng tồn kho"
                         value={pm.globalStats.totalStock}
                         icon={<TrendingUp />}
+                        tone="info"
                     />
                     <StatCard
                         label="Sắp hết hàng"
                         value={pm.globalStats.lowStock}
-                        icon={<Image />}
+                        icon={<AlertTriangle />}
+                        tone="warning"
                     />
                 </div>
             </div>
 
             {/* ===== SEARCH ===== */}
             <div className="card p-6 mb-6">
-                <div className="search-box">
-                    <Search size={18} className="text-neutral-400" />
-                    <input
-                        value={pm.search}
-                        onChange={e => pm.setSearch(e.target.value)}
-                        placeholder="Tìm theo tên hoặc mã sản phẩm..."
-                        className="flex-1 ml-3 outline-none bg-transparent"
-                    />
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="search-box flex-1">
+                        <Search size={18} className="text-neutral-400" />
+                        <input
+                            value={pm.search}
+                            onChange={e => pm.setSearch(e.target.value)}
+                            placeholder="Tìm theo tên hoặc mã sản phẩm..."
+                            className="flex-1 ml-3 outline-none bg-transparent"
+                        />
+                    </div>
+
+                    <div className="sort-box md:w-[320px]">
+                        <ArrowDownWideNarrow size={18} className="text-neutral-400" />
+                        <select
+                            value={pm.sortBy}
+                            onChange={(e) => pm.setSortBy(e.target.value)}
+                            className="flex-1 ml-3 bg-transparent outline-none"
+                        >
+                            <option value="newest_id">Sắp xếp: Mã mới nhất</option>
+                            <option value="oldest_id">Sắp xếp: Mã cũ nhất</option>
+                            <option value="name_az">Sắp xếp: Tên A-Z</option>
+                            <option value="name_za">Sắp xếp: Tên Z-A</option>
+                            <option value="price_desc">Sắp xếp: Giá cao đến thấp</option>
+                            <option value="price_asc">Sắp xếp: Giá thấp đến cao</option>
+                            <option value="stock_desc">Sắp xếp: Tồn kho cao đến thấp</option>
+                            <option value="stock_asc">Sắp xếp: Tồn kho thấp đến cao</option>
+                            <option value="value_desc">Sắp xếp: Giá trị tồn kho cao nhất</option>
+                            <option value="low_stock_first">Sắp xếp: Ưu tiên sắp hết hàng</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -299,14 +329,23 @@ export default function ProductManage() {
     );
 }
 
-function StatCard({ label, value, icon }) {
+function StatCard({ label, value, icon, tone = "primary" }) {
+    const toneMap = {
+        primary: "bg-primary-100 text-primary-600",
+        success: "bg-emerald-100 text-emerald-600",
+        info: "bg-sky-100 text-sky-600",
+        warning: "bg-amber-100 text-amber-600",
+        danger: "bg-rose-100 text-rose-600",
+        neutral: "bg-neutral-100 text-neutral-700",
+    };
+
     return (
         <div className="card p-6 flex items-center justify-between">
             <div>
                 <p className="text-sm text-neutral-600">{label}</p>
                 <p className="text-2xl font-bold">{value}</p>
             </div>
-            <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center text-primary-600">
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${toneMap[tone] || toneMap.primary}`}>
                 {icon}
             </div>
         </div>

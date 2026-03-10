@@ -4,6 +4,59 @@ import { getAllBrands } from "../../../../services/brandService";
 import { getAllCategories } from "../../../../services/categoryService";
 import { showToast } from "../../../../utils/adminToast";
 
+function getNextProductIdFromList(products, totalElements) {
+    const ids = (products || []).map((item) => item?.sp_id).filter(Boolean);
+    let maxNumber = 0;
+
+    ids.forEach((id) => {
+        const match = String(id).match(/^SP(\d+)$/i);
+        if (!match) return;
+        const num = Number(match[1]);
+        if (!Number.isNaN(num)) {
+            maxNumber = Math.max(maxNumber, num);
+        }
+    });
+
+    const fallbackByTotal = Number(totalElements || 0) + 1;
+    const nextNumber = Math.max(maxNumber + 1, fallbackByTotal, 1);
+    return `SP${String(nextNumber).padStart(3, "0")}`;
+}
+
+function getProductIdNum(id) {
+    const match = String(id || "").match(/(\d+)$/);
+    return match ? Number(match[1]) : 0;
+}
+
+function sortProducts(list, sortBy) {
+    const sorted = [...list];
+    sorted.sort((a, b) => {
+        switch (sortBy) {
+            case "oldest_id":
+                return getProductIdNum(a.sp_id) - getProductIdNum(b.sp_id);
+            case "name_az":
+                return String(a.sp_name || "").localeCompare(String(b.sp_name || ""), "vi", { sensitivity: "base" });
+            case "name_za":
+                return String(b.sp_name || "").localeCompare(String(a.sp_name || ""), "vi", { sensitivity: "base" });
+            case "price_desc":
+                return Number(b.sp_price || 0) - Number(a.sp_price || 0);
+            case "price_asc":
+                return Number(a.sp_price || 0) - Number(b.sp_price || 0);
+            case "stock_desc":
+                return Number(b.sp_stock || 0) - Number(a.sp_stock || 0);
+            case "stock_asc":
+                return Number(a.sp_stock || 0) - Number(b.sp_stock || 0);
+            case "value_desc":
+                return (Number(b.sp_price || 0) * Number(b.sp_stock || 0)) - (Number(a.sp_price || 0) * Number(a.sp_stock || 0));
+            case "low_stock_first":
+                return Number(a.sp_stock || 0) - Number(b.sp_stock || 0);
+            case "newest_id":
+            default:
+                return getProductIdNum(b.sp_id) - getProductIdNum(a.sp_id);
+        }
+    });
+    return sorted;
+}
+
 // Cache helpers
 const CACHE_KEY_PREFIX = "product_page_v2_";
 
@@ -22,6 +75,7 @@ export function useProductManageLogic() {
 
     const [search, setSearch] = useState("");
     const [searchInput, setSearchInput] = useState("");
+    const [sortBy, setSortBy] = useState("newest_id");
     const [page, setPage] = useState(1);
     const pageSize = 12; // Increased from 8 to 12
 
@@ -35,6 +89,7 @@ export function useProductManageLogic() {
     const searchTimeoutRef = useRef(null);
 
     const [form, setForm] = useState({
+        id: "",
         name: "",
         price: 0,
         stock: 0,
@@ -48,9 +103,13 @@ export function useProductManageLogic() {
 
     // Global Stats state
     const [globalStats, setGlobalStats] = useState({
+        totalProducts: 0,
         totalValue: 0,
         totalStock: 0,
-        lowStock: 0
+        lowStock: 0,
+        outOfStock: 0,
+        averagePrice: 0,
+        inStockRate: 0
     });
 
     const [brands, setBrands] = useState([]);
@@ -123,21 +182,41 @@ export function useProductManageLogic() {
         try {
             setLoading(true);
 
-            // If search is active, do local filtering from allProducts
-            if (isSearch || search.trim() !== "") {
-                const keyword = search.toLowerCase().trim();
+            const keyword = search.toLowerCase().trim();
+            const shouldUseLocalData = allProducts.length > 0 && (keyword !== "" || sortBy !== "newest_id");
+
+            if (shouldUseLocalData) {
                 const filtered = allProducts.filter(p =>
                     String(p.sp_name || "").toLowerCase().includes(keyword) ||
                     String(p.sp_id || "").toLowerCase().includes(keyword)
                 );
 
+                const sorted = sortProducts(filtered, sortBy);
+                setTotalElements(sorted.length);
+
+                const startIdx = (pageNum - 1) * pageSize;
+                const endIdx = startIdx + pageSize;
+                setProducts(sorted.slice(startIdx, endIdx));
+                setLoading(false);
+                return;
+            }
+
+            // If search is active, do local filtering from allProducts
+            if (isSearch || search.trim() !== "") {
+                const filtered = allProducts.filter(p =>
+                    String(p.sp_name || "").toLowerCase().includes(keyword) ||
+                    String(p.sp_id || "").toLowerCase().includes(keyword)
+                );
+
+                const sorted = sortProducts(filtered, sortBy);
+
                 // Calculate total pages for filtered
-                setTotalElements(filtered.length);
+                setTotalElements(sorted.length);
 
                 // Slice for pagination
                 const startIdx = (pageNum - 1) * pageSize;
                 const endIdx = startIdx + pageSize;
-                setProducts(filtered.slice(startIdx, endIdx));
+                setProducts(sorted.slice(startIdx, endIdx));
                 setLoading(false);
                 return;
             }
@@ -189,14 +268,14 @@ export function useProductManageLogic() {
             cacheRef.current[cacheKey] = pageData;
             setCachedPage(pageNum, pageData);
 
-            setProducts(mapped);
+            setProducts(sortProducts(mapped, sortBy));
             setTotalElements(res.totalElements);
         } catch (err) {
             console.error("Load products failed:", err);
         } finally {
             setLoading(false);
         }
-    }, [search, pageSize, allProducts]);
+    }, [search, pageSize, allProducts, sortBy]);
 
     /* ================= BACKGROUND LOADING ================= */
     const loadAllInBackground = useCallback(async () => {
@@ -238,10 +317,26 @@ export function useProductManageLogic() {
             setAllProducts(uniqueProducts);
 
             // Calculate global stats
+            const totalProducts = uniqueProducts.length;
+            const totalValue = uniqueProducts.reduce((s, p) => s + (p.sp_price * p.sp_stock), 0);
+            const totalStock = uniqueProducts.reduce((s, p) => s + p.sp_stock, 0);
+            const lowStock = uniqueProducts.filter(p => p.sp_stock > 0 && p.sp_stock < 10).length;
+            const outOfStock = uniqueProducts.filter(p => p.sp_stock <= 0).length;
+            const averagePrice = totalProducts > 0
+                ? Math.round(uniqueProducts.reduce((s, p) => s + Number(p.sp_price || 0), 0) / totalProducts)
+                : 0;
+            const inStockRate = totalProducts > 0
+                ? Math.round(((totalProducts - outOfStock) / totalProducts) * 100)
+                : 0;
+
             setGlobalStats({
-                totalValue: uniqueProducts.reduce((s, p) => s + (p.sp_price * p.sp_stock), 0),
-                totalStock: uniqueProducts.reduce((s, p) => s + p.sp_stock, 0),
-                lowStock: uniqueProducts.filter(p => p.sp_stock < 10).length
+                totalProducts,
+                totalValue,
+                totalStock,
+                lowStock,
+                outOfStock,
+                averagePrice,
+                inStockRate,
             });
             console.log("✅ Background load completed. Total Loaded:", uniqueProducts.length);
         } catch (err) {
@@ -281,6 +376,10 @@ export function useProductManageLogic() {
         };
     }, [searchInput, loadProductsPage]);
 
+    useEffect(() => {
+        setPage(1);
+    }, [sortBy]);
+
     /* ================= CALCULATE TOTAL PAGES ================= */
     const totalPages = Math.max(
         1,
@@ -302,6 +401,7 @@ export function useProductManageLogic() {
             }
 
             setForm({
+                id: getNextProductIdFromList(allProducts, totalElements),
                 name: "",
                 price: 0,
                 stock: 0,
@@ -320,6 +420,7 @@ export function useProductManageLogic() {
     const openEdit = p => {
         setEditing(p);
         setForm({
+            id: p.sp_id,
             name: p.sp_name,
             price: p.sp_price,
             stock: p.sp_stock,
@@ -511,6 +612,8 @@ export function useProductManageLogic() {
 
         search: searchInput,
         setSearch: setSearchInput,
+        sortBy,
+        setSortBy,
 
         page,
         setPage,

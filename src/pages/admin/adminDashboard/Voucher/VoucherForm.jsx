@@ -1,4 +1,4 @@
-﻿import { X, Ticket, FileText, Percent, Calendar, Loader2 } from "lucide-react";
+﻿import { X, Ticket, FileText, Percent, Calendar, Loader2, Hash } from "lucide-react";
 
 export default function VoucherForm({ open, onClose, onSubmit }) {
     if (!open) return null;
@@ -38,6 +38,22 @@ export default function VoucherForm({ open, onClose, onSubmit }) {
                         <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">Thông tin voucher</h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Mã voucher
+                                </label>
+                                <div className="relative">
+                                    <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={18} />
+                                    <input
+                                        type="text"
+                                        value={form.km_id || ""}
+                                        readOnly
+                                        disabled
+                                        className="w-full pl-10 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-neutral-700 disabled:opacity-100"
+                                    />
+                                </div>
+                            </div>
+
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                                     Tên voucher <span className="text-red-500">*</span>

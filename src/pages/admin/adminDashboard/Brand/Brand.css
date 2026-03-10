@@ -78,6 +78,64 @@
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
+.sort-box {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s;
+}
+
+.sort-box:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.sort-box select {
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
+.sortable-header {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sortable-header:hover {
+  color: #4338ca;
+}
+
+.sort-chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+  color: #4b5563;
+  background: #fff;
+}
+
+.sort-chip.active {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+  color: #3730a3;
+}
+
 /* Table Styles */
 .table-container {
   background-color: white;

@@ -6,6 +6,7 @@ import {
     deleteBrand,
 } from "../../../../services/brandService";
 import { showToast } from "../../../../utils/adminToast";
+import { generateSmartNextId } from "../../../../utils/codeGenerator";
 
 // Cache helpers
 const CACHE_KEY = "brand_data";
@@ -55,6 +56,7 @@ export function useBrandLogic() {
     // ===== STATE =====
     const [brands, setBrands] = useState([]);
     const [search, setSearch] = useState("");
+    const [sortBy, setSortBy] = useState("newest_id");
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -102,21 +104,59 @@ export function useBrandLogic() {
 
     // ===== FILTER =====
     const filteredBrands = useMemo(() => {
+        const keyword = search.toLowerCase().trim();
         return brands.filter((b) =>
-            b.hang_name.toLowerCase().includes(search.toLowerCase())
+            b.hang_name.toLowerCase().includes(keyword) ||
+            String(b.hang_id || "").toLowerCase().includes(keyword)
         );
     }, [brands, search]);
+
+    const sortedBrands = useMemo(() => {
+        const parseIdNumber = (value) => {
+            const match = String(value || "").match(/(\d+)$/);
+            return match ? Number(match[1]) : 0;
+        };
+
+        const list = [...filteredBrands];
+        list.sort((a, b) => {
+            switch (sortBy) {
+                case "oldest_id":
+                    return parseIdNumber(a.hang_id) - parseIdNumber(b.hang_id);
+                case "name_az":
+                    return String(a.hang_name || "").localeCompare(String(b.hang_name || ""), "vi", { sensitivity: "base" });
+                case "name_za":
+                    return String(b.hang_name || "").localeCompare(String(a.hang_name || ""), "vi", { sensitivity: "base" });
+                case "id_az":
+                    return String(a.hang_id || "").localeCompare(String(b.hang_id || ""), "vi", { sensitivity: "base" });
+                case "newest_id":
+                default:
+                    return parseIdNumber(b.hang_id) - parseIdNumber(a.hang_id);
+            }
+        });
+
+        return list;
+    }, [filteredBrands, sortBy]);
+
+    const stats = useMemo(() => {
+        const total = brands.length;
+        const matched = sortedBrands.length;
+
+        return {
+            total,
+            matched,
+        };
+    }, [brands, sortedBrands.length]);
 
     // ===== PAGINATION =====
     const paginatedBrands = useMemo(() => {
         const startIndex = currentPage * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        return filteredBrands.slice(startIndex, endIndex);
-    }, [filteredBrands, currentPage]);
+        return sortedBrands.slice(startIndex, endIndex);
+    }, [sortedBrands, currentPage]);
 
     const totalPages = useMemo(() => {
-        return Math.ceil(filteredBrands.length / itemsPerPage);
-    }, [filteredBrands.length]);
+        return Math.ceil(sortedBrands.length / itemsPerPage);
+    }, [sortedBrands.length]);
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -135,10 +175,15 @@ export function useBrandLogic() {
         setCurrentPage(0);
     }, [search]);
 
+    useEffect(() => {
+        setCurrentPage(0);
+    }, [sortBy]);
+
     // ===== OPEN FORM =====
     const openAdd = () => {
         setEditing(null);
-        setForm({ hang_id: "", hang_name: "" });
+        const nextId = generateSmartNextId(brands.map((item) => item.hang_id), "H", 2);
+        setForm({ hang_id: nextId, hang_name: "" });
         setOpenForm(true);
     };
 
@@ -158,6 +203,7 @@ export function useBrandLogic() {
         setIsSubmitting(true);
         try {
             const payload = {
+                hang_id: form.hang_id,
                 hang_name: form.hang_name.trim(),
             };
             
@@ -215,6 +261,9 @@ export function useBrandLogic() {
         loading,
         search,
         setSearch,
+        sortBy,
+        setSortBy,
+        stats,
         openForm,
         setOpenForm,
         editing,

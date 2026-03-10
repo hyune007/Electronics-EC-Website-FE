@@ -31,11 +31,12 @@ export async function getAllEmployees(page = 0, search = "") {
             nv_birth: e.birthday
                 ? new Date(e.birthday).toISOString().slice(0, 10)
                 : "",
-            nv_role: e.role?.id ?? "ROLE_STAFF",
+            nv_role: e.role?.id ?? "ROLE_EMPLOYEE",
             nv_role_name: e.role?.name ?? ""
         })),
         totalPages: data.totalPages ?? 0,
-        currentPage: data.number ?? 0
+        currentPage: data.number ?? 0,
+        totalElements: data.totalElements ?? 0
     };
 }
 
@@ -128,7 +129,7 @@ export async function getEmployeeById(id, tokenOverride) {
         nv_birth: e.birthday
             ? new Date(e.birthday).toISOString().slice(0, 10)
             : "",
-        nv_role: e.role?.id ?? "ROLE_STAFF",
+        nv_role: e.role?.id ?? "ROLE_EMPLOYEE",
         nv_role_name: e.role?.name ?? ""
     };
 }

@@ -7,6 +7,7 @@ import {
 } from "../../../../services/importService";
 import { getAllProducts } from "../../../../services/productService";
 import { showToast } from "../../../../utils/adminToast";
+import { generateSmartNextId } from "../../../../utils/codeGenerator";
 
 export function useImportLogic() {
     const [list, setList] = useState([]);
@@ -26,6 +27,7 @@ export function useImportLogic() {
     const [deletingId, setDeletingId] = useState(null);
 
     const emptyForm = {
+        nk_id: "",
         sp_id: "",
         nk_quantity: "",
         nk_date: new Date().toISOString().slice(0, 10)
@@ -176,7 +178,8 @@ export function useImportLogic() {
         products,
         openAdd: () => {
             setEditing(null);
-            setForm({ ...emptyForm });
+            const nextId = generateSmartNextId(list.map((item) => item.nk_id), "NK", 3);
+            setForm({ ...emptyForm, nk_id: nextId });
             setOpenForm(true);
         },
         openEdit: (item) => {

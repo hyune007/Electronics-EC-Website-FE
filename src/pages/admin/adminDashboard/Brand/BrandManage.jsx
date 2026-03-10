@@ -1,4 +1,4 @@
-import { Plus, Pencil, Trash2, Search, Building2, TrendingUp, Award, Package, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Building2, TrendingUp, ArrowDownWideNarrow, ChevronUp, ChevronDown, ArrowUpDown } from "lucide-react";
 import { useBrandLogic } from "./BrandLogic.js";
 import BrandForm from "./BrandForm.jsx";
 import { useState, useEffect } from "react";
@@ -11,15 +11,53 @@ export default function BrandManage() {
     const bm = useBrandLogic();
     const [mounted, setMounted] = useState(false);
     const { user } = useAuth();
+    const isAdmin = user?.roleId === "ROLE_ADMIN";
+    const isEmployee = user?.roleId === "ROLE_EMPLOYEE";
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    // Kiểm tra quyền - chỉ ADMIN được phép
-    if (user?.roleId !== "ROLE_ADMIN") {
+    // Theo BE security: ADMIN + EMPLOYEE
+    if (!isAdmin && !isEmployee) {
         return <Navigate to="/unauthorized" replace />;
     }
+
+    const isIdSort = bm.sortBy === "newest_id" || bm.sortBy === "oldest_id" || bm.sortBy === "id_az";
+    const isNameSort = bm.sortBy === "name_az" || bm.sortBy === "name_za";
+
+    const renderSortIcon = (column) => {
+        if (column === "id") {
+            if (bm.sortBy === "newest_id") return <ChevronDown size={14} className="text-indigo-600" />;
+            if (bm.sortBy === "oldest_id") return <ChevronUp size={14} className="text-indigo-600" />;
+            if (bm.sortBy === "id_az") return <ArrowUpDown size={14} className="text-indigo-600" />;
+            return <ArrowUpDown size={14} className="text-neutral-400" />;
+        }
+
+        if (column === "name") {
+            if (bm.sortBy === "name_az") return <ChevronUp size={14} className="text-indigo-600" />;
+            if (bm.sortBy === "name_za") return <ChevronDown size={14} className="text-indigo-600" />;
+            return <ArrowUpDown size={14} className="text-neutral-400" />;
+        }
+
+        return null;
+    };
+
+    const handleSortById = () => {
+        if (bm.sortBy === "newest_id") {
+            bm.setSortBy("oldest_id");
+            return;
+        }
+        if (bm.sortBy === "oldest_id") {
+            bm.setSortBy("id_az");
+            return;
+        }
+        bm.setSortBy("newest_id");
+    };
+
+    const handleSortByName = () => {
+        bm.setSortBy(bm.sortBy === "name_az" ? "name_za" : "name_az");
+    };
 
     return (
         <div className={`fade-in min-h-full ${mounted ? 'slide-up' : ''}`}>
@@ -45,7 +83,7 @@ export default function BrandManage() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-neutral-600 text-sm font-medium mb-1">Tổng Thương Hiệu</p>
-                                <p className="text-2xl font-bold text-neutral-900">{bm.filteredBrands.length}</p>
+                                <p className="text-2xl font-bold text-neutral-900">{bm.stats.total}</p>
                             </div>
                             <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
                                 <Building2 className="text-primary-600" size={24} />
@@ -56,9 +94,9 @@ export default function BrandManage() {
                     <div className="card p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-neutral-600 text-sm font-medium mb-1">Đang Tìm Kiếm</p>
+                                <p className="text-neutral-600 text-sm font-medium mb-1">Kết Quả Lọc</p>
                                 <p className="text-2xl font-bold text-neutral-900">
-                                    {bm.search ? bm.filteredBrands.length : bm.filteredBrands.length}
+                                    {bm.stats.matched}
                                 </p>
                             </div>
                             <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -96,6 +134,27 @@ export default function BrandManage() {
                             className="flex-1 bg-transparent outline-none ml-3 text-neutral-900 placeholder-neutral-400"
                         />
                     </div>
+
+                    <div className="sort-box sm:w-80">
+                        <ArrowDownWideNarrow className="text-neutral-400" size={20} />
+                        <select
+                            value={bm.sortBy}
+                            onChange={(e) => bm.setSortBy(e.target.value)}
+                            className="flex-1 bg-transparent outline-none ml-3 text-neutral-900"
+                        >
+                            <option value="newest_id">Sắp xếp: Mã mới nhất</option>
+                            <option value="oldest_id">Sắp xếp: Mã cũ nhất</option>
+                            <option value="name_az">Sắp xếp: Tên A-Z</option>
+                            <option value="name_za">Sắp xếp: Tên Z-A</option>
+                            <option value="id_az">Sắp xếp: Mã A-Z</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-medium text-neutral-500">Đang sắp xếp:</span>
+                    <span className={`sort-chip ${isIdSort ? "active" : ""}`}>Cột mã</span>
+                    <span className={`sort-chip ${isNameSort ? "active" : ""}`}>Cột tên</span>
                 </div>
             </div>
 
@@ -106,10 +165,26 @@ export default function BrandManage() {
                         <thead className="table-header">
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Mã Thương Hiệu
+                                    <button
+                                        type="button"
+                                        onClick={handleSortById}
+                                        className="sortable-header"
+                                        title="Sắp xếp theo mã"
+                                    >
+                                        <span>Mã Thương Hiệu</span>
+                                        {renderSortIcon("id")}
+                                    </button>
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Tên Thương Hiệu
+                                    <button
+                                        type="button"
+                                        onClick={handleSortByName}
+                                        className="sortable-header"
+                                        title="Sắp xếp theo tên"
+                                    >
+                                        <span>Tên Thương Hiệu</span>
+                                        {renderSortIcon("name")}
+                                    </button>
                                 </th>
                                 <th className="px-6 py-4 text-center text-xs font-medium text-neutral-600 uppercase tracking-wider">
                                     Hành Động
@@ -191,7 +266,7 @@ export default function BrandManage() {
                     currentPage={bm.currentPage}
                     totalPages={bm.totalPages}
                     itemsPerPage={bm.itemsPerPage}
-                    totalItems={bm.filteredBrands.length}
+                    totalItems={bm.stats.matched}
                     onPageChange={bm.handlePageChange}
                     onPreviousPage={bm.handlePreviousPage}
                     onNextPage={bm.handleNextPage}

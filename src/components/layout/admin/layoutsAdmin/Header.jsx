@@ -5,14 +5,20 @@ import { useAuth } from "../../../../hooks/useAuth.js";
 import { useCart } from "../../../../contexts/CartContext.jsx";
 import { jwtDecode } from "jwt-decode";
 import { ROUTE_TITLE_MAP } from "../../../../routes/routesConfig/admin/routeTitle.js";
+import { subscribeToast } from "../../../../utils/adminToast.js";
+
+const ADMIN_NOTIFICATION_KEY = "admin_header_notifications";
 
 export default function Header() {
     const location = useLocation();
     const navigate = useNavigate();
     const [showUserMenu, setShowUserMenu] = useState(false);
+    const [showNotificationMenu, setShowNotificationMenu] = useState(false);
+    const [notifications, setNotifications] = useState([]);
     const { user, logout } = useAuth();
     const { clearCart } = useCart();
     const userMenuRef = useRef(null);
+    const notificationMenuRef = useRef(null);
 
     const displayName = user?.name || (user?.email ? String(user.email).split("@")[0] : "Tài khoản");
     const displayEmail = user?.email || "Chưa có email";
@@ -29,6 +35,11 @@ export default function Header() {
         if (user?.roleId === "ROLE_CUSTOMER") return "Khách hàng";
         return "Tài khoản";
     }, [user?.roleId]);
+
+    const unreadCount = useMemo(
+        () => notifications.filter((item) => !item.read).length,
+        [notifications],
+    );
 
     const currentTitle =
         ROUTE_TITLE_MAP[location.pathname] || "Trang quản trị";
@@ -51,16 +62,75 @@ export default function Header() {
         navigate("/login", { replace: true });
     };
 
+    const handleToggleNotifications = () => {
+        setShowNotificationMenu((prev) => {
+            const nextOpen = !prev;
+            if (nextOpen) {
+                setNotifications((current) => {
+                    const updated = current.map((item) => ({ ...item, read: true }));
+                    localStorage.setItem(ADMIN_NOTIFICATION_KEY, JSON.stringify(updated));
+                    return updated;
+                });
+            }
+            return nextOpen;
+        });
+    };
+
+    const handleClearNotifications = () => {
+        localStorage.removeItem(ADMIN_NOTIFICATION_KEY);
+        setNotifications([]);
+    };
+
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem(ADMIN_NOTIFICATION_KEY);
+            const parsed = raw ? JSON.parse(raw) : [];
+            if (Array.isArray(parsed)) {
+                setNotifications(parsed);
+            }
+        } catch (error) {
+            console.error("Cannot parse admin notifications:", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        const unsubscribe = subscribeToast((toast) => {
+            const nextItem = {
+                id: toast.id,
+                message: toast.message,
+                type: toast.type || "info",
+                createdAt: Date.now(),
+                read: false,
+            };
+
+            setNotifications((prev) => {
+                const merged = [nextItem, ...prev.filter((item) => item.id !== nextItem.id)].slice(0, 20);
+                localStorage.setItem(ADMIN_NOTIFICATION_KEY, JSON.stringify(merged));
+                return merged;
+            });
+        });
+
+        return unsubscribe;
+    }, []);
+
     useEffect(() => {
         const onPointerDown = (event) => {
-            if (!showUserMenu) return;
-            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+            if (showUserMenu && userMenuRef.current && !userMenuRef.current.contains(event.target)) {
                 setShowUserMenu(false);
+            }
+
+            if (
+                showNotificationMenu &&
+                notificationMenuRef.current &&
+                !notificationMenuRef.current.contains(event.target)
+            ) {
+                setShowNotificationMenu(false);
             }
         };
 
         const onEsc = (event) => {
             if (event.key === "Escape") setShowUserMenu(false);
+            if (event.key === "Escape") setShowNotificationMenu(false);
         };
 
         document.addEventListener("mousedown", onPointerDown);
@@ -69,7 +139,7 @@ export default function Header() {
             document.removeEventListener("mousedown", onPointerDown);
             document.removeEventListener("keydown", onEsc);
         };
-    }, [showUserMenu]);
+    }, [showNotificationMenu, showUserMenu]);
 
     return (
         <header className="sticky top-0 z-30 h-16 bg-white border-b border-neutral-200 shadow-sm">
@@ -96,10 +166,68 @@ export default function Header() {
                 {/* Right */}
                 <div className="flex items-center gap-3">
                     {/* Notifications */}
-                    <button className="relative p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-all duration-200">
-                        <Bell size={18} />
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
+                    <div className="relative" ref={notificationMenuRef}>
+                        <button
+                            onClick={handleToggleNotifications}
+                            className="relative p-2 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-all duration-200"
+                        >
+                            <Bell size={18} />
+                            {unreadCount > 0 && (
+                                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] leading-[18px] text-center rounded-full font-semibold">
+                                    {unreadCount > 9 ? "9+" : unreadCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {showNotificationMenu && (
+                            <div className="absolute right-0 mt-3 w-[360px] max-w-[86vw] bg-white rounded-2xl shadow-xl border border-neutral-200 overflow-hidden z-50">
+                                <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-100">
+                                    <div>
+                                        <p className="text-sm font-semibold text-neutral-900">Thông báo quản trị</p>
+                                        <p className="text-xs text-neutral-500">Các thao tác mới đã thực hiện</p>
+                                    </div>
+                                    <button
+                                        onClick={handleClearNotifications}
+                                        className="text-xs font-medium text-red-600 hover:text-red-700"
+                                    >
+                                        Xóa tất cả
+                                    </button>
+                                </div>
+
+                                <div className="max-h-[360px] overflow-y-auto">
+                                    {notifications.length === 0 ? (
+                                        <div className="px-4 py-8 text-center text-sm text-neutral-500">
+                                            Chưa có thông báo mới
+                                        </div>
+                                    ) : (
+                                        notifications.map((item) => (
+                                            <div key={item.id} className="px-4 py-3 border-b border-neutral-100 last:border-b-0">
+                                                <div className="flex items-start gap-2">
+                                                    <span
+                                                        className={`mt-1 inline-block w-2 h-2 rounded-full ${
+                                                            item.type === "error"
+                                                                ? "bg-rose-500"
+                                                                : item.type === "warning"
+                                                                  ? "bg-amber-500"
+                                                                  : item.type === "success"
+                                                                    ? "bg-emerald-500"
+                                                                    : "bg-sky-500"
+                                                        }`}
+                                                    ></span>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm text-neutral-800 leading-5 break-words">{item.message}</p>
+                                                        <p className="mt-1 text-[11px] text-neutral-400">
+                                                            {new Date(item.createdAt).toLocaleString("vi-VN")}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     {/* User Menu */}
                     <div className="relative" ref={userMenuRef}>

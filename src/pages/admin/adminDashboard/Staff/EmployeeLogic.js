@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
     getAllEmployees,
     createEmployee,
@@ -6,6 +6,7 @@ import {
     deleteEmployee
 } from "../../../../services/employeeservice";
 import { showToast } from "../../../../utils/adminToast";
+import { generateSmartNextId } from "../../../../utils/codeGenerator";
 
 // Cache helpers
 const CACHE_KEY_PREFIX = "employee_page_";
@@ -56,14 +57,43 @@ function clearAllEmployeeCache() {
     }
 }
 
+function getKnownEmployeeIds(memoryCache = {}) {
+    const ids = [];
+
+    Object.values(memoryCache).forEach((pageData) => {
+        (pageData?.employees || []).forEach((emp) => {
+            if (emp?.nv_id) ids.push(emp.nv_id);
+        });
+    });
+
+    try {
+        const keys = Object.keys(localStorage);
+        keys.forEach((key) => {
+            if (!key.startsWith(CACHE_KEY_PREFIX)) return;
+            const raw = localStorage.getItem(key);
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            (parsed?.employees || []).forEach((emp) => {
+                if (emp?.nv_id) ids.push(emp.nv_id);
+            });
+        });
+    } catch (err) {
+        console.error("Error collecting employee ids:", err);
+    }
+
+    return Array.from(new Set(ids));
+}
+
 export function useEmployeeLogic() {
     const [employees, setEmployees] = useState([]);
     const [search, setSearch] = useState("");
+    const [sortBy, setSortBy] = useState("newest_id");
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
 
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [totalEmployees, setTotalEmployees] = useState(0);
     const [loading, setLoading] = useState(false);
 
     // submission / deletion states
@@ -83,7 +113,7 @@ export function useEmployeeLogic() {
         nv_mail: "",
         nv_address: "",
         nv_birth: "",
-        nv_role: "ROLE_STAFF"
+        nv_role: "ROLE_EMPLOYEE"
     };
 
     const [form, setForm] = useState(emptyForm);
@@ -115,7 +145,8 @@ export function useEmployeeLogic() {
             const data = await getAllEmployees(currentPage, search);
             const pageData = {
                 employees: data.employees || [],
-                totalPages: data.totalPages || 0
+                totalPages: data.totalPages || 0,
+                totalElements: data.totalElements || 0,
             };
 
             // Cache
@@ -124,14 +155,54 @@ export function useEmployeeLogic() {
 
             setEmployees(pageData.employees);
             setTotalPages(pageData.totalPages);
+            setTotalEmployees(pageData.totalElements);
         } catch (err) {
             console.error("Fetch employees failed:", err);
             setEmployees([]);
             setTotalPages(0);
+            setTotalEmployees(0);
         } finally {
             setLoading(false);
         }
     }, [currentPage, search]);
+
+    const sortedEmployees = useMemo(() => {
+        const getIdNum = (value) => {
+            const match = String(value || "").match(/(\d+)$/);
+            return match ? Number(match[1]) : 0;
+        };
+
+        const list = [...employees];
+        list.sort((a, b) => {
+            switch (sortBy) {
+                case "oldest_id":
+                    return getIdNum(a.nv_id) - getIdNum(b.nv_id);
+                case "name_az":
+                    return String(a.nv_name || "").localeCompare(String(b.nv_name || ""), "vi", { sensitivity: "base" });
+                case "name_za":
+                    return String(b.nv_name || "").localeCompare(String(a.nv_name || ""), "vi", { sensitivity: "base" });
+                case "role":
+                    return String(a.nv_role || "").localeCompare(String(b.nv_role || ""));
+                case "newest_id":
+                default:
+                    return getIdNum(b.nv_id) - getIdNum(a.nv_id);
+            }
+        });
+
+        return list;
+    }, [employees, sortBy]);
+
+    const stats = useMemo(() => {
+        const adminCount = employees.filter((e) => e.nv_role === "ROLE_ADMIN").length;
+        const employeeCount = employees.filter((e) => e.nv_role === "ROLE_EMPLOYEE").length;
+
+        return {
+            total: totalEmployees,
+            onPage: sortedEmployees.length,
+            adminCount,
+            employeeCount,
+        };
+    }, [employees, sortedEmployees.length, totalEmployees]);
 
     useEffect(() => {
         fetchEmployees();
@@ -188,7 +259,9 @@ export function useEmployeeLogic() {
     /* ================= ADD / EDIT ================= */
     const openAdd = () => {
         setEditing(null);
-        setForm(emptyForm);
+        const knownIds = getKnownEmployeeIds(cacheRef.current);
+        const nextId = generateSmartNextId(knownIds, "NV", 3);
+        setForm({ ...emptyForm, nv_id: nextId });
         setOpenForm(true);
     };
 
@@ -299,6 +372,9 @@ export function useEmployeeLogic() {
 
     return {
         search,
+        sortBy,
+        setSortBy,
+        stats,
         isSubmitting,
         deletingId,
         setSearch,
@@ -306,8 +382,8 @@ export function useEmployeeLogic() {
         setOpenForm,
         form,
         setForm,
-        filteredEmployees: employees,
-        paginatedEmployees: employees,
+        filteredEmployees: sortedEmployees,
+        paginatedEmployees: sortedEmployees,
         currentPage,
         totalPages,
         itemsPerPage,

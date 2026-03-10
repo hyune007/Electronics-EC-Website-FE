@@ -1,4 +1,4 @@
-import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Briefcase, Shield, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Briefcase, Shield, Loader2, ArrowDownWideNarrow, ArrowUpDown, ChevronUp, ChevronDown } from "lucide-react";
 import { useEmployeeLogic } from "./EmployeeLogic.js";
 import EmployeeForm from "./EmployeeForm.jsx";
 import { useState, useEffect } from "react";
@@ -27,6 +27,7 @@ export default function EmployeeManage() {
                 return 'badge-danger';
             case 'role_manager':
                 return 'badge-warning';
+            case 'role_employee':
             case 'role_staff':
                 return 'badge-success';
             default:
@@ -40,11 +41,42 @@ export default function EmployeeManage() {
                 return 'Admin';
             case 'role_manager':
                 return 'Manager';
+            case 'role_employee':
+                return 'Nhân viên';
             case 'role_staff':
                 return 'Staff';
             default:
                 return role;
         }
+    };
+
+    const renderSortIcon = (column) => {
+        if (column === "id") {
+            if (nv.sortBy === "newest_id") return <ChevronDown size={14} className="text-indigo-600" />;
+            if (nv.sortBy === "oldest_id") return <ChevronUp size={14} className="text-indigo-600" />;
+            return <ArrowUpDown size={14} className="text-neutral-400" />;
+        }
+
+        if (column === "name") {
+            if (nv.sortBy === "name_az") return <ChevronUp size={14} className="text-indigo-600" />;
+            if (nv.sortBy === "name_za") return <ChevronDown size={14} className="text-indigo-600" />;
+            return <ArrowUpDown size={14} className="text-neutral-400" />;
+        }
+
+        if (column === "role") {
+            if (nv.sortBy === "role") return <ChevronUp size={14} className="text-indigo-600" />;
+            return <ArrowUpDown size={14} className="text-neutral-400" />;
+        }
+
+        return null;
+    };
+
+    const handleSortById = () => {
+        nv.setSortBy(nv.sortBy === "newest_id" ? "oldest_id" : "newest_id");
+    };
+
+    const handleSortByName = () => {
+        nv.setSortBy(nv.sortBy === "name_az" ? "name_za" : "name_az");
     };
 
     return (
@@ -71,7 +103,7 @@ export default function EmployeeManage() {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-neutral-600 text-sm font-medium mb-1">Tổng Nhân Viên</p>
-                                <p className="text-2xl font-bold text-neutral-900">{nv.filteredEmployees.length}</p>
+                                <p className="text-2xl font-bold text-neutral-900">{nv.stats.total}</p>
                             </div>
                             <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
                                 <Users className="text-primary-600" size={24} />
@@ -82,9 +114,9 @@ export default function EmployeeManage() {
                     <div className="card p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-neutral-600 text-sm font-medium mb-1">Đang Tìm Kiếm</p>
+                                <p className="text-neutral-600 text-sm font-medium mb-1">Hiển Thị Trang</p>
                                 <p className="text-2xl font-bold text-neutral-900">
-                                    {nv.search ? nv.filteredEmployees.length : nv.filteredEmployees.length}
+                                    {nv.stats.onPage}
                                 </p>
                             </div>
                             <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -96,8 +128,8 @@ export default function EmployeeManage() {
                     <div className="card p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-neutral-600 text-sm font-medium mb-1">Phân Quyền</p>
-                                <p className="text-2xl font-bold text-neutral-900">3</p>
+                                <p className="text-neutral-600 text-sm font-medium mb-1">Admin / Nhân viên</p>
+                                <p className="text-2xl font-bold text-neutral-900">{nv.stats.adminCount} / {nv.stats.employeeCount}</p>
                             </div>
                             <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                                 <Shield className="text-amber-600" size={24} />
@@ -120,6 +152,21 @@ export default function EmployeeManage() {
                             className="flex-1 bg-transparent outline-none ml-3 text-neutral-900 placeholder-neutral-400"
                         />
                     </div>
+
+                    <div className="sort-box sm:w-80">
+                        <ArrowDownWideNarrow className="text-neutral-400" size={20} />
+                        <select
+                            value={nv.sortBy}
+                            onChange={(e) => nv.setSortBy(e.target.value)}
+                            className="flex-1 bg-transparent outline-none ml-3 text-neutral-900"
+                        >
+                            <option value="newest_id">Sắp xếp: Mã mới nhất</option>
+                            <option value="oldest_id">Sắp xếp: Mã cũ nhất</option>
+                            <option value="name_az">Sắp xếp: Tên A-Z</option>
+                            <option value="name_za">Sắp xếp: Tên Z-A</option>
+                            <option value="role">Sắp xếp: Vai trò</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -130,10 +177,16 @@ export default function EmployeeManage() {
                         <thead className="table-header">
                             <tr>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Mã Nhân Viên
+                                    <button type="button" className="sortable-header" onClick={handleSortById}>
+                                        <span>Mã Nhân Viên</span>
+                                        {renderSortIcon("id")}
+                                    </button>
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Họ Tên
+                                    <button type="button" className="sortable-header" onClick={handleSortByName}>
+                                        <span>Họ Tên</span>
+                                        {renderSortIcon("name")}
+                                    </button>
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
                                     SĐT
@@ -142,7 +195,10 @@ export default function EmployeeManage() {
                                     Email
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Vai Trò
+                                    <button type="button" className="sortable-header" onClick={() => nv.setSortBy("role")}>
+                                        <span>Vai Trò</span>
+                                        {renderSortIcon("role")}
+                                    </button>
                                 </th>
                                 <th className="px-6 py-4 text-center text-xs font-medium text-neutral-600 uppercase tracking-wider">
                                     Hành Động
@@ -244,7 +300,7 @@ export default function EmployeeManage() {
                     currentPage={nv.currentPage}
                     totalPages={nv.totalPages}
                     itemsPerPage={nv.itemsPerPage}
-                    totalItems={nv.filteredEmployees.length}
+                    totalItems={nv.stats.total}
                     onPageChange={nv.handlePageChange}
                     onPreviousPage={nv.handlePreviousPage}
                     onNextPage={nv.handleNextPage}

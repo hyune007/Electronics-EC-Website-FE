@@ -97,7 +97,7 @@ export function useDashboardLogic() {
                 const monthlyData = Object.keys(monthlyRevenueMap).map(month => ({
                     month: `Tháng ${month}`,
                     value: monthlyRevenueMap[month]
-                })).filter(item => item.value > 0); // Có thể bỏ filter này nếu muốn show cả tháng 0đ
+                }));
 
                 const currentMonthRevenue = monthlyRevenueMap[currentMonth] || 0;
                 let previousMonthRevenue = 0;
@@ -127,27 +127,22 @@ export function useDashboardLogic() {
                     currentMonthRevenue,
                     previousMonthRevenue,
                 });
-                setRevenueByMonth(monthlyData.length > 0 ? monthlyData : [
-                    { month: "Chưa có dữ liệu", value: 0 }
-                ]);
+                setRevenueByMonth(monthlyData);
 
                 setStats([
                     {
                         title: "Tổng doanh thu",
                         value: totalRevenue,
-                        trend: "+0%", // Tính toán trend có thể cần data tháng trước, tạm hardcode
                         color: "primary"
                     },
                     {
                         title: "Tổng đơn hàng",
                         value: totalOrders,
-                        trend: "+0%",
                         color: "emerald"
                     },
                     {
                         title: "Tổng khách hàng",
                         value: totalCustomers,
-                        trend: "+0%",
                         color: "amber"
                     },
                     {

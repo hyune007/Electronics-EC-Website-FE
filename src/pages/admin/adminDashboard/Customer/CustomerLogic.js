@@ -6,6 +6,7 @@ import {
     deleteCustomer
 } from "../../../../services/customerService.js";
 import { showToast } from "../../../../utils/adminToast";
+import { generateSmartNextId } from "../../../../utils/codeGenerator";
 
 // Cache helpers
 const CACHE_KEY = "customer_data";
@@ -54,6 +55,7 @@ function clearCustomerCache() {
 export function useCustomerLogic() {
     const [customers, setCustomers] = useState([]);
     const [search, setSearch] = useState("");
+    const [sortBy, setSortBy] = useState("newest");
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
@@ -116,18 +118,63 @@ export function useCustomerLogic() {
 
         return customers.filter(c =>
             c.kh_name.toLowerCase().includes(keyword) ||
-            c.kh_phone.includes(keyword)
+            c.kh_phone.includes(keyword) ||
+            c.kh_mail.toLowerCase().includes(keyword) ||
+            c.kh_id.toLowerCase().includes(keyword)
         );
     }, [customers, search]);
+
+    const sortedCustomers = useMemo(() => {
+        const getIdNumber = (value) => {
+            const match = String(value || "").match(/(\d+)$/);
+            return match ? Number(match[1]) : 0;
+        };
+
+        const list = [...filteredCustomers];
+        list.sort((a, b) => {
+            switch (sortBy) {
+                case "oldest":
+                    return getIdNumber(a.kh_id) - getIdNumber(b.kh_id);
+                case "name_az":
+                    return a.kh_name.localeCompare(b.kh_name, "vi", { sensitivity: "base" });
+                case "name_za":
+                    return b.kh_name.localeCompare(a.kh_name, "vi", { sensitivity: "base" });
+                case "email_az":
+                    return a.kh_mail.localeCompare(b.kh_mail, "vi", { sensitivity: "base" });
+                case "newest":
+                default:
+                    return getIdNumber(b.kh_id) - getIdNumber(a.kh_id);
+            }
+        });
+
+        return list;
+    }, [filteredCustomers, sortBy]);
 
     /* ================= PAGINATION ================= */
     const paginatedCustomers = useMemo(() => {
         const startIndex = currentPage * itemsPerPage;
         const endIndex = startIndex + itemsPerPage;
-        return filteredCustomers.slice(startIndex, endIndex);
-    }, [filteredCustomers, currentPage]);
+        return sortedCustomers.slice(startIndex, endIndex);
+    }, [sortedCustomers, currentPage]);
 
-    const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+    const totalPages = Math.ceil(sortedCustomers.length / itemsPerPage);
+
+    const stats = useMemo(() => {
+        const completedProfiles = customers.filter((item) =>
+            [item.kh_name, item.kh_phone, item.kh_mail].every((v) => String(v || "").trim().length > 0)
+        ).length;
+
+        const completionRate = customers.length > 0
+            ? Math.round((completedProfiles / customers.length) * 100)
+            : 0;
+
+        return {
+            total: customers.length,
+            matched: sortedCustomers.length,
+            pageTotal: paginatedCustomers.length,
+            completionRate,
+        };
+    }, [customers, sortedCustomers.length, paginatedCustomers.length]);
 
     const handlePageChange = (page) => {
         setCurrentPage(page);
@@ -181,6 +228,7 @@ export function useCustomerLogic() {
         }
         
         const payload = {
+            kh_id: form.kh_id,
             kh_name: form.kh_name.trim(),
             kh_password: form.kh_password.trim(),
             kh_phone: form.kh_phone.trim(),
@@ -234,6 +282,9 @@ export function useCustomerLogic() {
     return {
         search,
         setSearch,
+        sortBy,
+        setSortBy,
+        stats,
         openForm,
         setOpenForm,
         editing,
@@ -249,7 +300,8 @@ export function useCustomerLogic() {
         handleNextPage,
         openAdd: () => {
             setEditing(null);
-            setForm(emptyForm);
+            const nextId = generateSmartNextId(customers.map((item) => item.kh_id), "KH", 3);
+            setForm({ ...emptyForm, kh_id: nextId });
             setOpenForm(true);
         },
         openEdit: (customer) => {

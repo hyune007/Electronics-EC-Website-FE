@@ -34,6 +34,26 @@ export function generateNextId(existingIds, prefix, digits = 3) {
 }
 
 /**
+ * Generate next ID by inferring prefix and digit length from existing IDs.
+ * Falls back to provided prefix/digits when no valid IDs are found.
+ */
+export function generateSmartNextId(existingIds, fallbackPrefix = "ID", fallbackDigits = 3) {
+    const validIds = (existingIds || []).filter(id => typeof id === "string");
+
+    const samples = validIds
+        .map(id => id.match(/^([A-Za-z]+)(\d+)$/))
+        .filter(Boolean);
+
+    if (samples.length === 0) {
+        return generateNextId(validIds, fallbackPrefix, fallbackDigits);
+    }
+
+    const [prefix, digitsPart] = samples[0].slice(1);
+    const digits = Math.max(digitsPart.length, fallbackDigits);
+    return generateNextId(validIds, prefix, digits);
+}
+
+/**
  * Generate next product ID (SP001, SP002, ...)
  */
 export function generateNextProductId(existingProducts) {

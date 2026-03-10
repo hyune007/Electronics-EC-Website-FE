@@ -89,11 +89,11 @@ export default function AppRoutes({ location }) {
         {/* Dashboard - ADMIN + EMPLOYEE */}
         <Route path="dashboard" element={<Dashboard />} />
 
-        {/* Customers - ADMIN ONLY */}
+        {/* Customers - ADMIN + EMPLOYEE (delete action admin-only in UI/API) */}
         <Route
           path="customers"
           element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
               <CustomerManage />
             </ProtectedRoute>
           }
@@ -102,21 +102,21 @@ export default function AppRoutes({ location }) {
         {/* Orders - ADMIN + EMPLOYEE */}
         <Route path="orders" element={<OrderManage />} />
 
-        {/* Products - ADMIN ONLY */}
+        {/* Products - ADMIN + EMPLOYEE */}
         <Route
           path="products"
           element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
               <ProductManage />
             </ProtectedRoute>
           }
         />
 
-        {/* Brands - ADMIN ONLY */}
+        {/* Brands - ADMIN + EMPLOYEE */}
         <Route
           path="brands"
           element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
               <BrandManage />
             </ProtectedRoute>
           }
@@ -132,21 +132,21 @@ export default function AppRoutes({ location }) {
           }
         />
 
-        {/* Imports - ADMIN ONLY */}
+        {/* Imports - ADMIN + EMPLOYEE */}
         <Route
           path="imports"
           element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
               <ImportManage />
             </ProtectedRoute>
           }
         />
 
-        {/* Vouchers - ADMIN ONLY */}
+        {/* Vouchers - ADMIN + EMPLOYEE */}
         <Route
           path="vouchers"
           element={
-            <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
               <VoucherManage />
             </ProtectedRoute>
           }

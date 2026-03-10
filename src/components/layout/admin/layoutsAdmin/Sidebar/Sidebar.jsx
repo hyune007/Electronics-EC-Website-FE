@@ -134,8 +134,8 @@ export default function Sidebar() {
             isOpen={isOpen}
           />
 
-          {/* Khách hàng - ADMIN ONLY */}
-          {isAdmin && (
+          {/* Khách hàng - ADMIN + EMPLOYEE */}
+          {(isAdmin || isEmployee) && (
             <SidebarItem
               icon={<Users />}
               label="Quản lí khách hàng"
@@ -156,8 +156,8 @@ export default function Sidebar() {
             isOpen={isOpen}
           />
 
-          {/* Sản phẩm - ADMIN ONLY */}
-          {isAdmin && (
+          {/* Sản phẩm - ADMIN + EMPLOYEE */}
+          {(isAdmin || isEmployee) && (
             <SidebarItem
               icon={<DollarSign />}
               label="Quản lí sản phẩm"
@@ -168,8 +168,8 @@ export default function Sidebar() {
             />
           )}
 
-          {/* Hãng - ADMIN ONLY */}
-          {isAdmin && (
+          {/* Hãng - ADMIN + EMPLOYEE */}
+          {(isAdmin || isEmployee) && (
             <SidebarItem
               icon={<ShoppingBag />}
               label="Quản lí hãng"
@@ -192,8 +192,8 @@ export default function Sidebar() {
             />
           )}
 
-          {/* Nhập kho - ADMIN ONLY */}
-          {isAdmin && (
+          {/* Nhập kho - ADMIN + EMPLOYEE */}
+          {(isAdmin || isEmployee) && (
             <SidebarItem
               icon={<Warehouse />}
               label="Quản lí nhập kho"
@@ -204,8 +204,8 @@ export default function Sidebar() {
             />
           )}
 
-          {/* Voucher - ADMIN ONLY */}
-          {isAdmin && (
+          {/* Voucher - ADMIN + EMPLOYEE */}
+          {(isAdmin || isEmployee) && (
             <SidebarItem
               icon={<TicketPercent />}
               label="Quản lí voucher"

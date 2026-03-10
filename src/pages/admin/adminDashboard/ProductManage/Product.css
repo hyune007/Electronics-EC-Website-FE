@@ -78,6 +78,28 @@
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
 }
 
+.sort-box {
+  display: flex;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  transition: all 0.2s;
+}
+
+.sort-box:focus-within {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.sort-box select {
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: #111827;
+}
+
 /* Table Styles */
 .table-container {
   background-color: white;
