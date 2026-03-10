@@ -267,7 +267,6 @@ export default function VoucherManage() {
                     form: vm.form,
                     setForm: vm.setForm,
                     handleSubmit: vm.handleSubmit,
-                    isGeneratingId: vm.isGeneratingId,
                     isSubmitting: vm.isSubmitting
                 }}
                 editing={vm.editing}

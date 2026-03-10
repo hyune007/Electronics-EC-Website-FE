@@ -63,7 +63,7 @@ export default function Login() {
       }
 
       // Store auth data
-      login(response);
+      login({ ...response, email: formData.email });
 
       // Redirect based on role (decode JWT since backend only returns token)
       const payload = decodeJwtPayload(response.token);

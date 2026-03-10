@@ -77,3 +77,151 @@ tbody tr:hover {
     text-align: center;
     color: #6b7280;
 }
+
+/* ===== GROUPED ORDER TABLE READABILITY ===== */
+.order-filter-grid {
+    display: grid;
+    grid-template-columns: 1.5fr repeat(2, minmax(180px, 1fr)) repeat(2, minmax(145px, 0.8fr));
+    gap: 12px;
+    align-items: center;
+}
+
+@media (max-width: 1280px) {
+    .order-filter-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .order-filter-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.order-group-table thead th {
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap;
+}
+
+.order-customer-row {
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.order-customer-row:hover {
+    background: #f8fafc;
+}
+
+.order-customer-name {
+    letter-spacing: 0.01em;
+}
+
+.order-status-pills .badge-warning,
+.order-status-pills .badge-success,
+.order-status-pills .badge-danger {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 999px;
+}
+
+.order-child-row {
+    background: #f8fafc;
+}
+
+.order-child-row:hover {
+    background: #eef2ff;
+}
+
+.order-child-row td {
+    border-top: 1px dashed #e2e8f0;
+}
+
+.order-child-indent {
+    position: relative;
+    margin-left: 26px;
+    padding-left: 18px;
+}
+
+.order-child-indent::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: linear-gradient(180deg, #93c5fd 0%, #dbeafe 100%);
+    border-radius: 999px;
+}
+
+.order-detail-hint {
+    font-style: italic;
+    white-space: nowrap;
+}
+
+.order-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.order-toolbar-summary p {
+    margin: 0;
+}
+
+.order-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.order-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #1f2937;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.order-action-btn:hover:not(:disabled) {
+    border-color: #0f766e;
+    color: #0f766e;
+    background: #f0fdfa;
+}
+
+.order-action-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.order-action-btn-danger:hover:not(:disabled) {
+    border-color: #dc2626;
+    color: #dc2626;
+    background: #fef2f2;
+}
+
+.order-active-filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.order-filter-chip {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: 5px 10px;
+}

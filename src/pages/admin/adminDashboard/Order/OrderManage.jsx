@@ -2,20 +2,22 @@ import {
   Search,
   Package,
   User,
-  Calendar,
-  DollarSign,
   CheckCircle,
   Clock,
   XCircle,
   Filter,
-  ChevronLeft,
-  ChevronRight,
+  ChevronDown,
+  CreditCard,
+  ChevronsDown,
+  ChevronsUp,
+  RotateCcw,
 } from "lucide-react";
 import { useOrderLogic } from "./OrderLogic.js";
 import { getBillDetails } from "../../../../services/customer/billDetailServiceCustomer.js";
 import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
 import OrderDetailModal from "../../../../components/manage/OrderDetailModal.jsx";
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
+import { showToast } from "../../../../utils/adminToast.js";
 import "./Order.css";
 
 export default function OrderManage() {
@@ -24,6 +26,7 @@ export default function OrderManage() {
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [expandedCustomers, setExpandedCustomers] = useState({});
 
   useEffect(() => {
     setMounted(true);
@@ -56,6 +59,67 @@ export default function OrderManage() {
   };
 
   const getStatusText = (status) => status || "";
+
+  const toggleCustomer = (customerKey) => {
+    setExpandedCustomers((prev) => ({
+      ...prev,
+      [customerKey]: !prev[customerKey],
+    }));
+  };
+
+  const handleExpandVisible = () => {
+    setExpandedCustomers((prev) => {
+      const next = { ...prev };
+      om.paginatedGroups.forEach((group) => {
+        next[group.customer_key] = true;
+      });
+      return next;
+    });
+  };
+
+  const handleCollapseVisible = () => {
+    setExpandedCustomers((prev) => {
+      const next = { ...prev };
+      om.paginatedGroups.forEach((group) => {
+        next[group.customer_key] = false;
+      });
+      return next;
+    });
+  };
+
+  const expandedVisibleCount = om.paginatedGroups.filter(
+    (group) => expandedCustomers[group.customer_key],
+  ).length;
+
+  const openOrderDetails = async (order) => {
+    try {
+      setDetailsLoading(true);
+      setOrderModalOpen(true);
+      const resp = await getBillDetails(order.order_id);
+      const payload = resp?.data ?? resp;
+
+      let items = [];
+      if (Array.isArray(payload)) {
+        items = payload;
+      } else if (Array.isArray(payload?.data)) {
+        items = payload.data;
+      } else if (Array.isArray(payload?.items)) {
+        items = payload.items;
+      } else if (Array.isArray(payload?.details)) {
+        items = payload.details;
+      } else if (Array.isArray(payload?.products)) {
+        items = payload.products;
+      }
+
+      setOrderDetails({ order, items });
+    } catch (err) {
+      console.error("Failed to load order details", err);
+      showToast("Không thể tải chi tiết đơn hàng", "error");
+      setOrderDetails({ order, items: [] });
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
 
   return (
     <div className={`fade-in min-h-full ${mounted ? "slide-up" : ""}`}>
@@ -152,7 +216,45 @@ export default function OrderManage() {
 
       {/* Search and Filter Section */}
       <div className="card p-6 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="order-toolbar mb-4">
+          <div className="order-toolbar-summary">
+            <p className="text-sm font-semibold text-neutral-800">Bộ lọc thông minh</p>
+            <p className="text-xs text-neutral-500">
+              Hiển thị {om.groupedOrders.length} khách hàng, {om.filteredOrders.length} đơn hàng
+            </p>
+          </div>
+
+          <div className="order-toolbar-actions">
+            <button
+              type="button"
+              className="order-action-btn"
+              onClick={handleExpandVisible}
+              disabled={om.paginatedGroups.length === 0 || expandedVisibleCount === om.paginatedGroups.length}
+            >
+              <ChevronsDown size={15} /> Mở tất cả
+            </button>
+
+            <button
+              type="button"
+              className="order-action-btn"
+              onClick={handleCollapseVisible}
+              disabled={expandedVisibleCount === 0}
+            >
+              <ChevronsUp size={15} /> Thu gọn
+            </button>
+
+            <button
+              type="button"
+              className="order-action-btn order-action-btn-danger"
+              onClick={om.clearFilters}
+              disabled={!om.hasActiveFilters}
+            >
+              <RotateCcw size={15} /> Xóa lọc
+            </button>
+          </div>
+        </div>
+
+        <div className="order-filter-grid">
           <div className="flex-1 search-box">
             <Search className="text-neutral-400" size={20} />
             <input
@@ -181,158 +283,199 @@ export default function OrderManage() {
               <option value="Đã hủy">Đã hủy</option>
             </select>
           </div>
+
+          <div className="relative">
+            <CreditCard
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400"
+              size={20}
+            />
+            <select
+              value={om.paymentFilter}
+              onChange={(e) => om.setPaymentFilter(e.target.value)}
+              className="pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
+            >
+              <option value="ALL">Tất cả thanh toán</option>
+              {om.paymentMethods.map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <input
+            type="date"
+            value={om.dateFrom}
+            onChange={(e) => om.setDateFrom(e.target.value)}
+            className="px-3 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
+            title="Từ ngày"
+          />
+
+          <input
+            type="date"
+            value={om.dateTo}
+            onChange={(e) => om.setDateTo(e.target.value)}
+            className="px-3 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
+            title="Đến ngày"
+          />
         </div>
+
+        {om.hasActiveFilters && (
+          <div className="order-active-filters mt-4">
+            {om.search && <span className="order-filter-chip">Từ khóa: {om.search}</span>}
+            {om.statusFilter !== "ALL" && <span className="order-filter-chip">Trạng thái: {om.statusFilter}</span>}
+            {om.paymentFilter !== "ALL" && <span className="order-filter-chip">Thanh toán: {om.paymentFilter}</span>}
+            {om.dateFrom && <span className="order-filter-chip">Từ ngày: {om.dateFrom}</span>}
+            {om.dateTo && <span className="order-filter-chip">Đến ngày: {om.dateTo}</span>}
+          </div>
+        )}
       </div>
 
       {/* Table Section */}
       <div className="table-container">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full order-group-table">
             <thead className="table-header">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                  Mã Đơn Hàng
-                </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
                   Khách Hàng
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                  Ngày Tạo
+                  Số Đơn
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                  Tổng Tiền
+                  Tổng Chi
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                  Trạng Thái
+                  Trạng Thái Đơn
                 </th>
-                {om.statusFilter === "Chờ xác nhận" && (
-                  <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                    Cập nhật
-                  </th>
-                )}
+                <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
+                  Mở rộng
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-100">
-              {om.paginatedOrders.map((order, index) => (
-                <tr
-                  key={order.order_id}
-                  className="table-row cursor-pointer"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                  onClick={async () => {
-                    try {
-                      setDetailsLoading(true);
-                      setOrderModalOpen(true);
-                      const resp = await getBillDetails(order.order_id);
-                      const payload = resp?.data ?? resp;
+            <tbody>
+              {om.paginatedGroups.map((group, index) => {
+                const isOpen = !!expandedCustomers[group.customer_key];
 
-                      let items = [];
-                      if (Array.isArray(payload)) {
-                        items = payload;
-                      } else if (Array.isArray(payload?.data)) {
-                        items = payload.data;
-                      } else if (Array.isArray(payload?.items)) {
-                        items = payload.items;
-                      } else if (Array.isArray(payload?.details)) {
-                        items = payload.details;
-                      } else if (Array.isArray(payload?.products)) {
-                        items = payload.products;
-                      }
+                return (
+                  <Fragment key={group.customer_key}>
+                    <tr
+                      className="table-row cursor-pointer order-customer-row"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                      onClick={() => toggleCustomer(group.customer_key)}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center">
+                            <User className="text-neutral-600" size={16} />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-neutral-900 order-customer-name">
+                              {group.customer_name}
+                            </p>
+                            <p className="text-xs text-neutral-500">{group.customer_phone || "Không có SĐT"}</p>
+                          </div>
+                        </div>
+                      </td>
 
-                      setOrderDetails({ order, items });
-                    } catch (err) {
-                      console.error("Failed to load order details", err);
-                      alert("Không thể tải chi tiết đơn hàng");
-                      setOrderDetails({ order, items: [] });
-                    } finally {
-                      setDetailsLoading(false);
-                    }
-                  }}
-                >
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                        <Package className="text-primary-600" size={16} />
-                      </div>
-                      <div>
-                        <p className="font-mono text-sm font-medium text-neutral-900">
-                          {order.order_id}
-                        </p>
-                        <p className="text-xs text-neutral-500">Đơn hàng</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-neutral-100 rounded-lg flex items-center justify-center">
-                        <User className="text-neutral-600" size={16} />
-                      </div>
-                      <div>
-                        <p className="font-medium text-neutral-900">
-                          {order.customer_name}
-                        </p>
-                        <p className="text-xs text-neutral-500">Khách hàng</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="text-neutral-400" size={16} />
-                      <span className="text-neutral-900">
-                        {order.created_at}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="text-neutral-400" size={16} />
-                      <span className="font-semibold text-neutral-900">
-                        {order.total_amount?.toLocaleString("vi-VN")} ₫
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={getStatusBadge(order.status)}>
-                      <div className="flex items-center gap-1">
-                        {getStatusIcon(order.status)}
-                        <span>
-                          {getStatusText(order.raw_status || order.status)}
+                      <td className="px-6 py-4">
+                        <span className="font-semibold text-neutral-900">{group.total_orders}</span>
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <span className="font-semibold text-neutral-900">
+                          {group.total_spent.toLocaleString("vi-VN")} ₫
                         </span>
-                      </div>
-                    </span>
-                  </td>
-                  {om.statusFilter === "Chờ xác nhận" && (
-                    <td className="px-6 py-4">
-                      {order.raw_status === "Chờ xác nhận" ? (
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-2 order-status-pills">
+                          <span className="badge-warning">Chờ xử lý: {group.pending_count}</span>
+                          <span className="badge-success">Hoàn thành: {group.completed_count}</span>
+                          <span className="badge-danger">Đã hủy: {group.cancelled_count}</span>
+                        </div>
+                      </td>
+
+                      <td className="px-6 py-4">
                         <button
-                          className="px-3 py-1 text-xs rounded-md bg-[var(--color-primary)] text-white hover:opacity-90"
+                          className="p-2 rounded-lg hover:bg-neutral-100 transition-all duration-200"
                           onClick={(e) => {
                             e.stopPropagation();
-                            om.handleUpdateStatus(
-                              order.order_id,
-                              "Đơn đang chờ giao",
-                            );
+                            toggleCustomer(group.customer_key);
                           }}
                         >
-                          Xác nhận đơn
+                          <ChevronDown
+                            size={18}
+                            className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                          />
                         </button>
-                      ) : (
-                        <span className="text-xs text-neutral-400">--</span>
-                      )}
-                    </td>
-                  )}
-                </tr>
-              ))}
+                      </td>
+                    </tr>
 
-              {om.paginatedOrders.length === 0 && (
+                    {isOpen &&
+                      group.orders.map((order) => (
+                        <tr
+                          key={order.order_id}
+                          className="order-child-row cursor-pointer"
+                          onClick={() => openOrderDetails(order)}
+                        >
+                          <td className="px-10 py-3" colSpan={2}>
+                            <div className="order-child-indent flex items-center gap-3">
+                              <div className="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                                <Package className="text-primary-600" size={14} />
+                              </div>
+                              <div>
+                                <p className="font-mono text-sm font-medium text-neutral-900">{order.order_id}</p>
+                                <p className="text-xs text-neutral-500">{order.created_at}</p>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-3">
+                            <span className="font-semibold text-neutral-900">
+                              {order.total_amount?.toLocaleString("vi-VN")} ₫
+                            </span>
+                          </td>
+
+                          <td className="px-6 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className={getStatusBadge(order.status)}>
+                                <div className="flex items-center gap-1">
+                                  {getStatusIcon(order.status)}
+                                  <span>{getStatusText(order.raw_status || order.status)}</span>
+                                </div>
+                              </span>
+
+                              {order.raw_status === "Chờ xác nhận" && (
+                                <button
+                                  className="px-3 py-1 text-xs rounded-md bg-[var(--color-primary)] text-white hover:opacity-90"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    om.handleUpdateStatus(order.order_id, "Đơn đang chờ giao");
+                                  }}
+                                >
+                                  Xác nhận đơn
+                                </button>
+                              )}
+                            </div>
+                          </td>
+
+                          <td className="px-6 py-3 text-xs text-neutral-500 order-detail-hint">Click để xem chi tiết</td>
+                        </tr>
+                      ))}
+                  </Fragment>
+                );
+              })}
+
+              {om.paginatedGroups.length === 0 && (
                 <tr>
                   <td colSpan="5" className="px-6 py-12 text-center">
                     <div className="text-center">
                       <Package className="mx-auto h-12 w-12 text-neutral-400 mb-4" />
-                      <h3 className="text-lg font-medium text-neutral-900 mb-2">
-                        Không có đơn hàng
-                      </h3>
+                      <h3 className="text-lg font-medium text-neutral-900 mb-2">Không có đơn hàng</h3>
                       <p className="text-neutral-600">
-                        {om.search || om.statusFilter !== "ALL"
+                        {om.search || om.statusFilter !== "ALL" || om.paymentFilter !== "ALL" || om.dateFrom || om.dateTo
                           ? "Không tìm thấy đơn hàng nào"
                           : "Chưa có đơn hàng nào được tạo"}
                       </p>
@@ -351,11 +494,11 @@ export default function OrderManage() {
           currentPage={om.currentPage}
           totalPages={om.totalPages}
           itemsPerPage={om.itemsPerPage}
-          totalItems={om.filteredOrders.length}
+          totalItems={om.groupedOrders.length}
           onPageChange={om.handlePageChange}
           onPreviousPage={om.handlePreviousPage}
           onNextPage={om.handleNextPage}
-          itemLabel="đơn hàng"
+          itemLabel="khách hàng"
         />
       )}
 

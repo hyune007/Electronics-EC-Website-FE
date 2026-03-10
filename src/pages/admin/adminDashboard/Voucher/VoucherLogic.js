@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { getAllPromotions, createPromotion, updatePromotion, deletePromotion } from "../../../../services/promotionService";
-import { generateNextVoucherId } from "../../../../utils/codeGenerator";
+import { showToast } from "../../../../utils/adminToast";
 
 // Cache helpers
 const CACHE_KEY = "voucher_data_api_v2"; // Changed to force reload from API
@@ -52,12 +52,10 @@ export function useVoucherLogic() {
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
-    const [isGeneratingId, setIsGeneratingId] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const itemsPerPage = 12;
 
     const emptyForm = {
-        km_id: "",
         km_name: "",
         km_description: "",
         km_percent: "",
@@ -83,7 +81,7 @@ export function useVoucherLogic() {
             setCachedVouchers(data);
         } catch (error) {
             console.error("Failed to load vouchers:", error);
-            alert("Không thể tải danh sách voucher. Vui lòng kiểm tra kết nối API.");
+            showToast("Không thể tải danh sách voucher. Vui lòng kiểm tra kết nối API.", "error", 3400);
         }
     }, []);
 
@@ -130,12 +128,6 @@ export function useVoucherLogic() {
         setEditing(null);
         setForm(emptyForm);
         setOpenForm(true);
-        
-        // Generate ID in background
-        setIsGeneratingId(true);
-        const nextId = generateNextVoucherId(vouchers);
-        setForm(prev => ({ ...prev, km_id: nextId }));
-        setIsGeneratingId(false);
     };
 
     /* ================= OPEN EDIT ================= */
@@ -147,30 +139,64 @@ export function useVoucherLogic() {
 
     /* ================= SUBMIT ================= */
     const handleSubmit = async () => {
+        if (!form.km_name || !form.km_name.trim()) {
+            showToast("Vui lòng nhập tên voucher", "warning");
+            return;
+        }
+
+        if (!form.km_description || !form.km_description.trim()) {
+            showToast("Vui lòng nhập mô tả voucher", "warning");
+            return;
+        }
+
+        if (!form.km_percent || Number(form.km_percent) <= 0 || Number(form.km_percent) > 100) {
+            showToast("Phần trăm giảm phải trong khoảng 1-100", "warning");
+            return;
+        }
+
+        if (!form.km_start_date || !form.km_end_date) {
+            showToast("Vui lòng nhập đầy đủ thời gian áp dụng", "warning");
+            return;
+        }
+
+        if (new Date(form.km_start_date) > new Date(form.km_end_date)) {
+            showToast("Ngày bắt đầu không được lớn hơn ngày kết thúc", "warning");
+            return;
+        }
+
         setIsSubmitting(true);
+        const payload = {
+            ...form,
+            km_name: form.km_name.trim(),
+            km_description: form.km_description.trim(),
+            km_percent: Number(form.km_percent),
+        };
         
         try {
             if (editing) {
                 // Update
-                await updatePromotion(editing.km_id, form);
+                await updatePromotion(editing.km_id, {
+                    ...payload,
+                    km_id: editing.km_id,
+                });
                 const updatedVouchers = vouchers.map(v =>
-                    v.km_id === editing.km_id ? form : v
+                    v.km_id === editing.km_id ? { ...v, ...payload } : v
                 );
                 setVouchers(updatedVouchers);
                 setCachedVouchers(updatedVouchers);
             } else {
                 // Create
-                const newVoucher = await createPromotion(form);
+                const newVoucher = await createPromotion(payload);
                 const updatedVouchers = [...vouchers, newVoucher];
                 setVouchers(updatedVouchers);
                 setCachedVouchers(updatedVouchers);
             }
             
             setOpenForm(false);
-            alert(editing ? "Cập nhật voucher thành công!" : "Thêm voucher thành công!");
+            showToast(editing ? "Cập nhật voucher thành công" : "Thêm voucher thành công", "success");
         } catch (error) {
             console.error("Submit failed:", error);
-            alert(error.message || "Lưu voucher thất bại!");
+            showToast(error.message || "Lưu voucher thất bại", "error", 3400);
         } finally {
             setIsSubmitting(false);
         }
@@ -185,10 +211,10 @@ export function useVoucherLogic() {
             const updatedVouchers = vouchers.filter(v => v.km_id !== id);
             setVouchers(updatedVouchers);
             setCachedVouchers(updatedVouchers);
-            alert("Xóa voucher thành công!");
+            showToast("Xóa voucher thành công", "success");
         } catch (error) {
             console.error("Delete failed:", error);
-            alert("Xóa voucher thất bại!");
+            showToast("Xóa voucher thất bại", "error");
         }
     };
 
@@ -201,7 +227,6 @@ export function useVoucherLogic() {
         currentPage,
         totalPages,
         itemsPerPage,
-        isGeneratingId,
         isSubmitting,
         handlePageChange,
         handlePreviousPage,

@@ -1,4 +1,4 @@
-﻿import { X, UserCircle, Eye, EyeOff, Phone, Mail, Hash, MapPin, Calendar, ShieldCheck, Loader2 } from "lucide-react";
+﻿import { X, UserCircle, Eye, EyeOff, Phone, Mail, MapPin, Calendar, ShieldCheck, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export default function EmployeeForm({ open, onClose, onSubmit }) {
@@ -40,26 +40,7 @@ export default function EmployeeForm({ open, onClose, onSubmit }) {
                         <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">Thông tin cơ bản</h3>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {form.nv_id && (
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                        Mã nhân viên
-                                    </label>
-                                    <div className="relative">
-                                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={18} />
-                                        <input
-                                            type="text"
-                                            placeholder="Mã nhân viên"
-                                            value={form.nv_id}
-                                            disabled
-                                            className="w-full pl-10 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-neutral-900 font-mono cursor-not-allowed opacity-60"
-                                        />
-                                    </div>
-                                    <p className="text-xs text-neutral-500 mt-1">Mã nhân viên không thể thay đổi</p>
-                                </div>
-                            )}
-
-                            <div className={form.nv_id ? "" : "md:col-span-2"}>
+                            <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                                     Họ và tên <span className="text-red-500">*</span>
                                 </label>

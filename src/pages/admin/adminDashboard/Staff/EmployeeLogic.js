@@ -5,7 +5,7 @@ import {
     updateEmployee,
     deleteEmployee
 } from "../../../../services/employeeservice";
-import { generateNextEmployeeId } from "../../../../utils/codeGenerator";
+import { showToast } from "../../../../utils/adminToast";
 
 // Cache helpers
 const CACHE_KEY_PREFIX = "employee_page_";
@@ -201,47 +201,65 @@ export function useEmployeeLogic() {
     /* ================= SUBMIT ================= */
     const handleSubmit = async () => {
         if (!form.nv_name || !form.nv_name.trim()) {
-            alert("Vui lòng nhập họ tên nhân viên");
+            showToast("Vui lòng nhập họ tên nhân viên", "warning");
             return;
         }
 
-        if (!editing && (!form.nv_password || !form.nv_password.trim())) {
-            alert("Vui lòng nhập mật khẩu");
+        if (!form.nv_password || !form.nv_password.trim()) {
+            showToast("Vui lòng nhập mật khẩu", "warning");
             return;
         }
 
         if (!form.nv_phone || !form.nv_phone.trim()) {
-            alert("Vui lòng nhập số điện thoại");
+            showToast("Vui lòng nhập số điện thoại", "warning");
             return;
         }
 
         if (!form.nv_mail || !form.nv_mail.trim()) {
-            alert("Vui lòng nhập email");
+            showToast("Vui lòng nhập email", "warning");
+            return;
+        }
+
+        if (!form.nv_birth || !String(form.nv_birth).trim()) {
+            showToast("Vui lòng nhập ngày sinh", "warning");
+            return;
+        }
+
+        if (!form.nv_address || !form.nv_address.trim()) {
+            showToast("Vui lòng nhập địa chỉ", "warning");
+            return;
+        }
+
+        if (!form.nv_role || !String(form.nv_role).trim()) {
+            showToast("Vui lòng chọn vai trò", "warning");
             return;
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(form.nv_mail)) {
-            alert("Định dạng email không hợp lệ");
+            showToast("Định dạng email không hợp lệ", "warning");
             return;
         }
 
         setIsSubmitting(true);
         try {
-            let employeeId = form.nv_id;
-            if (!editing) {
-                const page0 = await getAllEmployees(0, "");
-                const list = page0.employees || [];
-                employeeId = generateNextEmployeeId(list);
-            }
-
-            const payload = { ...form, nv_id: employeeId };
+            const payload = {
+                ...form,
+                nv_name: form.nv_name.trim(),
+                nv_password: form.nv_password.trim(),
+                nv_phone: form.nv_phone.trim(),
+                nv_mail: form.nv_mail.trim(),
+                nv_address: form.nv_address.trim(),
+            };
             if (editing) {
-                await updateEmployee(form.nv_id, payload);
-                alert("✅ Cập nhật nhân viên thành công!");
+                await updateEmployee(form.nv_id, {
+                    ...payload,
+                    nv_id: form.nv_id,
+                });
+                showToast("Cập nhật nhân viên thành công", "success");
             } else {
                 await createEmployee(payload);
-                alert("✅ Thêm nhân viên mới thành công!");
+                showToast("Thêm nhân viên mới thành công", "success");
             }
 
             setOpenForm(false);
@@ -250,7 +268,7 @@ export function useEmployeeLogic() {
             await fetchEmployees();
         } catch (err) {
             console.error("Lỗi lưu nhân viên:", err);
-            alert("❌ " + (err.message || (editing ? "Cập nhật nhân viên thất bại" : "Thêm nhân viên thất bại")));
+            showToast(err.message || (editing ? "Cập nhật nhân viên thất bại" : "Thêm nhân viên thất bại"), "error", 3400);
         } finally {
             setIsSubmitting(false);
         }
@@ -262,13 +280,13 @@ export function useEmployeeLogic() {
         setDeletingId(id);
         try {
             await deleteEmployee(id);
-            alert("✅ Xóa nhân viên thành công!");
+            showToast("Xóa nhân viên thành công", "success");
 
             cacheRef.current = {};
             clearAllEmployeeCache();
             await fetchEmployees();
         } catch (err) {
-            alert("❌ Xóa nhân viên thất bại: " + (err.message || ""));
+            showToast("Xóa nhân viên thất bại: " + (err.message || ""), "error", 3400);
         } finally {
             setDeletingId(null);
         }

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { getProductsByPage, createProduct, updateProduct, deleteProduct } from "../../../../services/productService";
 import { getAllBrands } from "../../../../services/brandService";
 import { getAllCategories } from "../../../../services/categoryService";
+import { showToast } from "../../../../utils/adminToast";
 
 // Cache helpers
 const CACHE_KEY_PREFIX = "product_page_v2_";
@@ -26,7 +27,6 @@ export function useProductManageLogic() {
 
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [isGeneratingId, setIsGeneratingId] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
 
@@ -35,7 +35,6 @@ export function useProductManageLogic() {
     const searchTimeoutRef = useRef(null);
 
     const [form, setForm] = useState({
-        id: "",
         name: "",
         price: 0,
         stock: 0,
@@ -79,7 +78,7 @@ export function useProductManageLogic() {
                 setBrands(brandList);
             } catch (err) {
                 console.error("Failed to load brands:", err);
-                alert("Không tải được danh sách thương hiệu. Vui lòng thêm thương hiệu trước.");
+                showToast("Không tải được danh sách thương hiệu. Vui lòng thêm thương hiệu trước.", "error", 3400);
             }
         };
         loadBrands();
@@ -108,7 +107,7 @@ export function useProductManageLogic() {
                 setCategories(mappedCategories);
             } catch (err) {
                 console.error("Failed to load categories:", err);
-                alert("Không tải được danh sách danh mục. Vui lòng kiểm tra API.");
+                showToast("Không tải được danh sách danh mục. Vui lòng kiểm tra API.", "error", 3400);
             }
         };
         loadCategories();
@@ -298,49 +297,11 @@ export function useProductManageLogic() {
             console.log("Available categories (", categories.length, "):", categories);
 
             if (brands.length === 0) {
-                alert("Chưa có thương hiệu nào! Vui lòng thêm thương hiệu trước khi thêm sản phẩm.");
+                showToast("Chưa có thương hiệu nào. Vui lòng thêm thương hiệu trước khi thêm sản phẩm.", "warning", 3400);
                 return;
             }
 
-            // Tự động generate ID từ SP201
-            setIsGeneratingId(true);
-            let nextId = "SP201"; // Default starting point
-
-            try {
-                // Fetch page đầu tiên để lấy totalElements
-                const firstPageRes = await getProductsByPage(0, pageSize);
-                const total = firstPageRes.totalElements || 0;
-
-                // Tính page cuối cùng
-                const lastPageIndex = Math.max(0, Math.ceil(total / pageSize) - 1);
-
-                // Fetch 3 trang cuối để tìm ID cao nhất (thay vì fetch tất cả)
-                const pagesToFetch = [];
-                for (let i = Math.max(0, lastPageIndex - 2); i <= lastPageIndex; i++) {
-                    pagesToFetch.push(getProductsByPage(i, pageSize));
-                }
-
-                const results = await Promise.all(pagesToFetch);
-                const recentProducts = results.flatMap(res => res.products || []);
-
-                // Tìm ID cao nhất
-                const productIds = recentProducts
-                    .map(p => p.id)
-                    .filter(id => /^SP\d+$/.test(id))
-                    .map(id => parseInt(id.replace('SP', ''), 10))
-                    .filter(num => !isNaN(num));
-
-                let maxId = Math.max(...productIds, 200); // Minimum 200
-                nextId = `SP${String(maxId + 1).padStart(3, '0')}`;
-
-                console.log("🎯 Auto-generated next ID:", nextId, "from last", pagesToFetch.length, "pages (", recentProducts.length, "products )");
-            } catch (err) {
-                console.error("Failed to generate ID:", err);
-                // Tiếp tục với default SP201
-            }
-
             setForm({
-                id: nextId,
                 name: "",
                 price: 0,
                 stock: 0,
@@ -352,16 +313,13 @@ export function useProductManageLogic() {
             setOpenForm(true);
         } catch (err) {
             console.error("Error opening add form:", err);
-            alert("Có lỗi khi mở form thêm sản phẩm");
-        } finally {
-            setIsGeneratingId(false);
+            showToast("Có lỗi khi mở form thêm sản phẩm", "error");
         }
     };
 
     const openEdit = p => {
         setEditing(p);
         setForm({
-            id: p.sp_id,
             name: p.sp_name,
             price: p.sp_price,
             stock: p.sp_stock,
@@ -380,17 +338,17 @@ export function useProductManageLogic() {
 
         // Validate required fields
         if (!form.name || !form.name.trim()) {
-            alert("Vui lòng nhập tên sản phẩm");
+            showToast("Vui lòng nhập tên sản phẩm", "warning");
             return;
         }
 
         if (!form.price || Number(form.price) <= 0) {
-            alert("Vui lòng nhập giá sản phẩm hợp lệ");
+            showToast("Vui lòng nhập giá sản phẩm hợp lệ", "warning");
             return;
         }
 
         if (!form.brandId || form.brandId === "") {
-            alert("Vui lòng chọn thương hiệu");
+            showToast("Vui lòng chọn thương hiệu", "warning");
             console.log("Brand validation failed. brandId:", form.brandId);
             return;
         }
@@ -403,31 +361,26 @@ export function useProductManageLogic() {
             b.hangId === form.brandId
         ));
         if (!brandExists) {
-            alert("Thương hiệu không hợp lệ hoặc không tồn tại trong hệ thống. Vui lòng chọn lại.");
+            showToast("Thương hiệu không hợp lệ hoặc không tồn tại trong hệ thống. Vui lòng chọn lại.", "warning", 3400);
             console.error("Brand ID not found in brands list:", form.brandId);
             console.log("Available brands:", brands);
             return;
         }
 
         if (!form.categoryId || form.categoryId === "") {
-            alert("Vui lòng chọn danh mục");
+            showToast("Vui lòng chọn danh mục", "warning");
             console.log("Category validation failed. categoryId:", form.categoryId);
             return;
         }
 
-        // Validate ID
-        let productId = form.id;
-        if (!editing) {
-            if (!productId || !productId.trim()) {
-                alert("Vui lòng nhập mã sản phẩm");
-                return;
-            }
+        if (!form.description || !form.description.trim()) {
+            showToast("Vui lòng nhập mô tả sản phẩm", "warning");
+            return;
+        }
 
-            // Kiểm tra format ID (SPxxx)
-            if (!/^SP\d{3,}$/.test(productId)) {
-                alert("Mã sản phẩm phải có định dạng SPxxx (ví dụ: SP201, SP202,...)");
-                return;
-            }
+        if (!form.image || !form.image.trim()) {
+            showToast("Vui lòng nhập URL hình ảnh sản phẩm", "warning");
+            return;
         }
 
         let finalImage = form.image;
@@ -456,7 +409,8 @@ export function useProductManageLogic() {
 
         const payload = {
             ...form,
-            id: productId,
+            name: form.name.trim(),
+            description: form.description.trim(),
             image: finalImage
         };
 
@@ -467,10 +421,10 @@ export function useProductManageLogic() {
         try {
             if (editing) {
                 await updateProduct(editing.sp_id, payload);
-                alert("✅ Cập nhật sản phẩm thành công!");
+                showToast("Cập nhật sản phẩm thành công", "success");
             } else {
                 await createProduct(payload);
-                alert("✅ Thêm sản phẩm thành công! Mã: " + productId);
+                showToast("Thêm sản phẩm thành công", "success");
             }
             setOpenForm(false);
 
@@ -505,7 +459,7 @@ export function useProductManageLogic() {
             if (errorMsg.includes("400")) {
                 errorMsg = "Mã sản phẩm đã tồn tại hoặc dữ liệu không hợp lệ. Vui lòng kiểm tra lại.";
             }
-            alert("❌ Lưu sản phẩm thất bại: " + errorMsg);
+            showToast("Lưu sản phẩm thất bại: " + errorMsg, "error", 3600);
         } finally {
             setIsSubmitting(false);
         }
@@ -540,11 +494,11 @@ export function useProductManageLogic() {
                 await loadProductsPage(page, false);
             }
 
-            alert("✅ Xóa sản phẩm thành công!");
+            showToast("Xóa sản phẩm thành công", "success");
             setTimeout(() => loadAllInBackground(), 500);
         } catch (err) {
             console.error("Delete product error:", err);
-            alert("❌ Xoá sản phẩm thất bại");
+            showToast("Xóa sản phẩm thất bại", "error");
         } finally {
             setDeletingId(null);
         }
@@ -569,7 +523,6 @@ export function useProductManageLogic() {
         form,
         setForm,
         isSubmitting,
-        isGeneratingId,
         deletingId,
         brands,
         categories,

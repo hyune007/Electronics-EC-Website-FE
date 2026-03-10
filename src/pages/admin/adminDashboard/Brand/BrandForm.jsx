@@ -1,4 +1,4 @@
-import { X, Building2, Hash, Tag } from "lucide-react";
+import { X, Building2 } from "lucide-react";
 
 export default function BrandForm({ open, onClose, onSubmit }) {
     if (!open) return null;
@@ -38,25 +38,6 @@ export default function BrandForm({ open, onClose, onSubmit }) {
                         <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">Thông tin thương hiệu</h3>
                         
                         <div className="space-y-4">
-                            {form.hang_id && (
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                        Mã thương hiệu
-                                    </label>
-                                    <div className="relative">
-                                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={18} />
-                                        <input
-                                            type="text"
-                                            placeholder="Mã thương hiệu"
-                                            value={form.hang_id}
-                                            disabled
-                                            className="w-full pl-10 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-neutral-900 font-mono cursor-not-allowed opacity-60"
-                                        />
-                                    </div>
-                                    <p className="text-xs text-neutral-500 mt-1">Mã thương hiệu không thể thay đổi</p>
-                                </div>
-                            )}
-
                             <div>
                                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                                     Tên thương hiệu <span className="text-red-500">*</span>

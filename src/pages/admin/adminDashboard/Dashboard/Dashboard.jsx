@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, DollarSign, Package, Users, Calendar, ArrowUp } from "lucide-react";
 import "./Dashboard.css";
-import "./Dashboard.css";
 import { useDashboardLogic } from "./Dashboardlogic.js";
 import { preloadAllData, shouldPreload } from "../../../../utils/preloadData";
 
 export default function Dashboard() {
-  const { loading, error, revenue, stats, revenueByMonth } = useDashboardLogic();
+  const { loading, error, revenue, revenueTrend, stats, revenueByMonth } = useDashboardLogic();
   const [mounted, setMounted] = useState(false);
 
   // Animation cho số liệu chạy lên (revenue count-up)
@@ -61,7 +60,7 @@ export default function Dashboard() {
     }, stepTime);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [loading, revenue]);
 
   const getIconForStat = (title) => {
     if (title.includes("đơn hàng")) return Package;
@@ -140,9 +139,20 @@ export default function Dashboard() {
                   {displayRevenue.toLocaleString('vi-VN')} ₫
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-emerald-600 font-medium">+12.5%</span>
-                  <span className="text-neutral-600">so với tháng trước</span>
-                  <ArrowUp className="text-emerald-600" size={16} />
+                  {revenueTrend.previousMonthRevenue > 0 ? (
+                    <>
+                      <span className={`font-medium ${revenueTrend.percent >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {revenueTrend.percent >= 0 ? '+' : ''}{revenueTrend.percent.toFixed(1)}%
+                      </span>
+                      <span className="text-neutral-600">so với tháng trước</span>
+                      <ArrowUp
+                        className={revenueTrend.percent >= 0 ? 'text-emerald-600' : 'text-red-600 rotate-180'}
+                        size={16}
+                      />
+                    </>
+                  ) : (
+                    <span className="text-neutral-600">Chưa có dữ liệu so sánh tháng trước</span>
+                  )}
                 </div>
               </div>
 
@@ -166,7 +176,7 @@ export default function Dashboard() {
                 {revenueByMonth.map((month, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                     <div>
-                      <p className="text-sm font-medium text-neutral-900">Tháng {month.month}</p>
+                      <p className="text-sm font-medium text-neutral-900">{month.month}</p>
                       <p className="text-xs text-neutral-600">2024</p>
                     </div>
                     <p className="text-sm font-semibold text-neutral-900">

@@ -5,7 +5,7 @@ import {
     updateBrand,
     deleteBrand,
 } from "../../../../services/brandService";
-import { generateNextBrandId } from "../../../../utils/codeGenerator";
+import { showToast } from "../../../../utils/adminToast";
 
 // Cache helpers
 const CACHE_KEY = "brand_data";
@@ -90,7 +90,7 @@ export function useBrandLogic() {
             setBrands(data);
         } catch (err) {
             console.error("Error loading brands:", err);
-            alert("Không tải được danh sách hãng");
+            showToast("Không tải được danh sách hãng", "error");
         } finally {
             setLoading(false);
         }
@@ -150,41 +150,31 @@ export function useBrandLogic() {
 
     // ===== SUBMIT =====
     const handleSubmit = async () => {
-        // Chỉ validate tên thương hiệu, ID sẽ được tạo tự động khi thêm mới
         if (!form.hang_name || !form.hang_name.trim()) {
-            alert("Vui lòng nhập tên thương hiệu");
+            showToast("Vui lòng nhập tên thương hiệu", "warning");
             return;
         }
 
         setIsSubmitting(true);
         try {
-            // Tự động generate ID nếu đang tạo mới
-            let brandId = form.hang_id;
-            if (!editing) {
-                // Fetch fresh data để tránh duplicate ID
-                const allBrands = await getAllBrands();
-                brandId = generateNextBrandId(allBrands);
-                console.log("Generated brand ID:", brandId);
-            }
-            
             const payload = {
-                hang_id: brandId,
-                hang_name: form.hang_name
+                hang_name: form.hang_name.trim(),
             };
             
             if (editing) {
-                await updateBrand(editing.hang_id, payload);
+                await updateBrand(editing.hang_id, {
+                    ...payload,
+                    hang_id: editing.hang_id,
+                });
                 setBrands((prev) =>
                     prev.map((b) =>
-                        b.hang_id === editing.hang_id ? payload : b
+                        b.hang_id === editing.hang_id
+                            ? { ...b, ...payload }
+                            : b
                     )
                 );
             } else {
-                const newBrand = await createBrand(payload);
-                setBrands((prev) => [
-                    ...prev,
-                    { hang_id: newBrand.id || brandId, hang_name: newBrand.name },
-                ]);
+                await createBrand(payload);
             }
             
             // Clear cache and reload
@@ -192,10 +182,10 @@ export function useBrandLogic() {
             await fetchBrands();
             
             setOpenForm(false);
-            alert(editing ? "✅ Cập nhật thương hiệu thành công!" : "✅ Thêm thương hiệu thành công!");
+            showToast(editing ? "Cập nhật thương hiệu thành công" : "Thêm thương hiệu thành công", "success");
         } catch (err) {
             console.error(err);
-            alert("❌ Lưu hãng thất bại: " + (err.message || ""));
+            showToast("Lưu hãng thất bại: " + (err.message || ""), "error", 3400);
         } finally {
             setIsSubmitting(false);
         }
@@ -212,10 +202,10 @@ export function useBrandLogic() {
             // Clear cache and reload
             clearBrandCache();
             await fetchBrands();
-            alert("✅ Xóa thương hiệu thành công!");
+            showToast("Xóa thương hiệu thành công", "success");
         } catch (err) {
             console.error(err);
-            alert("❌ Xóa hãng thất bại: " + (err.message || ""));
+            showToast("Xóa hãng thất bại: " + (err.message || ""), "error", 3400);
         } finally {
             setDeletingId(null);
         }

@@ -1,4 +1,4 @@
-﻿import { X, Package, Calendar, Hash, Loader2 } from "lucide-react";
+﻿import { X, Package, Calendar, Loader2 } from "lucide-react";
 
 export default function ImportForm({ open, onClose, onSubmit }) {
     if (!open) return null;
@@ -33,25 +33,6 @@ export default function ImportForm({ open, onClose, onSubmit }) {
 
                 {/* Form */}
                 <div className="p-6 space-y-4">
-                    {form.nk_id && (
-                        <div>
-                            <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                Mã nhập kho
-                            </label>
-                            <div className="relative">
-                                <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={18} />
-                                <input
-                                    type="text"
-                                    value={form.nk_id}
-                                    disabled
-                                    className="w-full pl-10 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-neutral-900 font-mono cursor-not-allowed"
-                                    placeholder="Mã nhập kho sẽ tự động tạo"
-                                />
-                            </div>
-                            <p className="text-xs text-neutral-500 mt-1">Mã nhập kho không thể thay đổi</p>
-                        </div>
-                    )}
-
                     <div>
                         <label className="block text-sm font-medium text-neutral-700 mb-2">
                             Sản phẩm <span className="text-red-500">*</span>
@@ -64,6 +45,7 @@ export default function ImportForm({ open, onClose, onSubmit }) {
                                     setForm({ ...form, sp_id: e.target.value })
                                 }
                                 className="w-full pl-10 pr-10 py-3 bg-white border border-neutral-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                                required
                             >
                                 <option value="">-- Chọn sản phẩm --</option>
                                 {Array.isArray(products) && products.length > 0 ? (
@@ -99,6 +81,7 @@ export default function ImportForm({ open, onClose, onSubmit }) {
                             min="1"
                             className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
                             placeholder="Nhập số lượng"
+                            required
                         />
                     </div>
 
@@ -115,6 +98,7 @@ export default function ImportForm({ open, onClose, onSubmit }) {
                                     setForm({ ...form, nk_date: e.target.value })
                                 }
                                 className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                                required
                             />
                         </div>
                     </div>

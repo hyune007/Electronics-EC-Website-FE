@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { getAllBills, updateBill } from "../../../../services/billService.js";
+import { showToast } from "../../../../utils/adminToast.js";
 
 // Cache helpers
 const CACHE_KEY = "order_data_api";
@@ -51,8 +52,11 @@ export function useOrderLogic() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [paymentFilter, setPaymentFilter] = useState("ALL");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
-  const itemsPerPage = 12;
+  const itemsPerPage = 8;
 
   /* ================= LOAD DATA ================= */
   const loadOrders = useCallback(async () => {
@@ -108,7 +112,7 @@ export function useOrderLogic() {
       setOrders(mappedOrders);
     } catch (error) {
       console.error("Failed to load orders:", error);
-      alert("Không thể tải danh sách đơn hàng. Vui lòng kiểm tra kết nối API.");
+      showToast("Không thể tải danh sách đơn hàng. Vui lòng kiểm tra kết nối API.", "error", 3400);
     } finally {
       setLoading(false);
     }
@@ -125,36 +129,94 @@ export function useOrderLogic() {
       // Clear cache and reload
       clearOrderCache();
       await loadOrders();
-      alert("Cập nhật trạng thái đơn hàng thành công!");
+      showToast("Cập nhật trạng thái đơn hàng thành công", "success");
     } catch (error) {
       console.error("Failed to update order status:", error);
-      alert("Không thể cập nhật trạng thái đơn hàng.");
+      showToast("Không thể cập nhật trạng thái đơn hàng", "error");
     }
   };
 
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
+      const orderId = String(o.order_id || "").toLowerCase();
+      const customerName = String(o.customer_name || "").toLowerCase();
+      const customerPhone = String(o.customer_phone || "").toLowerCase();
+      const keyword = search.toLowerCase().trim();
+
       const matchSearch =
-        o.order_id.toLowerCase().includes(search.toLowerCase()) ||
-        o.customer_name.toLowerCase().includes(search.toLowerCase());
+        orderId.includes(keyword) ||
+        customerName.includes(keyword) ||
+        customerPhone.includes(keyword);
 
       let matchStatus = true;
       if (statusFilter && statusFilter !== "ALL") {
         matchStatus = o.raw_status === statusFilter;
       }
 
-      return matchSearch && matchStatus;
+      let matchPayment = true;
+      if (paymentFilter && paymentFilter !== "ALL") {
+        matchPayment = String(o.payment_method || "") === paymentFilter;
+      }
+
+      let matchDate = true;
+      if (dateFrom) {
+        matchDate = matchDate && String(o.created_at || "") >= dateFrom;
+      }
+      if (dateTo) {
+        matchDate = matchDate && String(o.created_at || "") <= dateTo;
+      }
+
+      return matchSearch && matchStatus && matchPayment && matchDate;
     });
-  }, [orders, search, statusFilter]);
+  }, [orders, search, statusFilter, paymentFilter, dateFrom, dateTo]);
+
+  const groupedOrders = useMemo(() => {
+    const groups = new Map();
+
+    filteredOrders.forEach((order) => {
+      const key = `${order.customer_id || "unknown"}-${order.customer_name || "Khách vãng lai"}`;
+
+      if (!groups.has(key)) {
+        groups.set(key, {
+          customer_key: key,
+          customer_id: order.customer_id || "",
+          customer_name: order.customer_name || "Khách vãng lai",
+          customer_phone: order.customer_phone || "",
+          orders: [],
+          total_spent: 0,
+          last_order_date: "",
+        });
+      }
+
+      const group = groups.get(key);
+      group.orders.push(order);
+      group.total_spent += Number(order.total_amount || 0);
+
+      if (!group.last_order_date || String(order.created_at) > group.last_order_date) {
+        group.last_order_date = order.created_at;
+      }
+    });
+
+    return Array.from(groups.values())
+      .map((g) => ({
+        ...g,
+        total_orders: g.orders.length,
+        pending_count: g.orders.filter((o) => o.status === "PENDING").length,
+        completed_count: g.orders.filter((o) => o.status === "COMPLETED").length,
+        cancelled_count: g.orders.filter((o) => o.status === "CANCELLED").length,
+        orders: g.orders.sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))),
+      }))
+      .sort((a, b) => b.total_orders - a.total_orders || String(b.last_order_date).localeCompare(String(a.last_order_date)));
+  }, [filteredOrders]);
 
   /* ================= PAGINATION ================= */
-  const paginatedOrders = useMemo(() => {
+  const paginatedGroups = useMemo(() => {
     const startIndex = currentPage * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return filteredOrders.slice(startIndex, endIndex);
-  }, [filteredOrders, currentPage]);
+    return groupedOrders.slice(startIndex, endIndex);
+  }, [groupedOrders, currentPage]);
 
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const totalPages = Math.ceil(groupedOrders.length / itemsPerPage);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -168,10 +230,39 @@ export function useOrderLogic() {
     setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
   };
 
+  const hasActiveFilters = useMemo(() => {
+    return Boolean(
+      search.trim() ||
+        statusFilter !== "ALL" ||
+        paymentFilter !== "ALL" ||
+        dateFrom ||
+        dateTo,
+    );
+  }, [search, statusFilter, paymentFilter, dateFrom, dateTo]);
+
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("ALL");
+    setPaymentFilter("ALL");
+    setDateFrom("");
+    setDateTo("");
+    setCurrentPage(0);
+  };
+
   // Reset page when search or filter changes
   useEffect(() => {
     setCurrentPage(0);
-  }, [search, statusFilter]);
+  }, [search, statusFilter, paymentFilter, dateFrom, dateTo]);
+
+  const paymentMethods = useMemo(() => {
+    const values = new Set(
+      orders
+        .map((o) => String(o.payment_method || "").trim())
+        .filter(Boolean),
+    );
+
+    return Array.from(values);
+  }, [orders]);
 
   return {
     loading,
@@ -179,8 +270,18 @@ export function useOrderLogic() {
     setSearch,
     statusFilter,
     setStatusFilter,
+    paymentFilter,
+    setPaymentFilter,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
+    paymentMethods,
+    hasActiveFilters,
+    clearFilters,
     filteredOrders,
-    paginatedOrders,
+    groupedOrders,
+    paginatedGroups,
     currentPage,
     totalPages,
     itemsPerPage,

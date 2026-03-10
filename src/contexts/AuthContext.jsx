@@ -8,16 +8,63 @@ export const AuthProvider = ({ children }) => {
     const [token, setToken] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
+  const normalizeUserData = useCallback((authToken, source = {}, fallbackUser = null) => {
+    const payload = decodeJwtPayload(authToken);
+    const nested = source?.user || source?.data || {};
+
+    const rawName =
+      source?.name ||
+      source?.fullName ||
+      nested?.name ||
+      nested?.fullName ||
+      payload?.name ||
+      payload?.fullName ||
+      payload?.given_name ||
+      payload?.username ||
+      payload?.preferred_username ||
+      fallbackUser?.name ||
+      "";
+
+    const rawEmail =
+      source?.email ||
+      nested?.email ||
+      payload?.email ||
+      fallbackUser?.email ||
+      "";
+
+    const resolvedName =
+      String(rawName || "").trim() ||
+      (String(rawEmail || "").includes("@")
+        ? String(rawEmail).split("@")[0]
+        : "User");
+
+    return {
+      id: payload?.sub || source?.id || nested?.id || fallbackUser?.id || "",
+      name: resolvedName,
+      email: String(rawEmail || "").trim(),
+      roleId: payload?.roleId || source?.roleId || nested?.roleId || fallbackUser?.roleId,
+    };
+  }, []);
+
   useEffect(() => {
     const initAuth = () => {
       const storedToken = localStorage.getItem("authToken");
       const storedUser = localStorage.getItem("authUser");
 
-      if (storedToken && storedUser) {
+      if (storedToken) {
         const decoded = decodeJwtPayload(storedToken);
         if (decoded && decoded.exp * 1000 > Date.now()) {
+          let parsedStoredUser = null;
+          try {
+            parsedStoredUser = storedUser ? JSON.parse(storedUser) : null;
+          } catch {
+            parsedStoredUser = null;
+          }
+
+          const userData = normalizeUserData(storedToken, parsedStoredUser || {}, parsedStoredUser);
           setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+          setUser(userData);
+          localStorage.setItem("authUser", JSON.stringify(userData));
         } else {
           localStorage.removeItem("authToken");
           localStorage.removeItem("authUser");
@@ -30,22 +77,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
     const login = useCallback((loginResponse) => {
-        const { token, email } = loginResponse;
-        const payload = decodeJwtPayload(token);
-
-        const userData = {
-            id: payload?.sub,
-            name: payload?.name || "User",
-            email: email || payload?.email || "",
-            roleId: payload?.roleId,
-        };
+      const { token } = loginResponse;
+      const userData = normalizeUserData(token, loginResponse);
 
         localStorage.setItem('authToken', token);
         localStorage.setItem('authUser', JSON.stringify(userData));
 
         setToken(token);
         setUser(userData);
-    }, []);
+    }, [normalizeUserData]);
 
     const logout = useCallback(() => {
         localStorage.removeItem('authToken');

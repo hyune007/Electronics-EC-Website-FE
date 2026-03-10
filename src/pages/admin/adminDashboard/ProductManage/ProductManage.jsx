@@ -6,8 +6,7 @@ import {
     Package,
     TrendingUp,
     DollarSign,
-    Image,
-    Loader2
+    Image
 } from "lucide-react";
 import ProductForm from "./ProductForm.jsx";
 import { useProductManageLogic } from "./Productlogic.js";
@@ -47,20 +46,12 @@ export default function ProductManage() {
 
                     <button
                         onClick={pm.openAdd}
-                        disabled={pm.isGeneratingId}
-                        className="btn-primary shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="btn-primary shadow-lg"
                     >
-                        {pm.isGeneratingId ? (
-                            <>
-                                <Loader2 size={18} className="animate-spin" />
-                                Đang tạo...
-                            </>
-                        ) : (
-                            <>
-                                <Plus size={18} />
-                                Thêm Sản Phẩm
-                            </>
-                        )}
+                        <>
+                            <Plus size={18} />
+                            Thêm Sản Phẩm
+                        </>
                     </button>
                 </div>
 
@@ -300,7 +291,6 @@ export default function ProductManage() {
                     handleSubmit: pm.handleSubmit
                 }}
                 editing={pm.editing}
-                isGeneratingId={pm.isGeneratingId}
                 isSubmitting={pm.isSubmitting}
                 brands={pm.brands}
                 categories={pm.categories}

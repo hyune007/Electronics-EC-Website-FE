@@ -1,6 +1,6 @@
-﻿import { X, Package, DollarSign, Hash, Image as ImageIcon, Tag, Building2, FileText, Loader2 } from "lucide-react";
+﻿import { X, Package, DollarSign, Image as ImageIcon, Tag, Building2, FileText, Loader2 } from "lucide-react";
 
-export default function ProductForm({ open, onClose, onSubmit, editing, isGeneratingId, isSubmitting, brands = [], categories = [] }) {
+export default function ProductForm({ open, onClose, onSubmit, editing, isSubmitting, brands = [], categories = [] }) {
     if (!open) return null;
 
     const { form, setForm, handleSubmit } = onSubmit;
@@ -43,15 +43,6 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                     </div>
                 )}
 
-                {isGeneratingId && (
-                    <div className="absolute inset-0 z-10 bg-white/70 backdrop-blur-sm flex items-center justify-center rounded-2xl">
-                        <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl shadow-lg border border-neutral-100">
-                            <Loader2 size={18} className="animate-spin text-indigo-600" />
-                            <span className="text-sm font-medium text-neutral-700">Đang tạo mã sản phẩm...</span>
-                        </div>
-                    </div>
-                )}
-
                 {/* Form Content */}
                 <div className="p-6 space-y-6">
                     {/* Basic Info */}
@@ -59,30 +50,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                         <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">Thông tin cơ bản</h3>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {!editing && (
-                                <div>
-                                    <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                        Mã sản phẩm <span className="text-red-500">*</span>
-                                    </label>
-                                    <div className="relative">
-                                        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={18} />
-                                        <input
-                                            type="text"
-                                            name="id"
-                                            value={form.id}
-                                            onChange={change}
-                                            placeholder="SP201, SP202,..."
-                                            className="w-full pl-10 pr-4 py-3 bg-indigo-50 border-2 border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 font-semibold text-indigo-900"
-                                            required
-                                        />
-                                    </div>
-                                    <p className="text-xs text-neutral-500 mt-1 flex items-center gap-1">
-                                        <span className="text-green-600">✓</span> ID được tạo tự động, có thể chỉnh sửa
-                                    </p>
-                                </div>
-                            )}
-
-                            <div className={editing ? "md:col-span-2" : ""}>
+                            <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                                     Tên sản phẩm <span className="text-red-500">*</span>
                                 </label>
@@ -227,6 +195,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                                     placeholder="Nhập mô tả chi tiết về sản phẩm..."
                                     rows={4}
                                     className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 resize-none"
+                                    required
                                 />
                             </div>
                         </div>
@@ -238,7 +207,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
 
                         <div>
                             <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                URL hình ảnh <span className="text-neutral-400 text-xs">(Không bắt buộc)</span>
+                                URL hình ảnh <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
                                 <ImageIcon className="absolute left-3 top-3 text-neutral-400" size={18} />
@@ -247,8 +216,9 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                                     value={form.image}
                                     onChange={change}
                                     rows="3"
-                                    placeholder="https://example.com/image.jpg hoặc để trống"
+                                    placeholder="https://example.com/image.jpg"
                                     className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 resize-none"
+                                    required
                                 />
                             </div>
                             <p className="text-xs text-neutral-500 mt-1">
@@ -289,11 +259,6 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                             <>
                                 <Loader2 size={18} className="animate-spin" />
                                 Đang lưu...
-                            </>
-                        ) : !editing && isGeneratingId ? (
-                            <>
-                                <Loader2 size={18} className="animate-spin" />
-                                Đang tạo mã...
                             </>
                         ) : (
                             <>

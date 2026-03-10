@@ -3,12 +3,40 @@ import { getAllBills } from "../../../../services/billService";
 import { getAllCustomers } from "../../../../services/customerService";
 import { getProductsByPage } from "../../../../services/productService";
 
+function parseAmount(value) {
+    if (typeof value === "number") return value;
+    if (typeof value === "string") {
+        const normalized = value.replace(/[^\d.-]/g, "");
+        const parsed = Number(normalized);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+}
+
+function isCompletedBill(statusValue) {
+    if (statusValue === 3) return true; // Common backend code for delivered/completed
+
+    const status = String(statusValue || "").trim().toUpperCase();
+    return ["ĐÃ GIAO", "DA GIAO", "COMPLETED", "DELIVERED", "SUCCESS"].includes(status);
+}
+
+function getBillAmount(bill) {
+    return parseAmount(
+        bill.totalAmount ?? bill.total_amount ?? bill.total ?? bill.amount ?? 0,
+    );
+}
+
 export function useDashboardLogic() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
     // Dữ liệu dùng cho Dashboard
     const [revenue, setRevenue] = useState(0);
+    const [revenueTrend, setRevenueTrend] = useState({
+        percent: 0,
+        currentMonthRevenue: 0,
+        previousMonthRevenue: 0,
+    });
     const [stats, setStats] = useState([]);
     const [revenueByMonth, setRevenueByMonth] = useState([]);
 
@@ -29,16 +57,20 @@ export function useDashboardLogic() {
                 const totalCustomers = customers?.length || 0;
                 const totalProducts = productsResponse?.totalElements || 0;
 
-                // Filter bills đã thanh toán/hoàn thành để tính doanh thu
-                // Tuỳ BE của bạn trạng thái nào là hoàn thành (Ví dụ: 3 - Đã giao, hoặc 'COMPLETED')
-                // Ở đây mình tạm cộng tất cả những đơn không bị Hủy (giả sử Hủy là 4)
-                const validBills = billsList.filter(b => b.status !== 4 && b.status !== 'Đã hủy');
+                // Chỉ tính doanh thu từ đơn hoàn thành/đã giao.
+                const completedBills = billsList.filter((bill) => {
+                    const rawStatus = bill.status?.name ?? bill.status;
+                    return isCompletedBill(rawStatus);
+                });
 
                 const totalOrders = billsList.length;
                 let totalRevenue = 0;
 
                 // Tính doanh thu theo tháng (năm hiện tại)
                 const currentYear = new Date().getFullYear();
+                const currentMonth = new Date().getMonth() + 1;
+                const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+                const previousMonthYear = currentMonth === 1 ? currentYear - 1 : currentYear;
                 const monthlyRevenueMap = {};
 
                 // Khởi tạo 12 tháng = 0
@@ -46,8 +78,9 @@ export function useDashboardLogic() {
                     monthlyRevenueMap[i] = 0;
                 }
 
-                validBills.forEach(bill => {
-                    totalRevenue += (bill.total_amount || bill.total || 0);
+                completedBills.forEach((bill) => {
+                    const billAmount = getBillAmount(bill);
+                    totalRevenue += billAmount;
 
                     // Parse ngày tạo bill (VD: created_at, createDate, date)
                     const dateStr = bill.created_at || bill.createDate || bill.date;
@@ -55,7 +88,7 @@ export function useDashboardLogic() {
                         const date = new Date(dateStr);
                         if (date.getFullYear() === currentYear) {
                             const month = date.getMonth() + 1;
-                            monthlyRevenueMap[month] += (bill.total_amount || bill.total || 0);
+                            monthlyRevenueMap[month] += billAmount;
                         }
                     }
                 });
@@ -66,8 +99,34 @@ export function useDashboardLogic() {
                     value: monthlyRevenueMap[month]
                 })).filter(item => item.value > 0); // Có thể bỏ filter này nếu muốn show cả tháng 0đ
 
+                const currentMonthRevenue = monthlyRevenueMap[currentMonth] || 0;
+                let previousMonthRevenue = 0;
+
+                // Nếu đang là tháng 1 thì doanh thu tháng trước là tháng 12 của năm trước.
+                if (previousMonthYear === currentYear) {
+                    previousMonthRevenue = monthlyRevenueMap[previousMonth] || 0;
+                } else {
+                    previousMonthRevenue = completedBills
+                        .filter((bill) => {
+                            const dateStr = bill.created_at || bill.createDate || bill.date;
+                            if (!dateStr) return false;
+                            const d = new Date(dateStr);
+                            return d.getFullYear() === previousMonthYear && d.getMonth() + 1 === previousMonth;
+                        })
+                        .reduce((sum, bill) => sum + getBillAmount(bill), 0);
+                }
+
+                const trendPercent = previousMonthRevenue > 0
+                    ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100
+                    : 0;
+
                 // Set states
                 setRevenue(totalRevenue);
+                setRevenueTrend({
+                    percent: Number.isFinite(trendPercent) ? trendPercent : 0,
+                    currentMonthRevenue,
+                    previousMonthRevenue,
+                });
                 setRevenueByMonth(monthlyData.length > 0 ? monthlyData : [
                     { month: "Chưa có dữ liệu", value: 0 }
                 ]);
@@ -110,6 +169,7 @@ export function useDashboardLogic() {
                     { title: "Tổng khách hàng", value: 0 },
                     { title: "Tổng sản phẩm", value: 0 }
                 ]);
+                setRevenueTrend({ percent: 0, currentMonthRevenue: 0, previousMonthRevenue: 0 });
             } finally {
                 setLoading(false);
             }
@@ -122,6 +182,7 @@ export function useDashboardLogic() {
         loading,
         error,
         revenue,
+        revenueTrend,
         stats,
         revenueByMonth
     };

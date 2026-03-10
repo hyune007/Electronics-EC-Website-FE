@@ -5,7 +5,7 @@ import {
     updateCustomer,
     deleteCustomer
 } from "../../../../services/customerService.js";
-import { generateNextCustomerId } from "../../../../utils/codeGenerator";
+import { showToast } from "../../../../utils/adminToast";
 
 // Cache helpers
 const CACHE_KEY = "customer_data";
@@ -154,51 +154,37 @@ export function useCustomerLogic() {
         
         // Validate required fields
         if (!form.kh_name || !form.kh_name.trim()) {
-            alert("Vui lòng nhập họ tên khách hàng");
+            showToast("Vui lòng nhập họ tên khách hàng", "warning");
             return;
         }
         
-        if (!editing && (!form.kh_password || !form.kh_password.trim())) {
-            alert("Vui lòng nhập mật khẩu");
+        if (!form.kh_password || !form.kh_password.trim()) {
+            showToast("Vui lòng nhập mật khẩu", "warning");
             return;
         }
         
         if (!form.kh_phone || !form.kh_phone.trim()) {
-            alert("Vui lòng nhập số điện thoại");
+            showToast("Vui lòng nhập số điện thoại", "warning");
             return;
         }
         
         if (!form.kh_mail || !form.kh_mail.trim()) {
-            alert("Vui lòng nhập email");
+            showToast("Vui lòng nhập email", "warning");
             return;
         }
         
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(form.kh_mail)) {
-            alert("Định dạng email không hợp lệ");
+            showToast("Định dạng email không hợp lệ", "warning");
             return;
         }
         
-        // Tự động generate ID nếu đang tạo mới
-        let customerId = form.kh_id;
-        if (!editing) {
-            // Fetch fresh data để tránh duplicate ID
-            const freshData = await getAllCustomers();
-            const mapped = freshData.map(c => ({
-                kh_id: c.id || c.kh_id,
-                kh_name: c.name || c.kh_name
-            }));
-            customerId = generateNextCustomerId(mapped);
-            console.log("Generated customer ID:", customerId);
-        }
-        
         const payload = {
-            kh_id: customerId,
-            kh_name: form.kh_name,
-            kh_password: form.kh_password,
-            kh_phone: form.kh_phone,
-            kh_mail: form.kh_mail,
+            kh_name: form.kh_name.trim(),
+            kh_password: form.kh_password.trim(),
+            kh_phone: form.kh_phone.trim(),
+            kh_mail: form.kh_mail.trim(),
             kh_role_id: form.kh_role || "ROLE_CUSTOMER",
         };
         
@@ -207,9 +193,11 @@ export function useCustomerLogic() {
         try {
             if (editing) {
                 // UPDATE → cần id
-                await updateCustomer(editing.kh_id, payload);
+                await updateCustomer(editing.kh_id, {
+                    ...payload,
+                    kh_id: editing.kh_id,
+                });
             } else {
-                // CREATE → GỬi ID đã generate
                 await createCustomer(payload);
             }
 
@@ -218,10 +206,10 @@ export function useCustomerLogic() {
             // Clear cache and reload
             clearCustomerCache();
             await fetchCustomers();
-            alert(editing ? "✅ Cập nhật khách hàng thành công!" : "✅ Thêm khách hàng thành công!");
+            showToast(editing ? "Cập nhật khách hàng thành công" : "Thêm khách hàng thành công", "success");
         } catch (err) {
             console.error("Lỗi lưu khách hàng:", err);
-            alert(editing ? "❌ Cập nhật khách hàng thất bại: " + err.message : "❌ Thêm khách hàng thất bại: " + err.message);
+            showToast(editing ? "Cập nhật khách hàng thất bại: " + err.message : "Thêm khách hàng thất bại: " + err.message, "error", 3400);
         }
     };
 
@@ -235,10 +223,10 @@ export function useCustomerLogic() {
                 // Clear cache and reload
                 clearCustomerCache();
                 await fetchCustomers();
-                alert("✅ Xóa khách hàng thành công!");
+                showToast("Xóa khách hàng thành công", "success");
             } catch (err) {
                 console.error("Delete customer failed:", err);
-                alert("❌ Xóa khách hàng thất bại: " + (err.message || ""));
+                showToast("Xóa khách hàng thất bại: " + (err.message || ""), "error", 3400);
             }
         }
     };
