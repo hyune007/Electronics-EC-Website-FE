@@ -32,7 +32,7 @@ export function useDashboardLogic() {
                 // Filter bills đã thanh toán/hoàn thành để tính doanh thu
                 // Tuỳ BE của bạn trạng thái nào là hoàn thành (Ví dụ: 3 - Đã giao, hoặc 'COMPLETED')
                 // Ở đây mình tạm cộng tất cả những đơn không bị Hủy (giả sử Hủy là 4)
-                const validBills = billsList.filter(b => b.status !== 4 && b.status !== 'CANCELLED');
+                const validBills = billsList.filter(b => b.status !== 4 && b.status !== 'Đã hủy');
 
                 const totalOrders = billsList.length;
                 let totalRevenue = 0;

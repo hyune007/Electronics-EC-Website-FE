@@ -190,6 +190,7 @@ const vi = {
         all: "Tất cả",
         pending: "Chờ xác nhận",
         confirmed: "Đã xác nhận",
+        waiting_shipping: "Đơn đang chờ giao",
         shipping: "Đang giao",
         delivered: "Đã giao",
         cancelled: "Đã hủy",
