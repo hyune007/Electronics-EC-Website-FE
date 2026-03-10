@@ -24,7 +24,7 @@ export default function Header() {
     }, [displayName]);
 
     const roleLabel = useMemo(() => {
-        if (user?.roleId === "ROLE_ADMIN") return "Quản trị viên";
+        if (user?.roleId === "ROLE_ADMIN") return "Admin";
         if (user?.roleId === "ROLE_EMPLOYEE") return "Nhân viên";
         if (user?.roleId === "ROLE_CUSTOMER") return "Khách hàng";
         return "Tài khoản";

@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useCallback } from "react";
 import { decodeJwtPayload } from "../utils/jwt";
+import { getEmployeeById } from "../services/employeeservice";
 
 export const AuthContext = createContext(null);
 
@@ -7,6 +8,25 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+
+  const enrichAdminProfile = useCallback(async (authToken, currentUserData) => {
+    const canEnrich = currentUserData?.roleId === "ROLE_ADMIN" && currentUserData?.id;
+    if (!canEnrich) return;
+
+    try {
+      const employee = await getEmployeeById(currentUserData.id, authToken);
+      const enrichedUser = {
+        ...currentUserData,
+        name: employee?.nv_name || currentUserData.name,
+        email: employee?.nv_mail || currentUserData.email,
+      };
+
+      setUser(enrichedUser);
+      localStorage.setItem("authUser", JSON.stringify(enrichedUser));
+    } catch (error) {
+      console.warn("Cannot enrich admin profile:", error);
+    }
+  }, []);
 
   const normalizeUserData = useCallback((authToken, source = {}, fallbackUser = null) => {
     const payload = decodeJwtPayload(authToken);
@@ -20,8 +40,6 @@ export const AuthProvider = ({ children }) => {
       payload?.name ||
       payload?.fullName ||
       payload?.given_name ||
-      payload?.username ||
-      payload?.preferred_username ||
       fallbackUser?.name ||
       "";
 
@@ -65,6 +83,7 @@ export const AuthProvider = ({ children }) => {
           setToken(storedToken);
           setUser(userData);
           localStorage.setItem("authUser", JSON.stringify(userData));
+          enrichAdminProfile(storedToken, userData);
         } else {
           localStorage.removeItem("authToken");
           localStorage.removeItem("authUser");
@@ -74,7 +93,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, []);
+  }, [enrichAdminProfile, normalizeUserData]);
 
     const login = useCallback((loginResponse) => {
       const { token } = loginResponse;
@@ -85,7 +104,8 @@ export const AuthProvider = ({ children }) => {
 
         setToken(token);
         setUser(userData);
-    }, [normalizeUserData]);
+        enrichAdminProfile(token, userData);
+      }, [enrichAdminProfile, normalizeUserData]);
 
     const logout = useCallback(() => {
         localStorage.removeItem('authToken');

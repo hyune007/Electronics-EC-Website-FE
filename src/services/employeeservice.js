@@ -110,3 +110,25 @@ export async function deleteEmployee(id) {
         throw new Error("Xóa nhân viên thất bại");
     }
 }
+
+export async function getEmployeeById(id, tokenOverride) {
+    const res = await fetch(`${API_URL}/detail/${id}`, {
+        headers: getAuthHeaders(tokenOverride)
+    });
+
+    if (!res.ok) throw new Error("Không lấy được thông tin nhân viên");
+
+    const e = await res.json();
+    return {
+        nv_id: e.id ?? "",
+        nv_name: e.name ?? "",
+        nv_phone: e.phone ?? "",
+        nv_mail: e.email ?? "",
+        nv_address: e.address ?? "",
+        nv_birth: e.birthday
+            ? new Date(e.birthday).toISOString().slice(0, 10)
+            : "",
+        nv_role: e.role?.id ?? "ROLE_STAFF",
+        nv_role_name: e.role?.name ?? ""
+    };
+}
