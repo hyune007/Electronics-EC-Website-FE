@@ -16,9 +16,7 @@ export async function getAllBrands() {
             headers: getAuthHeaders()
         });
         if (!res.ok) throw new Error("Không lấy được danh sách hãng");
-
         const data = await res.json();
-
         // MAP BE → FE
         return data.map(b => ({
             hang_id: b.id,

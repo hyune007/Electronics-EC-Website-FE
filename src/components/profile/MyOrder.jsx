@@ -70,9 +70,10 @@ export default function MyOrder() {
 
   const badgeClassFor = (status) => {
     const map = {
+      "Chờ xác nhận": "bg-yellow-100 text-yellow-700 border border-yellow-200",
       "Đơn đang chờ giao":
         "bg-yellow-100 text-yellow-700 border border-yellow-200",
-      "Đang giao": "bg-yellow-100 text-yellow-700 border border-yellow-200",
+      "Đang giao": "bg-blue-100 text-blue-700 border border-blue-200",
       "Đã giao": "bg-green-100 text-green-700 border border-green-200",
       "Đã hủy": "bg-red-100 text-red-700 border border-red-200",
     };
@@ -90,7 +91,7 @@ export default function MyOrder() {
 
   const filters = [
     ["all", vi.profile.myOrder.filters.all],
-
+    ["Chờ xác nhận", vi.profile.myOrder.filters.pending],
     ["Đơn đang chờ giao", vi.profile.myOrder.filters.waiting_shipping],
     ["Đang giao", vi.profile.myOrder.filters.shipping],
     ["Đã giao", vi.profile.myOrder.filters.delivered],
@@ -98,6 +99,7 @@ export default function MyOrder() {
   ];
 
   const statusLabel = {
+    pending: "Chờ xác nhận",
     waiting_shipping: "Đơn đang chờ giao",
     shipping: "Đang giao",
     delivered: "Đã giao",
