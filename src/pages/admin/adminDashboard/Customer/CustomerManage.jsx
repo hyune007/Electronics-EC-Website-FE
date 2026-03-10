@@ -2,15 +2,24 @@ import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Shield, ChevronLeft, 
 import { useCustomerLogic } from "./CustomerLogic.js";
 import CustomerForm from "./CustomerForm.jsx";
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../../../hooks/useAuth.js";
+import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
 import "./Customer.css";
 
 export default function CustomerManage() {
     const cm = useCustomerLogic();
     const [mounted, setMounted] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Kiểm tra quyền - chỉ ADMIN được phép
+    if (user?.roleId !== "ROLE_ADMIN") {
+        return <Navigate to="/unauthorized" replace />;
+    }
 
     return (
         <div className={`fade-in min-h-full ${mounted ? 'slide-up' : ''}`}>
@@ -191,44 +200,16 @@ export default function CustomerManage() {
 
             {/* Pagination */}
             {cm.filteredCustomers.length > 0 && (
-                <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-neutral-600">
-                        Hiển thị {(cm.currentPage * cm.itemsPerPage) + 1} đến {Math.min((cm.currentPage + 1) * cm.itemsPerPage, cm.filteredCustomers.length)} của {cm.filteredCustomers.length} khách hàng
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={cm.handlePreviousPage}
-                            disabled={cm.currentPage === 0}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                        
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: cm.totalPages }, (_, i) => i).map(page => (
-                                <button
-                                    key={page}
-                                    onClick={() => cm.handlePageChange(page)}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        cm.currentPage === page
-                                            ? 'bg-primary-500 text-white'
-                                            : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
-                                    }`}
-                                >
-                                    {page + 1}
-                                </button>
-                            ))}
-                        </div>
-                        
-                        <button
-                            onClick={cm.handleNextPage}
-                            disabled={cm.currentPage === cm.totalPages - 1}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
-                </div>
+                <PaginationComponent
+                    currentPage={cm.currentPage}
+                    totalPages={cm.totalPages}
+                    itemsPerPage={cm.itemsPerPage}
+                    totalItems={cm.filteredCustomers.length}
+                    onPageChange={cm.handlePageChange}
+                    onPreviousPage={cm.handlePreviousPage}
+                    onNextPage={cm.handleNextPage}
+                    itemLabel="khách hàng"
+                />
             )}
 
             {/* MODAL */}

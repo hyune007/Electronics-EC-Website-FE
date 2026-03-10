@@ -57,7 +57,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                     {/* Basic Info */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">Thông tin cơ bản</h3>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {!editing && (
                                 <div>
@@ -81,7 +81,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                                     </p>
                                 </div>
                             )}
-                            
+
                             <div className={editing ? "md:col-span-2" : ""}>
                                 <label className="block text-sm font-medium text-neutral-700 mb-2">
                                     Tên sản phẩm <span className="text-red-500">*</span>
@@ -144,7 +144,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                     {/* Categories */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">Phân loại</h3>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-medium text-neutral-700 mb-2">
@@ -213,7 +213,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                     {/* Description */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">Mô tả sản phẩm</h3>
-                        
+
                         <div>
                             <label className="block text-sm font-medium text-neutral-700 mb-2">
                                 Mô tả chi tiết
@@ -235,24 +235,24 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isGenera
                     {/* Image */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">Hình ảnh</h3>
-                        
+
                         <div>
                             <label className="block text-sm font-medium text-neutral-700 mb-2">
                                 URL hình ảnh <span className="text-neutral-400 text-xs">(Không bắt buộc)</span>
                             </label>
                             <div className="relative">
-                                <ImageIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={18} />
-                                <input
-                                    type="text"
+                                <ImageIcon className="absolute left-3 top-3 text-neutral-400" size={18} />
+                                <textarea
                                     name="image"
                                     value={form.image}
                                     onChange={change}
+                                    rows="3"
                                     placeholder="https://example.com/image.jpg hoặc để trống"
-                                    className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                                    className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 resize-none"
                                 />
                             </div>
                             <p className="text-xs text-neutral-500 mt-1">
-                                💡 Có thể để trống và thêm ảnh sau qua backend
+                                💡 Chấp nhận đường link ảnh (URL) hoặc tên file.
                             </p>
                             {form.image && (
                                 <div className="mt-3">

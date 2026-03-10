@@ -75,7 +75,7 @@ export function useOrderLogic() {
         customer_id: bill.customer?.id || "",
         total_amount: bill.totalAmount || 0,
         status: bill.status || "PENDING",
-        created_at: bill.createdAt ? new Date(bill.createdAt).toISOString().slice(0, 10) : "",
+        created_at: bill.date ? new Date(bill.date).toISOString().slice(0, 10) : "",
         payment_method: bill.paymentMethod || "",
         address_id: bill.address?.id || "",
         employee_id: bill.employee?.id || ""

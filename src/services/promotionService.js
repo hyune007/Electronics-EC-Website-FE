@@ -1,5 +1,5 @@
-const API_URL = "http://localhost:8080/api/promotion";
-// const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/promotion";
+ const API_URL = "http://localhost:8080/api/promotion";
+//const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/promotion";
 
 // Helper to get auth token
 function getAuthHeaders() {

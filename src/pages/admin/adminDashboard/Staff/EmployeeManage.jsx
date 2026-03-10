@@ -2,15 +2,24 @@ import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Briefcase, Shield, Ch
 import { useEmployeeLogic } from "./EmployeeLogic.js";
 import EmployeeForm from "./EmployeeForm.jsx";
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../../../hooks/useAuth.js";
+import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
 import "./Employee.css";
 
 export default function EmployeeManage() {
     const nv = useEmployeeLogic();
     const [mounted, setMounted] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Kiểm tra quyền - chỉ ADMIN được phép
+    if (user?.roleId !== "ROLE_ADMIN") {
+        return <Navigate to="/unauthorized" replace />;
+    }
 
     const getRoleBadge = (role) => {
         switch (role?.toLowerCase()) {
@@ -231,44 +240,16 @@ export default function EmployeeManage() {
 
             {/* Pagination */}
             {!nv.loading && nv.filteredEmployees.length > 0 && (
-                <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-neutral-600">
-                        Hiển thị {(nv.currentPage * nv.itemsPerPage) + 1} đến {Math.min((nv.currentPage + 1) * nv.itemsPerPage, nv.filteredEmployees.length)} của {nv.filteredEmployees.length} nhân viên
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={nv.handlePreviousPage}
-                            disabled={nv.currentPage === 0}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                        
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: nv.totalPages }, (_, i) => i).map(page => (
-                                <button
-                                    key={page}
-                                    onClick={() => nv.handlePageChange(page)}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        nv.currentPage === page
-                                            ? 'bg-primary-500 text-white'
-                                            : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
-                                    }`}
-                                >
-                                    {page + 1}
-                                </button>
-                            ))}
-                        </div>
-                        
-                        <button
-                            onClick={nv.handleNextPage}
-                            disabled={nv.currentPage === nv.totalPages - 1}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
-                </div>
+                <PaginationComponent
+                    currentPage={nv.currentPage}
+                    totalPages={nv.totalPages}
+                    itemsPerPage={nv.itemsPerPage}
+                    totalItems={nv.filteredEmployees.length}
+                    onPageChange={nv.handlePageChange}
+                    onPreviousPage={nv.handlePreviousPage}
+                    onNextPage={nv.handleNextPage}
+                    itemLabel="nhân viên"
+                />
             )}
 
             {/* MODAL */}

@@ -2,15 +2,24 @@ import { Plus, Pencil, Trash2, Search, Percent, Calendar, Tag, Clock, Gift, Chev
 import { useVoucherLogic } from "./VoucherLogic.js";
 import VoucherForm from "./VoucherForm.jsx";
 import { useState, useEffect } from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../../../../hooks/useAuth.js";
+import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
 import "./Voucher.css";
 
 export default function VoucherManage() {
     const vm = useVoucherLogic();
     const [mounted, setMounted] = useState(false);
+    const { user } = useAuth();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    // Kiểm tra quyền - chỉ ADMIN được phép
+    if (user?.roleId !== "ROLE_ADMIN") {
+        return <Navigate to="/unauthorized" replace />;
+    }
 
     const getStatusBadge = (startDate, endDate) => {
         const now = new Date();
@@ -238,44 +247,16 @@ export default function VoucherManage() {
 
             {/* Pagination */}
             {vm.filteredVouchers.length > 0 && (
-                <div className="flex items-center justify-between mt-6">
-                    <div className="text-sm text-neutral-600">
-                        Hiển thị {(vm.currentPage * vm.itemsPerPage) + 1} đến {Math.min((vm.currentPage + 1) * vm.itemsPerPage, vm.filteredVouchers.length)} của {vm.filteredVouchers.length} voucher
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={vm.handlePreviousPage}
-                            disabled={vm.currentPage === 0}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronLeft size={20} />
-                        </button>
-                        
-                        <div className="flex items-center gap-1">
-                            {Array.from({ length: vm.totalPages }, (_, i) => i).map(page => (
-                                <button
-                                    key={page}
-                                    onClick={() => vm.handlePageChange(page)}
-                                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-all duration-200 ${
-                                        vm.currentPage === page
-                                            ? 'bg-primary-500 text-white'
-                                            : 'text-neutral-600 hover:text-primary-600 hover:bg-primary-50'
-                                    }`}
-                                >
-                                    {page + 1}
-                                </button>
-                            ))}
-                        </div>
-                        
-                        <button
-                            onClick={vm.handleNextPage}
-                            disabled={vm.currentPage === vm.totalPages - 1}
-                            className="p-2 text-neutral-600 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-neutral-600"
-                        >
-                            <ChevronRight size={20} />
-                        </button>
-                    </div>
-                </div>
+                <PaginationComponent
+                    currentPage={vm.currentPage}
+                    totalPages={vm.totalPages}
+                    itemsPerPage={vm.itemsPerPage}
+                    totalItems={vm.filteredVouchers.length}
+                    onPageChange={vm.handlePageChange}
+                    onPreviousPage={vm.handlePreviousPage}
+                    onNextPage={vm.handleNextPage}
+                    itemLabel="voucher"
+                />
             )}
 
             {/* MODAL */}
