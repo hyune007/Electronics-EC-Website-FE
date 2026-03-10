@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import ScrollToTop from "../../../common/ScrollToTop.jsx";
 import { AnimatePresence } from "framer-motion";
 import { ROUTE_TITLE_MAP } from "../../../../routes/routesConfig/customer/routeTitle.js";
+import SocialChatPopup from "../../../common/SocialChatPopup.jsx";
 
 export default function CustomerLayout() {
   const location = useLocation();
@@ -26,6 +27,7 @@ export default function CustomerLayout() {
           </AnimatePresence>
         </main>
 
+        <SocialChatPopup />
         <Footer />
       </div>
     </>
