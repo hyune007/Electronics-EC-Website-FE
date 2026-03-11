@@ -8,6 +8,7 @@ export default function ShoppingCartStep({ onProceed }) {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const isCartEmpty = cart.length === 0;
   const total = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,
@@ -21,6 +22,12 @@ export default function ShoppingCartStep({ onProceed }) {
   const handleDelete = (id) => {
     removeFromCart(id);
   };
+
+  const hasOutOfStock = cart.some(
+    (item) => item.quantity > item.stock
+  );
+
+  const disableOrder = hasOutOfStock || cart.length === 0;
 
   const handleProceed = () => {
     if (!isAuthenticated || !isCustomer) {
@@ -133,7 +140,12 @@ export default function ShoppingCartStep({ onProceed }) {
 
           <button
             type="button"
-            className="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-md font-bold flex items-center justify-center gap-2"
+            disabled={disableOrder}
+            className={`w-full py-4 rounded-md font-bold flex items-center justify-center gap-2
+    ${disableOrder
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-primary hover:bg-primary/90 text-white"
+              }`}
             onClick={handleProceed}
           >
             Tiến hành đặt hàng
