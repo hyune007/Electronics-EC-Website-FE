@@ -3,6 +3,7 @@ import { getProductsByPage, createProduct, updateProduct, deleteProduct } from "
 import { getAllBrands } from "../../../../services/brandService";
 import { getAllCategories } from "../../../../services/categoryService";
 import { showToast } from "../../../../utils/adminToast";
+import { getCache, setCache, removeCache, removeCacheByPrefix } from "../../../../utils/localCache";
 
 function getNextProductIdFromList(products, totalElements) {
     const ids = (products || []).map((item) => item?.sp_id).filter(Boolean);
@@ -59,13 +60,140 @@ function sortProducts(list, sortBy) {
 
 // Cache helpers
 const CACHE_KEY_PREFIX = "product_page_v2_";
+const PRODUCT_PAGE_CACHE_TTL = 5 * 60 * 1000;
+const PRODUCT_STATS_CACHE_KEY = "product_stats_v1";
+const PRODUCT_STATS_CACHE_TTL = 10 * 60 * 1000;
+const BG_PAGE_SIZE = 100;
+const BG_PAGE_CONCURRENCY = 4;
 
 function getCachedPage(pageNum) {
-    return null; // Disable localStorage read cache for admin panels to prevent stale data
+    return getCache(`${CACHE_KEY_PREFIX}${pageNum}`, PRODUCT_PAGE_CACHE_TTL);
 }
 
 function setCachedPage(pageNum, data) {
-    // Disable localStorage write cache
+    setCache(`${CACHE_KEY_PREFIX}${pageNum}`, data);
+}
+
+function toUiProduct(prod) {
+    return {
+        ...prod,
+        sp_id: prod.id,
+        sp_name: prod.name,
+        sp_price: Number(prod.price ?? 0),
+        sp_stock: Number(prod.stock ?? 0),
+        sp_desc: prod.description ?? "",
+        sp_image: prod.image ?? "",
+        sp_raw_image: prod.raw_image ?? "",
+        sp_brand_id: prod.brand?.id ?? "",
+        sp_brand_name: prod.brand?.name ?? "",
+        sp_category_id: prod.category?.id ?? "",
+        sp_category_name: prod.category?.name ?? ""
+    };
+}
+
+function computeGlobalStats(list) {
+    const totalProducts = list.length;
+    const totalValue = list.reduce((s, p) => s + (Number(p.sp_price || 0) * Number(p.sp_stock || 0)), 0);
+    const totalStock = list.reduce((s, p) => s + Number(p.sp_stock || 0), 0);
+    const lowStock = list.filter((p) => Number(p.sp_stock || 0) > 0 && Number(p.sp_stock || 0) < 10).length;
+    const outOfStock = list.filter((p) => Number(p.sp_stock || 0) <= 0).length;
+    const averagePrice = totalProducts > 0
+        ? Math.round(list.reduce((s, p) => s + Number(p.sp_price || 0), 0) / totalProducts)
+        : 0;
+    const inStockRate = totalProducts > 0
+        ? Math.round(((totalProducts - outOfStock) / totalProducts) * 100)
+        : 0;
+
+    return {
+        totalProducts,
+        totalValue,
+        totalStock,
+        lowStock,
+        outOfStock,
+        averagePrice,
+        inStockRate,
+    };
+}
+
+function parseCsvLine(line) {
+    const out = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+        const ch = line[i];
+        const next = line[i + 1];
+
+        if (ch === '"') {
+            if (inQuotes && next === '"') {
+                current += '"';
+                i += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+
+        if (ch === "," && !inQuotes) {
+            out.push(current.trim());
+            current = "";
+            continue;
+        }
+
+        current += ch;
+    }
+
+    out.push(current.trim());
+    return out;
+}
+
+function parseCsv(text) {
+    const lines = String(text || "")
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+    if (lines.length === 0) return [];
+    const headers = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
+
+    return lines.slice(1).map((line) => {
+        const cells = parseCsvLine(line);
+        const row = {};
+        headers.forEach((header, idx) => {
+            row[header] = cells[idx] ?? "";
+        });
+        return row;
+    });
+}
+
+async function parseExcel(arrayBuffer) {
+    const XLSX = await import("xlsx");
+    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    const firstSheetName = workbook.SheetNames?.[0];
+    if (!firstSheetName) return [];
+
+    const sheet = workbook.Sheets[firstSheetName];
+    return XLSX.utils.sheet_to_json(sheet, {
+        defval: "",
+        raw: true,
+    });
+}
+
+async function runWithConcurrency(items, concurrency, worker) {
+    const results = [];
+    let cursor = 0;
+
+    const runner = async () => {
+        while (cursor < items.length) {
+            const index = cursor;
+            cursor += 1;
+            results[index] = await worker(items[index], index);
+        }
+    };
+
+    const workers = Array.from({ length: Math.max(1, concurrency) }, () => runner());
+    await Promise.all(workers);
+    return results;
 }
 
 export function useProductManageLogic() {
@@ -83,10 +211,13 @@ export function useProductManageLogic() {
     const [editing, setEditing] = useState(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isImportingFile, setIsImportingFile] = useState(false);
 
     // Cache: store loaded pages to avoid re-fetching
     const cacheRef = useRef({});
     const searchTimeoutRef = useRef(null);
+    const allProductsLoadingRef = useRef(false);
 
     const [form, setForm] = useState({
         id: "",
@@ -116,6 +247,13 @@ export function useProductManageLogic() {
     const [allBrands, setAllBrands] = useState([]); // Lưu tất cả brands
     const [categories, setCategories] = useState([]);
     const [allCategories, setAllCategories] = useState([]); // Lưu tất cả categories
+
+    useEffect(() => {
+        const cachedStats = getCache(PRODUCT_STATS_CACHE_KEY, PRODUCT_STATS_CACHE_TTL);
+        if (cachedStats) {
+            setGlobalStats(cachedStats);
+        }
+    }, []);
 
     /* ================= LOAD BRANDS ================= */
     useEffect(() => {
@@ -279,77 +417,51 @@ export function useProductManageLogic() {
 
     /* ================= BACKGROUND LOADING ================= */
     const loadAllInBackground = useCallback(async () => {
+        if (allProductsLoadingRef.current || allProducts.length > 0) return;
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 500));
-            // Tải tuần tự qua các trang để tính thống kê và search, tránh việc BE giới hạn size
-            let allLoadedProducts = [];
-            let currentPage = 0;
-            let hasMore = true;
+            allProductsLoadingRef.current = true;
+            const first = await getProductsByPage(0, BG_PAGE_SIZE);
+            const totalPages = Math.max(1, Number(first.totalPages || 1));
+            const allLoadedProducts = [...(first.products || [])];
 
-            while (hasMore) {
-                const res = await getProductsByPage(currentPage, 50);
-                allLoadedProducts = [...allLoadedProducts, ...res.products];
+            if (totalPages > 1) {
+                const pages = Array.from({ length: totalPages - 1 }, (_, idx) => idx + 1);
 
-                if (res.isLast || res.products.length === 0) {
-                    hasMore = false;
-                } else {
-                    currentPage++;
+                for (let i = 0; i < pages.length; i += BG_PAGE_CONCURRENCY) {
+                    const chunk = pages.slice(i, i + BG_PAGE_CONCURRENCY);
+                    const results = await Promise.all(chunk.map((p) => getProductsByPage(p, BG_PAGE_SIZE)));
+                    results.forEach((res) => {
+                        if (Array.isArray(res?.products)) {
+                            allLoadedProducts.push(...res.products);
+                        }
+                    });
                 }
             }
 
-            const mappedAll = allLoadedProducts.map(prod => ({
-                ...prod,
-                sp_id: prod.id,
-                sp_name: prod.name,
-                sp_price: Number(prod.price ?? 0),
-                sp_stock: Number(prod.stock ?? 0),
-                sp_desc: prod.description ?? "",
-                sp_image: prod.image ?? "",
-                sp_raw_image: prod.raw_image ?? "",
-                sp_brand_id: prod.brand?.id ?? "",
-                sp_brand_name: prod.brand?.name ?? "",
-                sp_category_id: prod.category?.id ?? "",
-                sp_category_name: prod.category?.name ?? ""
-            }));
+            const mappedAll = allLoadedProducts.map(toUiProduct);
 
             // Xóa trùng lặp (nếu có) do sai sót logic BE
             const uniqueProducts = Array.from(new Map(mappedAll.map(p => [p.sp_id, p])).values());
             setAllProducts(uniqueProducts);
 
-            // Calculate global stats
-            const totalProducts = uniqueProducts.length;
-            const totalValue = uniqueProducts.reduce((s, p) => s + (p.sp_price * p.sp_stock), 0);
-            const totalStock = uniqueProducts.reduce((s, p) => s + p.sp_stock, 0);
-            const lowStock = uniqueProducts.filter(p => p.sp_stock > 0 && p.sp_stock < 10).length;
-            const outOfStock = uniqueProducts.filter(p => p.sp_stock <= 0).length;
-            const averagePrice = totalProducts > 0
-                ? Math.round(uniqueProducts.reduce((s, p) => s + Number(p.sp_price || 0), 0) / totalProducts)
-                : 0;
-            const inStockRate = totalProducts > 0
-                ? Math.round(((totalProducts - outOfStock) / totalProducts) * 100)
-                : 0;
-
-            setGlobalStats({
-                totalProducts,
-                totalValue,
-                totalStock,
-                lowStock,
-                outOfStock,
-                averagePrice,
-                inStockRate,
-            });
+            const stats = computeGlobalStats(uniqueProducts);
+            setGlobalStats(stats);
+            setCache(PRODUCT_STATS_CACHE_KEY, stats);
             console.log("✅ Background load completed. Total Loaded:", uniqueProducts.length);
         } catch (err) {
             console.error("Background load failed:", err);
+        } finally {
+            allProductsLoadingRef.current = false;
         }
-    }, []);
+    }, [allProducts.length]);
 
     /* ================= INITIAL LOAD ================= */
     useEffect(() => {
         loadProductsPage(1);
         loadAllInBackground();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Chỉ chạy 1 lần khi mount
+    }, []); // Chỉ tải trang hiện tại khi mở màn hình
 
     /* ================= HANDLE PAGE CHANGE ================= */
     useEffect(() => {
@@ -362,6 +474,9 @@ export function useProductManageLogic() {
 
         // Debounce search for 500ms
         searchTimeoutRef.current = setTimeout(() => {
+            if (searchInput.trim() && allProducts.length === 0) {
+                loadAllInBackground();
+            }
             setSearch(searchInput);
             setPage(1); // Reset page on new search
             if (searchInput.trim() === "") {
@@ -430,6 +545,155 @@ export function useProductManageLogic() {
             categoryId: p.sp_category_id
         });
         setOpenForm(true);
+    };
+
+    const normalizeImportRows = (rows) => {
+        const brandByName = new Map(allBrands.map((b) => [String(b.hang_name || b.name || "").toLowerCase(), String(b.hang_id || b.id || "")]));
+        const validBrandIds = new Set(allBrands.map((b) => String(b.hang_id || b.id || "")));
+        const categoryByName = new Map(allCategories.map((c) => [String(c.name || "").toLowerCase(), String(c.id || "")]));
+        const validCategoryIds = new Set(allCategories.map((c) => String(c.id || "")));
+
+        const normalizeHeader = (value) => String(value || "")
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "");
+
+        return rows.map((row, index) => {
+            const normalizedRow = new Map(
+                Object.entries(row || {}).map(([key, value]) => [normalizeHeader(key), value]),
+            );
+
+            const pick = (aliases) => {
+                for (const alias of aliases) {
+                    const direct = row?.[alias];
+                    if (direct !== undefined && direct !== null && String(direct).trim() !== "") {
+                        return direct;
+                    }
+
+                    const normalized = normalizedRow.get(normalizeHeader(alias));
+                    if (normalized !== undefined && normalized !== null && String(normalized).trim() !== "") {
+                        return normalized;
+                    }
+                }
+                return "";
+            };
+
+            const brandIdRaw = pick([
+                "brandId", "brand_id", "brand", "brandname", "thuonghieu", "thương hiệu", "hang", "hãng",
+            ]);
+
+            const categoryIdRaw = pick([
+                "categoryId", "category_id", "category", "categoryname", "danhmuc", "danh mục", "loai", "loại",
+            ]);
+
+            const normalizedBrand = String(brandIdRaw || "").trim();
+            const normalizedCategory = String(categoryIdRaw || "").trim();
+
+            const brandId = validBrandIds.has(normalizedBrand)
+                ? normalizedBrand
+                : (brandByName.get(normalizedBrand.toLowerCase()) || "");
+
+            const categoryId = validCategoryIds.has(normalizedCategory)
+                ? normalizedCategory
+                : (categoryByName.get(normalizedCategory.toLowerCase()) || "");
+
+            return {
+                rowNo: index + 2,
+                id: String(pick(["id", "sp_id", "ma", "mã", "ma san pham", "mã sản phẩm", "masanpham"]) || "").trim(),
+                name: String(pick(["name", "sp_name", "ten", "tên", "sanpham", "sản phẩm", "tensanpham"]) || "").trim(),
+                price: Number(pick(["price", "sp_price", "gia", "giá", "dongia", "đơn giá"]) || 0),
+                stock: Number(pick(["stock", "sp_stock", "kho", "soluong", "số lượng", "tonkho", "tồn kho"]) || 0),
+                description: String(pick(["description", "sp_desc", "mota", "mô tả"]) || "").trim(),
+                image: String(pick(["image", "sp_image", "anh", "ảnh", "hinhanh", "hình ảnh", "url"]) || "").trim(),
+                brandId,
+                categoryId,
+            };
+        });
+    };
+
+    const handleBulkImportFile = async (file) => {
+        if (!file) return;
+
+        if (allBrands.length === 0 || allCategories.length === 0) {
+            showToast("Cần có dữ liệu thương hiệu và danh mục trước khi import", "warning", 3400);
+            return;
+        }
+
+        setIsImportingFile(true);
+
+        try {
+            const lowerName = String(file.name || "").toLowerCase();
+
+            let rawRows = [];
+            if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+                const buffer = await file.arrayBuffer();
+                rawRows = await parseExcel(buffer);
+            } else if (lowerName.endsWith(".json")) {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+                rawRows = Array.isArray(parsed) ? parsed : [];
+            } else {
+                const text = await file.text();
+                rawRows = parseCsv(text);
+            }
+
+            if (!Array.isArray(rawRows) || rawRows.length === 0) {
+                showToast("File không có dữ liệu hợp lệ", "warning");
+                return;
+            }
+
+            const rows = normalizeImportRows(rawRows);
+            const invalidRows = rows.filter((row) => {
+                return !row.id || !row.name || row.price <= 0 || row.stock < 0 || !row.brandId || !row.categoryId;
+            });
+
+            if (invalidRows.length > 0) {
+                showToast(`Có ${invalidRows.length} dòng lỗi dữ liệu. Vui lòng kiểm tra lại file.`, "warning", 4200);
+                return;
+            }
+
+            const results = await runWithConcurrency(rows, 3, async (row) => {
+                try {
+                    await createProduct({
+                        id: row.id,
+                        name: row.name,
+                        price: row.price,
+                        stock: row.stock,
+                        description: row.description,
+                        image: row.image,
+                        brandId: row.brandId,
+                        categoryId: row.categoryId,
+                    });
+                    return { ok: true };
+                } catch (error) {
+                    return { ok: false, message: error?.message || "Lỗi tạo sản phẩm" };
+                }
+            });
+
+            const success = results.filter((r) => r.ok).length;
+            const failed = results.length - success;
+
+            cacheRef.current = {};
+            removeCacheByPrefix(CACHE_KEY_PREFIX);
+            removeCache(PRODUCT_STATS_CACHE_KEY);
+            setAllProducts([]);
+
+            await loadProductsPage(1, false);
+            setPage(1);
+            loadAllInBackground();
+
+            if (failed === 0) {
+                showToast(`Import thành công ${success} sản phẩm`, "success");
+            } else {
+                showToast(`Import xong: ${success} thành công, ${failed} thất bại`, "warning", 4200);
+            }
+        } catch (err) {
+            console.error("Bulk import failed:", err);
+            showToast("Import file thất bại. Hỗ trợ: XLSX, XLS, CSV, JSON.", "error", 3600);
+        } finally {
+            setIsImportingFile(false);
+        }
     };
 
     const handleSubmit = async () => {
@@ -525,20 +789,52 @@ export function useProductManageLogic() {
                 showToast("Cập nhật sản phẩm thành công", "success");
             } else {
                 await createProduct(payload);
+
+                const addedPrice = Number(payload.price || 0);
+                const addedStock = Number(payload.stock || 0);
+                setGlobalStats((prev) => {
+                    const prevTotalProducts = Number(prev?.totalProducts || 0);
+                    const prevTotalValue = Number(prev?.totalValue || 0);
+                    const prevTotalStock = Number(prev?.totalStock || 0);
+                    const prevLowStock = Number(prev?.lowStock || 0);
+                    const prevOutOfStock = Number(prev?.outOfStock || 0);
+                    const prevAveragePrice = Number(prev?.averagePrice || 0);
+
+                    const totalProducts = prevTotalProducts + 1;
+                    const totalValue = prevTotalValue + (addedPrice * addedStock);
+                    const totalStock = prevTotalStock + addedStock;
+                    const lowStock = prevLowStock + (addedStock > 0 && addedStock < 10 ? 1 : 0);
+                    const outOfStock = prevOutOfStock + (addedStock <= 0 ? 1 : 0);
+                    const averagePrice = totalProducts > 0
+                        ? Math.round(((prevAveragePrice * prevTotalProducts) + addedPrice) / totalProducts)
+                        : 0;
+                    const inStockRate = totalProducts > 0
+                        ? Math.round(((totalProducts - outOfStock) / totalProducts) * 100)
+                        : 0;
+
+                    const optimisticStats = {
+                        totalProducts,
+                        totalValue,
+                        totalStock,
+                        lowStock,
+                        outOfStock,
+                        averagePrice,
+                        inStockRate,
+                    };
+
+                    setCache(PRODUCT_STATS_CACHE_KEY, optimisticStats);
+                    return optimisticStats;
+                });
+
                 showToast("Thêm sản phẩm thành công", "success");
             }
             setOpenForm(false);
 
             // Clear all cache to ensure correct data and pagination
             cacheRef.current = {};
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith(CACHE_KEY_PREFIX)) {
-                    keysToRemove.push(key);
-                }
-            }
-            keysToRemove.forEach(k => localStorage.removeItem(k));
+            removeCacheByPrefix(CACHE_KEY_PREFIX);
+            removeCache(PRODUCT_STATS_CACHE_KEY);
+            setAllProducts([]);
 
             if (editing) {
                 await loadProductsPage(page, false);
@@ -551,7 +847,7 @@ export function useProductManageLogic() {
             }
 
             // Trigger lại background load cho các page chưa có cache
-            setTimeout(() => loadAllInBackground(), 500);
+            loadAllInBackground();
         } catch (err) {
             console.error("Save product error:", err);
 
@@ -575,14 +871,9 @@ export function useProductManageLogic() {
 
             // Clear all cache to ensure correct data and pagination
             cacheRef.current = {};
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith(CACHE_KEY_PREFIX)) {
-                    keysToRemove.push(key);
-                }
-            }
-            keysToRemove.forEach(k => localStorage.removeItem(k));
+            removeCacheByPrefix(CACHE_KEY_PREFIX);
+            removeCache(PRODUCT_STATS_CACHE_KEY);
+            setAllProducts([]);
 
             // Điều chỉnh page nếu page hiện tại trống
             const newTotalElems = Math.max(0, totalElements - 1);
@@ -596,12 +887,61 @@ export function useProductManageLogic() {
             }
 
             showToast("Xóa sản phẩm thành công", "success");
-            setTimeout(() => loadAllInBackground(), 500);
+            loadAllInBackground();
         } catch (err) {
             console.error("Delete product error:", err);
             showToast("Xóa sản phẩm thất bại", "error");
         } finally {
             setDeletingId(null);
+        }
+    };
+
+    const handleDeleteMany = async (ids = []) => {
+        const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
+        if (uniqueIds.length === 0) return;
+
+        setIsBulkDeleting(true);
+        try {
+            const results = await runWithConcurrency(uniqueIds, 3, async (id) => {
+                try {
+                    await deleteProduct(id);
+                    return { ok: true };
+                } catch (error) {
+                    return { ok: false, message: error?.message || "Lỗi xóa sản phẩm" };
+                }
+            });
+
+            const success = results.filter((r) => r.ok).length;
+            const failed = results.length - success;
+
+            cacheRef.current = {};
+            removeCacheByPrefix(CACHE_KEY_PREFIX);
+            removeCache(PRODUCT_STATS_CACHE_KEY);
+            setAllProducts([]);
+
+            const newTotalElems = Math.max(0, totalElements - success);
+            const newTotalPages = Math.max(1, Math.ceil(newTotalElems / pageSize));
+            const targetPage = Math.min(page, newTotalPages);
+
+            if (targetPage !== page) {
+                setPage(targetPage);
+                await loadProductsPage(targetPage, false);
+            } else {
+                await loadProductsPage(page, false);
+            }
+
+            loadAllInBackground();
+
+            if (failed === 0) {
+                showToast(`Đã xóa ${success} sản phẩm`, "success");
+            } else {
+                showToast(`Xóa nhanh: ${success} thành công, ${failed} thất bại`, "warning", 4200);
+            }
+        } catch (err) {
+            console.error("Bulk delete product error:", err);
+            showToast("Xóa nhanh sản phẩm thất bại", "error");
+        } finally {
+            setIsBulkDeleting(false);
         }
     };
 
@@ -627,13 +967,17 @@ export function useProductManageLogic() {
         setForm,
         isSubmitting,
         deletingId,
+        isBulkDeleting,
+        isImportingFile,
         brands,
         categories,
         globalStats, // Thêm export globalStats
 
         openAdd,
         openEdit,
+        handleBulkImportFile,
         handleSubmit,
-        handleDelete
+        handleDelete,
+        handleDeleteMany
     };
 }

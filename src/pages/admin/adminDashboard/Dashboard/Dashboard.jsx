@@ -17,7 +17,6 @@ import {
 } from "recharts";
 import "./Dashboard.css";
 import { useDashboardLogic } from "./Dashboardlogic.js";
-import { preloadAllData, shouldPreload } from "../../../../utils/preloadData";
 
 export default function Dashboard() {
   const { loading, error, revenue, revenueTrend, stats, revenueByMonth } = useDashboardLogic();
@@ -28,26 +27,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Load ngầm dữ liệu trong background
-  useEffect(() => {
-    if (!shouldPreload()) return;
-
-    console.log("🔄 Starting background data preload...");
-
-    preloadAllData({
-      onProgress: (value) => {
-        if (value === 100) {
-          console.log("✅ Preload completed!");
-        }
-      },
-      onPhaseChange: (phase) => {
-        console.log("📊 Preload phase:", phase);
-      }
-    }).catch((err) => {
-      console.error("❌ Preload failed:", err);
-    });
   }, []);
 
   useEffect(() => {

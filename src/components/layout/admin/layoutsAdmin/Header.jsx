@@ -1,4 +1,4 @@
-import { Menu, Bell, Settings, LogOut } from "lucide-react";
+import { Menu, Bell, Settings, LogOut, House } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useAuth } from "../../../../hooks/useAuth.js";
@@ -165,6 +165,14 @@ export default function Header() {
 
                 {/* Right */}
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => navigate("/home")}
+                        className="hidden sm:inline-flex items-center gap-2 px-3 py-2 text-sm text-neutral-700 border border-neutral-200 bg-white hover:bg-neutral-50 hover:border-neutral-300 rounded-xl shadow-sm transition-all duration-200"
+                    >
+                        <House size={16} />
+                        Về trang chủ
+                    </button>
+
                     {/* Notifications */}
                     <div className="relative" ref={notificationMenuRef}>
                         <button
