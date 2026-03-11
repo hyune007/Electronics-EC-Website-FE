@@ -52,6 +52,118 @@ function clearBrandCache() {
     }
 }
 
+function parseCsvLine(line) {
+    const out = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+        const ch = line[i];
+        const next = line[i + 1];
+
+        if (ch === '"') {
+            if (inQuotes && next === '"') {
+                current += '"';
+                i += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+
+        if (ch === "," && !inQuotes) {
+            out.push(current.trim());
+            current = "";
+            continue;
+        }
+
+        current += ch;
+    }
+
+    out.push(current.trim());
+    return out;
+}
+
+function parseCsv(text) {
+    const lines = String(text || "")
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+    if (lines.length === 0) return [];
+    const headers = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
+
+    return lines.slice(1).map((line) => {
+        const cells = parseCsvLine(line);
+        const row = {};
+        headers.forEach((header, idx) => {
+            row[header] = cells[idx] ?? "";
+        });
+        return row;
+    });
+}
+
+async function parseExcel(arrayBuffer) {
+    const XLSX = await import("xlsx");
+    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    const firstSheetName = workbook.SheetNames?.[0];
+    if (!firstSheetName) return [];
+
+    const sheet = workbook.Sheets[firstSheetName];
+    return XLSX.utils.sheet_to_json(sheet, {
+        defval: "",
+        raw: true,
+    });
+}
+
+function normalizeHeaderKey(value) {
+    return String(value ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+function normalizeImportRow(row) {
+    const normalized = {};
+    Object.entries(row || {}).forEach(([key, value]) => {
+        const normalizedKey = normalizeHeaderKey(key);
+        if (normalizedKey && !(normalizedKey in normalized)) {
+            normalized[normalizedKey] = value;
+        }
+    });
+    return normalized;
+}
+
+function pickField(row, aliases = []) {
+    for (const alias of aliases) {
+        const value = row?.[normalizeHeaderKey(alias)];
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+            return String(value).trim();
+        }
+    }
+    return "";
+}
+
+async function runWithConcurrency(items, concurrency, worker) {
+    const results = [];
+    let cursor = 0;
+
+    const runner = async () => {
+        while (cursor < items.length) {
+            const index = cursor;
+            cursor += 1;
+            results[index] = await worker(items[index], index);
+        }
+    };
+
+    const workers = Array.from({ length: Math.max(1, concurrency) }, () => runner());
+    await Promise.all(workers);
+    return results;
+}
+
 export function useBrandLogic() {
     // ===== STATE =====
     const [brands, setBrands] = useState([]);
@@ -62,6 +174,8 @@ export function useBrandLogic() {
     const [loading, setLoading] = useState(true);
     const [, setIsSubmitting] = useState(false);
     const [, setDeletingId] = useState(null);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isImportingFile, setIsImportingFile] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 12;
 
@@ -221,11 +335,12 @@ export function useBrandLogic() {
                 );
             } else {
                 await createBrand(payload);
+                setBrands((prev) => [payload, ...prev]);
             }
             
             // Clear cache and reload
             clearBrandCache();
-            await fetchBrands();
+            fetchBrands();
             
             setOpenForm(false);
             showToast(editing ? "Cập nhật thương hiệu thành công" : "Thêm thương hiệu thành công", "success");
@@ -257,6 +372,100 @@ export function useBrandLogic() {
         }
     };
 
+    const handleDeleteMany = async (ids = []) => {
+        const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
+        if (uniqueIds.length === 0) return;
+
+        setIsBulkDeleting(true);
+        try {
+            const results = await Promise.allSettled(uniqueIds.map((id) => deleteBrand(id)));
+            const success = results.filter((r) => r.status === "fulfilled").length;
+            const failed = results.length - success;
+
+            clearBrandCache();
+            await fetchBrands();
+
+            if (failed === 0) {
+                showToast(`Đã xóa ${success} thương hiệu`, "success");
+            } else {
+                showToast(`Xóa nhanh: ${success} thành công, ${failed} thất bại`, "warning", 3600);
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Xóa nhanh thương hiệu thất bại", "error", 3400);
+        } finally {
+            setIsBulkDeleting(false);
+        }
+    };
+
+    const handleBulkImportFile = async (file) => {
+        if (!file) return;
+        setIsImportingFile(true);
+
+        try {
+            const lowerName = String(file.name || "").toLowerCase();
+            let rawRows = [];
+
+            if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+                const buffer = await file.arrayBuffer();
+                rawRows = await parseExcel(buffer);
+            } else if (lowerName.endsWith(".json")) {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+                rawRows = Array.isArray(parsed) ? parsed : [];
+            } else {
+                const text = await file.text();
+                rawRows = parseCsv(text);
+            }
+
+            if (!Array.isArray(rawRows) || rawRows.length === 0) {
+                showToast("File không có dữ liệu hợp lệ", "warning");
+                return;
+            }
+
+            const rows = rawRows.map((row, index) => {
+                const normalized = normalizeImportRow(row);
+                return {
+                rowNo: index + 2,
+                hang_id: pickField(normalized, ["hang_id", "hang id", "id", "ma", "ma thuong hieu", "ma hang"]),
+                hang_name: pickField(normalized, ["hang_name", "hang name", "name", "ten", "ten thuong hieu", "thuong hieu"]),
+            };
+            });
+
+            const invalidRows = rows.filter((r) => !r.hang_id || !r.hang_name);
+            if (invalidRows.length > 0) {
+                showToast(`Có ${invalidRows.length} dòng thiếu dữ liệu`, "warning", 3600);
+                return;
+            }
+
+            const results = await runWithConcurrency(rows, 3, async (row) => {
+                try {
+                    await createBrand({ hang_id: row.hang_id, hang_name: row.hang_name });
+                    return { ok: true };
+                } catch (error) {
+                    return { ok: false, message: error?.message || "Lỗi thêm thương hiệu" };
+                }
+            });
+
+            const success = results.filter((r) => r.ok).length;
+            const failed = results.length - success;
+
+            clearBrandCache();
+            await fetchBrands();
+
+            if (failed === 0) {
+                showToast(`Import thành công ${success} thương hiệu`, "success");
+            } else {
+                showToast(`Import xong: ${success} thành công, ${failed} thất bại`, "warning", 4200);
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Import file thương hiệu thất bại", "error", 3400);
+        } finally {
+            setIsImportingFile(false);
+        }
+    };
+
     return {
         loading,
         search,
@@ -274,10 +483,14 @@ export function useBrandLogic() {
         currentPage,
         totalPages,
         itemsPerPage,
+        isBulkDeleting,
+        isImportingFile,
         openAdd,
         openEdit,
         handleSubmit,
         handleDelete,
+        handleDeleteMany,
+        handleBulkImportFile,
         handlePageChange,
         handlePreviousPage,
         handleNextPage,

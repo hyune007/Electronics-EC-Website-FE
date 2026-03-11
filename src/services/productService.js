@@ -11,6 +11,21 @@ function getAuthHeaders() {
     };
 }
 
+function decodeJwtPayload(token) {
+    try {
+        if (!token) return null;
+        const parts = token.split(".");
+        if (parts.length < 2) return null;
+        const payload = parts[1]
+            .replace(/-/g, "+")
+            .replace(/_/g, "/")
+            .padEnd(Math.ceil(parts[1].length / 4) * 4, "=");
+        return JSON.parse(atob(payload));
+    } catch {
+        return null;
+    }
+}
+
 function extractRawImage(url) {
     if (!url || typeof url !== "string") return "";
     let normalized = url.trim().replace(/\\/g, "/");
@@ -148,6 +163,16 @@ export async function getAllProducts() {
 
 export async function createProduct(productData) {
 
+    const rawToken = localStorage.getItem("authToken");
+    const tokenPayload = decodeJwtPayload(rawToken);
+    const authUserRaw = localStorage.getItem("authUser");
+    let authUser = null;
+    try {
+        authUser = authUserRaw ? JSON.parse(authUserRaw) : null;
+    } catch {
+        authUser = null;
+    }
+
     const payload = {
         id: productData.id, // Luôn gửi ID
         name: productData.name,
@@ -164,6 +189,14 @@ export async function createProduct(productData) {
     console.log("Payload to send:", JSON.stringify(payload, null, 2));
     console.log("Brand ID:", productData.brandId, "Type:", typeof productData.brandId);
     console.log("Category ID:", productData.categoryId, "Type:", typeof productData.categoryId);
+    console.log("Auth debug:", {
+        hasToken: Boolean(rawToken),
+        tokenPrefix: rawToken ? `${rawToken.slice(0, 12)}...` : null,
+        tokenRole: tokenPayload?.roleId || tokenPayload?.role || null,
+        tokenSub: tokenPayload?.sub || null,
+        tokenExp: tokenPayload?.exp || null,
+        authUserRole: authUser?.roleId || null,
+    });
 
     const res = await fetch(`${API_URL}/save`, {
         method: "POST",
@@ -176,7 +209,16 @@ export async function createProduct(productData) {
         console.error("=== Backend Error ===");
         console.error("Status:", res.status);
         console.error("Error message:", errorText);
+        console.error("Response headers:", {
+            wwwAuthenticate: res.headers.get("www-authenticate"),
+            contentType: res.headers.get("content-type"),
+        });
         console.error("Request payload was:", JSON.stringify(payload, null, 2));
+
+        if (res.status === 403) {
+            throw new Error("Không tạo được sản phẩm: 403 Forbidden. Kiểm tra quyền tài khoản (ROLE_ADMIN/ROLE_EMPLOYEE) và token đăng nhập.");
+        }
+
         throw new Error(`Không tạo được sản phẩm: ${errorText}`);
     }
 

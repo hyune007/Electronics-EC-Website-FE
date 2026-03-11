@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { getAllBills } from "../../../../services/billService";
 import { getAllCustomers } from "../../../../services/customerService";
 import { getProductsByPage } from "../../../../services/productService";
+import { getCache, setCache } from "../../../../utils/localCache";
+
+const DASHBOARD_CACHE_KEY = "dashboard_data_v1";
+const DASHBOARD_CACHE_TTL = 5 * 60 * 1000;
 
 function parseAmount(value) {
     if (typeof value === "number") return value;
@@ -41,9 +45,22 @@ export function useDashboardLogic() {
     const [revenueByMonth, setRevenueByMonth] = useState([]);
 
     useEffect(() => {
+        const cached = getCache(DASHBOARD_CACHE_KEY, DASHBOARD_CACHE_TTL);
+        if (cached) {
+            setRevenue(cached.revenue || 0);
+            setRevenueTrend(cached.revenueTrend || {
+                percent: 0,
+                currentMonthRevenue: 0,
+                previousMonthRevenue: 0,
+            });
+            setStats(cached.stats || []);
+            setRevenueByMonth(cached.revenueByMonth || []);
+            setLoading(false);
+        }
+
         const fetchDashboardData = async () => {
             try {
-                setLoading(true);
+                if (!cached) setLoading(true);
 
                 // Fetch song song 3 nguồn dữ liệu chính
                 const [billsResponse, customers, productsResponse] = await Promise.all([
@@ -129,7 +146,7 @@ export function useDashboardLogic() {
                 });
                 setRevenueByMonth(monthlyData);
 
-                setStats([
+                const nextStats = [
                     {
                         title: "Tổng doanh thu",
                         value: totalRevenue,
@@ -151,20 +168,35 @@ export function useDashboardLogic() {
                         trend: "+0%",
                         color: "red"
                     }
-                ]);
+                ];
+
+                setStats(nextStats);
+
+                setCache(DASHBOARD_CACHE_KEY, {
+                    revenue: totalRevenue,
+                    revenueTrend: {
+                        percent: Number.isFinite(trendPercent) ? trendPercent : 0,
+                        currentMonthRevenue,
+                        previousMonthRevenue,
+                    },
+                    stats: nextStats,
+                    revenueByMonth: monthlyData,
+                });
 
             } catch (err) {
                 console.error("Dashboard data load error:", err);
                 setError(err.message);
 
                 // Fallback nếu có lỗi
-                setStats([
+                if (!cached) {
+                    setStats([
                     { title: "Tổng doanh thu", value: 0 },
                     { title: "Tổng đơn hàng", value: 0 },
                     { title: "Tổng khách hàng", value: 0 },
                     { title: "Tổng sản phẩm", value: 0 }
-                ]);
-                setRevenueTrend({ percent: 0, currentMonthRevenue: 0, previousMonthRevenue: 0 });
+                    ]);
+                    setRevenueTrend({ percent: 0, currentMonthRevenue: 0, previousMonthRevenue: 0 });
+                }
             } finally {
                 setLoading(false);
             }

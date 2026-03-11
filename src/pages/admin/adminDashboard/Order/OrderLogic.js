@@ -64,6 +64,52 @@ export function useOrderLogic() {
     const cachedOrders = getCachedOrders();
     if (cachedOrders) {
       setOrders(cachedOrders);
+      // Keep UX fast, then refresh in background.
+      getAllBills()
+        .then((response) => {
+          const bills = response.data || [];
+          const mappedOrders = bills.map((bill) => {
+            const rawStatus = bill.status || "";
+
+            let status = rawStatus;
+            if (rawStatus === "Chờ xác nhận") status = "PENDING";
+            else if (rawStatus === "Đơn đang chờ giao") status = "PENDING";
+            else if (rawStatus === "Đang giao") status = "PENDING";
+            else if (rawStatus === "Đã giao") status = "COMPLETED";
+            else if (rawStatus === "Đã hủy") status = "CANCELLED";
+
+            const createdAt = bill.date
+              ? new Date(bill.date).toISOString().slice(0, 10)
+              : "";
+
+            const addressParts = [
+              bill.address?.detailAddress,
+              bill.address?.ward,
+              bill.address?.city,
+            ].filter(Boolean);
+
+            return {
+              order_id: bill.id || "",
+              customer_name: bill.customer?.name || "N/A",
+              customer_id: bill.customer?.id || "",
+              customer_phone: bill.customer?.phone || "",
+              total_amount: bill.totalAmount || 0,
+              status,
+              raw_status: rawStatus,
+              created_at: createdAt,
+              payment_method: bill.paymentMethod || "",
+              address_id: bill.address?.id || "",
+              address_detail: addressParts.join(", "),
+              employee_id: bill.employee?.id || "",
+            };
+          });
+
+          setCachedOrders(mappedOrders);
+          setOrders(mappedOrders);
+        })
+        .catch((error) => {
+          console.error("Background refresh orders failed:", error);
+        });
       return;
     }
 

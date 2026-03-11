@@ -9,10 +9,16 @@ import {
     Image,
     AlertTriangle,
     ArrowDownWideNarrow,
+    Loader2,
+    ChevronDown,
+    FileSpreadsheet,
+    Upload,
+    Download,
+    X,
 } from "lucide-react";
 import ProductForm from "./ProductForm.jsx";
 import { useProductManageLogic } from "./Productlogic.js";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth.js";
 import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
@@ -21,6 +27,12 @@ import "./Product.css";
 export default function ProductManage() {
     const pm = useProductManageLogic();
     const [mounted, setMounted] = useState(false);
+    const [showAddMenu, setShowAddMenu] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const fileInputRef = useRef(null);
+    const addMenuRef = useRef(null);
     const { user } = useAuth();
     const isAdmin = user?.roleId === "ROLE_ADMIN";
     const isEmployee = user?.roleId === "ROLE_EMPLOYEE";
@@ -28,6 +40,117 @@ export default function ProductManage() {
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!addMenuRef.current?.contains(event.target)) {
+                setShowAddMenu(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const visibleIds = new Set((pm.products || []).map((p) => p.sp_id));
+        setSelectedIds((prev) => prev.filter((id) => visibleIds.has(id)));
+    }, [pm.products]);
+
+    const getProductIdNum = (id) => {
+        const match = String(id || "").match(/(\d+)$/);
+        return match ? Number(match[1]) : 0;
+    };
+
+    const toProductCode = (num) => `SP${String(num).padStart(3, "0")}`;
+
+    const downloadTemplateFile = async () => {
+        const XLSX = await import("xlsx");
+        const loadedMaxId = (pm.products || []).reduce((max, p) => {
+            const value = getProductIdNum(p?.sp_id);
+            return Math.max(max, Number.isNaN(value) ? 0 : value);
+        }, 0);
+
+        const fallbackMax = Number(pm.totalElements || 0);
+        const nextIdNum = Math.max(loadedMaxId, fallbackMax, 0) + 1;
+
+        const firstBrandName = pm.brands?.[0]?.hang_name || pm.brands?.[0]?.name || "Ten thuong hieu";
+        const secondBrandName = pm.brands?.[1]?.hang_name || pm.brands?.[1]?.name || firstBrandName;
+        const firstCategoryName = pm.categories?.[0]?.name || "Ten danh muc";
+        const secondCategoryName = pm.categories?.[1]?.name || firstCategoryName;
+
+        const aoa = [
+            ["Mã sản phẩm", "Tên sản phẩm", "Giá", "Số lượng", "Mô tả", "Hình ảnh", "Thương hiệu", "Danh mục"],
+            [toProductCode(nextIdNum), "Tai nghe Bluetooth XYZ", 990000, 25, "Tai nghe chong on chu dong", "http://example.com/headphone.jpg", firstBrandName, firstCategoryName],
+            [toProductCode(nextIdNum + 1), "Loa mini ABC", 450000, 50, "Loa mini ket noi bluetooth", "http://example.com/speaker.jpg", secondBrandName, secondCategoryName],
+        ];
+
+        const worksheet = XLSX.utils.aoa_to_sheet(aoa);
+        worksheet["!cols"] = [
+            { wch: 14 },
+            { wch: 28 },
+            { wch: 12 },
+            { wch: 12 },
+            { wch: 32 },
+            { wch: 38 },
+            { wch: 14 },
+            { wch: 14 },
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "MauNhapSanPham");
+        XLSX.writeFile(workbook, "product-import-template.xlsx");
+    };
+
+    const onPickFile = () => {
+        if (pm.isImportingFile) return;
+        fileInputRef.current?.click();
+    };
+
+    const onSelectedFile = async (file) => {
+        if (!file) return;
+        await pm.handleBulkImportFile(file);
+        setShowImportModal(false);
+    };
+
+    const onDropFile = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDraggingFile(false);
+
+        const file = event.dataTransfer?.files?.[0];
+        await onSelectedFile(file);
+    };
+
+    const allPageIds = (pm.products || []).map((p) => p.sp_id);
+    const allSelectedOnPage = allPageIds.length > 0 && allPageIds.every((id) => selectedIds.includes(id));
+
+    const toggleSelectAllOnPage = () => {
+        if (allSelectedOnPage) {
+            setSelectedIds((prev) => prev.filter((id) => !allPageIds.includes(id)));
+            return;
+        }
+
+        setSelectedIds((prev) => Array.from(new Set([...prev, ...allPageIds])));
+    };
+
+    const toggleSelectOne = (id) => {
+        setSelectedIds((prev) => (
+            prev.includes(id)
+                ? prev.filter((item) => item !== id)
+                : [...prev, id]
+        ));
+    };
+
+    const onQuickDelete = async () => {
+        if (selectedIds.length === 0 || pm.isBulkDeleting) return;
+
+        const ok = window.confirm(`Bạn chắc chắn muốn xóa nhanh ${selectedIds.length} sản phẩm đã chọn?`);
+        if (!ok) return;
+
+        await pm.handleDeleteMany(selectedIds);
+        setSelectedIds([]);
+    };
 
     // Theo BE security: ADMIN + EMPLOYEE
     if (!isAdmin && !isEmployee) {
@@ -48,16 +171,74 @@ export default function ProductManage() {
                         </p>
                     </div>
 
-                    <button
-                        onClick={pm.openAdd}
-                        className="btn-primary shadow-lg"
-                    >
-                        <>
+                    <div className="add-product-actions" ref={addMenuRef}>
+                        {selectedIds.length > 0 && (
+                            <button
+                                type="button"
+                                className="btn-quick-delete"
+                                onClick={onQuickDelete}
+                                disabled={pm.isBulkDeleting}
+                            >
+                                {pm.isBulkDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                                {pm.isBulkDeleting ? "Đang xóa..." : `Xóa nhanh (${selectedIds.length})`}
+                            </button>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => setShowAddMenu((s) => !s)}
+                            className="btn-primary shadow-lg"
+                            title="Thêm sản phẩm"
+                        >
                             <Plus size={18} />
-                            Thêm Sản Phẩm
-                        </>
-                    </button>
+                            Thêm sản phẩm
+                            <ChevronDown size={16} />
+                        </button>
+
+                        {showAddMenu && (
+                            <div className="add-menu-dropdown">
+                                <button
+                                    type="button"
+                                    className="add-menu-item"
+                                    onClick={() => {
+                                        pm.openAdd();
+                                        setShowAddMenu(false);
+                                    }}
+                                >
+                                    <Plus size={16} />
+                                    Thêm 1 sản phẩm (form)
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="add-menu-item"
+                                    onClick={() => {
+                                        setShowImportModal(true);
+                                        setShowAddMenu(false);
+                                    }}
+                                    disabled={pm.isImportingFile}
+                                >
+                                    {pm.isImportingFile ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={16} />}
+                                    {pm.isImportingFile ? "Đang import..." : "Thêm nhiều sản phẩm bằng file"}
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
+
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.json"
+                    className="hidden"
+                    onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                            await onSelectedFile(file);
+                        }
+                        e.target.value = "";
+                    }}
+                />
 
                 {/* ===== STATS ===== */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -129,6 +310,14 @@ export default function ProductManage() {
                     <table className="w-full">
                         <thead className="table-header">
                             <tr>
+                                <th className="text-center w-12">
+                                    <input
+                                        type="checkbox"
+                                        checked={allSelectedOnPage}
+                                        onChange={toggleSelectAllOnPage}
+                                        aria-label="Chọn tất cả sản phẩm trên trang"
+                                    />
+                                </th>
                                 <th>Mã</th>
                                 <th>Sản phẩm</th>
                                 <th className="text-right">Giá</th>
@@ -143,7 +332,7 @@ export default function ProductManage() {
                         <tbody className="divide-y page-animate">
                             {pm.loading && (
                                 <tr>
-                                    <td colSpan="8" className="py-10 text-center">
+                                    <td colSpan="9" className="py-10 text-center">
                                         <div className="flex justify-center items-center">
                                             <div className="loading-spinner w-8 h-8 mr-3" />
                                             Đang tải dữ liệu...
@@ -161,6 +350,14 @@ export default function ProductManage() {
                                             animationDelay: `${index * 40}ms`
                                         }}
                                     >
+                                        <td className="text-center">
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedIds.includes(p.sp_id)}
+                                                onChange={() => toggleSelectOne(p.sp_id)}
+                                                aria-label={`Chọn sản phẩm ${p.sp_id}`}
+                                            />
+                                        </td>
                                         <td>
                                             <span className="font-mono bg-neutral-100 px-2 py-1 rounded">
                                                 {p.sp_id}
@@ -284,7 +481,7 @@ export default function ProductManage() {
                             {!pm.loading && pm.products.length === 0 && (
                                 <tr>
                                     <td
-                                        colSpan="8"
+                                        colSpan="9"
                                         className="text-center py-10"
                                     >
                                         <Package className="mx-auto mb-3 text-neutral-400" />
@@ -325,6 +522,121 @@ export default function ProductManage() {
                 brands={pm.brands}
                 categories={pm.categories}
             />
+
+            {showImportModal && (
+                <div
+                    className="import-modal-backdrop"
+                    onClick={() => {
+                        if (!pm.isImportingFile) {
+                            setShowImportModal(false);
+                            setIsDraggingFile(false);
+                        }
+                    }}
+                >
+                    <div
+                        className="import-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="import-modal-header">
+                            <div>
+                                <h3>Nhập file sản phẩm</h3>
+                                <p>Hỗ trợ .xlsx, .xls, .csv, .json. Khuyên dùng file mẫu .xlsx.</p>
+                            </div>
+                            <button
+                                type="button"
+                                className="import-close-btn"
+                                onClick={() => {
+                                    if (!pm.isImportingFile) {
+                                        setShowImportModal(false);
+                                        setIsDraggingFile(false);
+                                    }
+                                }}
+                                disabled={pm.isImportingFile}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="import-modal-hero">
+                            <p>
+                                Tải file mẫu để có sẵn cột chuẩn, mã sản phẩm kế tiếp và tên thương hiệu/danh mục dạng chữ.
+                            </p>
+                            <div className="import-field-tags">
+                                <span>Mã sản phẩm</span>
+                                <span>Tên sản phẩm</span>
+                                <span>Giá</span>
+                                <span>Số lượng</span>
+                                <span>Mô tả</span>
+                                <span>Hình ảnh</span>
+                                <span>Thương hiệu</span>
+                                <span>Danh mục</span>
+                            </div>
+                        </div>
+
+                        <div
+                            className={`import-dropzone ${isDraggingFile ? "dragging" : ""} ${pm.isImportingFile ? "disabled" : ""}`}
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                if (!pm.isImportingFile) {
+                                    setIsDraggingFile(true);
+                                }
+                            }}
+                            onDragLeave={(e) => {
+                                e.preventDefault();
+                                setIsDraggingFile(false);
+                            }}
+                            onDrop={onDropFile}
+                        >
+                            {pm.isImportingFile ? (
+                                <>
+                                    <Loader2 size={28} className="animate-spin" />
+                                    <p>Đang import file, vui lòng chờ...</p>
+                                </>
+                            ) : (
+                                <>
+                                    <Upload size={28} />
+                                    <p>Kéo thả file vào đây hoặc chọn file từ máy</p>
+                                    <small>File mẫu sẽ dùng tên thương hiệu và danh mục bằng chữ để dễ nhập.</small>
+                                    <button
+                                        type="button"
+                                        className="import-action-btn"
+                                        onClick={onPickFile}
+                                    >
+                                        <FileSpreadsheet size={16} />
+                                        Chọn file để import
+                                    </button>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="import-modal-actions">
+                            <button
+                                type="button"
+                                className="import-template-btn"
+                                onClick={downloadTemplateFile}
+                                disabled={pm.isImportingFile}
+                            >
+                                <Download size={16} />
+                                Tải file mẫu
+                            </button>
+
+                            <button
+                                type="button"
+                                className="import-cancel-btn"
+                                onClick={() => {
+                                    if (!pm.isImportingFile) {
+                                        setShowImportModal(false);
+                                        setIsDraggingFile(false);
+                                    }
+                                }}
+                                disabled={pm.isImportingFile}
+                            >
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

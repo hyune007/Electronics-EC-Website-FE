@@ -1,4 +1,4 @@
-import { Plus, Pencil, Trash2, Search, Package, Calendar, TrendingUp, Loader2, Printer, FileDown, Eye, X, ArrowUpDown, Wallet, BarChart3 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Package, TrendingUp, Loader2, Printer, FileDown, Eye, X, ArrowUpDown, Wallet } from "lucide-react";
 import { useImportLogic } from "./ImportLogic";
 import ImportForm from "./ImportForm";
 import { useState, useEffect, useMemo } from "react";
@@ -21,7 +21,6 @@ export default function ImportManage() {
     const [previewItem, setPreviewItem] = useState(null);
     const [previewHtml, setPreviewHtml] = useState("");
     const [sortBy, setSortBy] = useState("latest_date");
-    const [dateFilter, setDateFilter] = useState("all");
     const itemsPerPage = 12;
 
     useEffect(() => {
@@ -35,17 +34,6 @@ export default function ImportManage() {
 
         const formatCurrency = (value) => Number(value || 0).toLocaleString("vi-VN");
         const formatDateTime = () => new Date().toLocaleString("vi-VN");
-
-    const today = new Date();
-    const todayKey = today.toISOString().slice(0, 10);
-
-    const isWithinDays = (dateStr, days) => {
-        const raw = new Date(dateStr);
-        if (Number.isNaN(raw.getTime())) return false;
-        const date = new Date(raw.getFullYear(), raw.getMonth(), raw.getDate());
-        const from = new Date(today.getFullYear(), today.getMonth(), today.getDate() - days + 1);
-        return date >= from;
-    };
 
     const listWithMetrics = useMemo(() => {
         return ip.filteredList.map((item) => {
@@ -61,48 +49,32 @@ export default function ImportManage() {
     }, [ip.filteredList]);
 
     const visibleList = useMemo(() => {
-        const filteredByDate = listWithMetrics.filter((item) => {
-            if (dateFilter === "all") return true;
-            if (dateFilter === "today") return item.nk_date === todayKey;
-            if (dateFilter === "7d") return isWithinDays(item.nk_date, 7);
-            if (dateFilter === "30d") return isWithinDays(item.nk_date, 30);
-            return true;
-        });
-
-        const sorted = [...filteredByDate].sort((a, b) => {
+        const sorted = [...listWithMetrics].sort((a, b) => {
             if (sortBy === "latest_date") return new Date(b.nk_date) - new Date(a.nk_date);
             if (sortBy === "oldest_date") return new Date(a.nk_date) - new Date(b.nk_date);
             if (sortBy === "value_desc") return (b.nk_value || 0) - (a.nk_value || 0);
-            if (sortBy === "value_asc") return (a.nk_value || 0) - (b.nk_value || 0);
             if (sortBy === "qty_desc") return (b.nk_quantity || 0) - (a.nk_quantity || 0);
-            if (sortBy === "qty_asc") return (a.nk_quantity || 0) - (b.nk_quantity || 0);
             return String(a.nk_id || "").localeCompare(String(b.nk_id || ""));
         });
 
         return sorted.map((item, index) => ({ ...item, rank: index + 1 }));
-    }, [listWithMetrics, dateFilter, sortBy]);
+    }, [listWithMetrics, sortBy]);
 
     useEffect(() => {
         setCurrentPage(0);
-    }, [ip.search, dateFilter, sortBy]);
+    }, [ip.search, sortBy]);
 
     const stats = useMemo(() => {
         const totalReceipts = visibleList.length;
         const totalQty = visibleList.reduce((sum, item) => sum + Number(item.nk_quantity || 0), 0);
         const totalValue = visibleList.reduce((sum, item) => sum + Number(item.nk_value || 0), 0);
-        const todayValue = visibleList
-            .filter((item) => item.nk_date === todayKey)
-            .reduce((sum, item) => sum + Number(item.nk_value || 0), 0);
-        const avgValue = totalReceipts > 0 ? Math.round(totalValue / totalReceipts) : 0;
 
         return {
             totalReceipts,
             totalQty,
             totalValue,
-            todayValue,
-            avgValue,
         };
-    }, [visibleList, todayKey]);
+    }, [visibleList]);
 
     // Tính toán phân trang
     const totalPages = Math.max(1, Math.ceil(visibleList.length / itemsPerPage));
@@ -415,24 +387,12 @@ export default function ImportManage() {
                 setPreviewHtml("");
             };
 
-    const getTierBadgeClass = (tier) => {
-        if (tier === "vip") return "bg-rose-100 text-rose-700";
-        if (tier === "high") return "bg-amber-100 text-amber-700";
-        return "bg-slate-100 text-slate-700";
-    };
-
-    const getTierLabel = (tier) => {
-        if (tier === "vip") return "VIP";
-        if (tier === "high") return "Cao";
-        return "Thường";
-    };
-
     const handlePageChange = (page) => setCurrentPage(page);
     const handlePreviousPage = () => setCurrentPage(p => Math.max(0, p - 1));
     const handleNextPage = () => setCurrentPage(p => Math.min(totalPages - 1, p + 1));
 
     return (
-        <div className={`fade-in min-h-full ${mounted ? 'slide-up' : ''}`}>
+        <div className={`import-manage fade-in min-h-full ${mounted ? 'slide-up' : ''}`}>
             {/* Header Section */}
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-6">
@@ -450,13 +410,12 @@ export default function ImportManage() {
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                     <div className="card p-6">
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-neutral-600 text-sm font-medium mb-1">Phiếu Sau Lọc</p>
                                 <p className="text-2xl font-bold text-neutral-900">{stats.totalReceipts}</p>
-                                <p className="text-xs text-neutral-500 mt-1">Theo bộ lọc hiện tại</p>
                             </div>
                             <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center">
                                 <Package className="text-indigo-600" size={24} />
@@ -471,7 +430,6 @@ export default function ImportManage() {
                                 <p className="text-2xl font-bold text-neutral-900">
                                     {formatCurrency(stats.totalQty)}
                                 </p>
-                                <p className="text-xs text-neutral-500 mt-1">Đơn vị sản phẩm</p>
                             </div>
                             <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
                                 <TrendingUp className="text-emerald-600" size={24} />
@@ -486,25 +444,9 @@ export default function ImportManage() {
                                 <p className="text-2xl font-bold text-neutral-900">
                                     {formatCurrency(stats.totalValue)} ₫
                                 </p>
-                                <p className="text-xs text-neutral-500 mt-1">Trung bình: {formatCurrency(stats.avgValue)} ₫/phiếu</p>
                             </div>
                             <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
                                 <Wallet className="text-amber-600" size={24} />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="card p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-neutral-600 text-sm font-medium mb-1">Giá Trị Nhập Hôm Nay</p>
-                                <p className="text-2xl font-bold text-neutral-900">
-                                    {formatCurrency(stats.todayValue)} ₫
-                                </p>
-                                <p className="text-xs text-neutral-500 mt-1">Ngày {todayKey}</p>
-                            </div>
-                            <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
-                                <BarChart3 className="text-cyan-600" size={24} />
                             </div>
                         </div>
                     </div>
@@ -518,43 +460,25 @@ export default function ImportManage() {
                         <Search className="text-neutral-400" size={20} />
                         <input
                             type="text"
-                            placeholder="Tìm theo mã NK, tên sản phẩm, thương hiệu, danh mục..."
+                            placeholder="Tìm theo mã NK hoặc tên sản phẩm..."
                             value={ip.search}
                             onChange={(e) => ip.setSearch(e.target.value)}
                             className="flex-1 bg-transparent outline-none ml-3 text-neutral-900 placeholder-neutral-400"
                         />
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3">
-                        <div className="flex items-center gap-2 px-3 py-2 border border-neutral-200 rounded-xl bg-white">
-                            <Calendar size={16} className="text-neutral-500" />
-                            <select
-                                value={dateFilter}
-                                onChange={(e) => setDateFilter(e.target.value)}
-                                className="bg-transparent text-sm text-neutral-700 outline-none"
-                            >
-                                <option value="all">Tất cả thời gian</option>
-                                <option value="today">Hôm nay</option>
-                                <option value="7d">7 ngày gần đây</option>
-                                <option value="30d">30 ngày gần đây</option>
-                            </select>
-                        </div>
-
-                        <div className="flex items-center gap-2 px-3 py-2 border border-neutral-200 rounded-xl bg-white">
-                            <ArrowUpDown size={16} className="text-neutral-500" />
-                            <select
-                                value={sortBy}
-                                onChange={(e) => setSortBy(e.target.value)}
-                                className="bg-transparent text-sm text-neutral-700 outline-none"
-                            >
-                                <option value="latest_date">Ngày nhập mới nhất</option>
-                                <option value="oldest_date">Ngày nhập cũ nhất</option>
-                                <option value="value_desc">Giá trị nhập giảm dần</option>
-                                <option value="value_asc">Giá trị nhập tăng dần</option>
-                                <option value="qty_desc">Số lượng giảm dần</option>
-                                <option value="qty_asc">Số lượng tăng dần</option>
-                            </select>
-                        </div>
+                    <div className="flex items-center gap-2 px-3 py-2 border border-neutral-200 rounded-xl bg-white">
+                        <ArrowUpDown size={16} className="text-neutral-500" />
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="bg-transparent text-sm text-neutral-700 outline-none"
+                        >
+                            <option value="latest_date">Ngày nhập mới nhất</option>
+                            <option value="oldest_date">Ngày nhập cũ nhất</option>
+                            <option value="value_desc">Giá trị nhập cao nhất</option>
+                            <option value="qty_desc">Số lượng nhiều nhất</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -565,32 +489,20 @@ export default function ImportManage() {
                     <table className="w-full">
                         <thead className="table-header">
                             <tr>
-                                <th className="px-4 py-4 text-center text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    #
-                                </th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
                                     Mã NK
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
                                     Sản phẩm
                                 </th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Thương hiệu
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Danh mục
-                                </th>
                                 <th className="px-6 py-4 text-center text-xs font-medium text-neutral-600 uppercase tracking-wider">
                                     Số lượng
                                 </th>
                                 <th className="px-6 py-4 text-right text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Giá
+                                    Đơn giá
                                 </th>
                                 <th className="px-6 py-4 text-right text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Giá Trị Nhập
-                                </th>
-                                <th className="px-6 py-4 text-center text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                    Mức Phiếu
+                                    Thành tiền
                                 </th>
                                 <th className="px-6 py-4 text-center text-xs font-medium text-neutral-600 uppercase tracking-wider">
                                     Ngày nhập
@@ -603,7 +515,7 @@ export default function ImportManage() {
                         <tbody className="divide-y divide-neutral-100">
                             {ip.loading && (
                                 <tr>
-                                    <td colSpan="11" className="px-6 py-12 text-center">
+                                    <td colSpan="8" className="px-6 py-12 text-center">
                                         <div className="flex items-center justify-center">
                                             <div className="loading-spinner w-8 h-8 mr-3"></div>
                                             <span className="text-neutral-600">Đang tải dữ liệu...</span>
@@ -614,11 +526,6 @@ export default function ImportManage() {
 
                             {!ip.loading && paginatedList.map((i, index) => (
                                 <tr key={i.nk_id} className="table-row" style={{ animationDelay: `${index * 50}ms` }}>
-                                    <td className="px-4 py-4 text-center">
-                                        <span className="inline-flex items-center justify-center min-w-7 h-7 rounded-full bg-neutral-100 text-neutral-700 text-xs font-semibold">
-                                            {i.rank}
-                                        </span>
-                                    </td>
                                     <td className="px-6 py-4">
                                         <span className="font-mono text-sm text-neutral-900 bg-neutral-100 px-2 py-1 rounded-lg">
                                             {i.nk_id}
@@ -627,37 +534,32 @@ export default function ImportManage() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-start gap-3">
                                             {i.sp_image ? (
-                                                <img 
-                                                    src={i.sp_image} 
+                                                <img
+                                                    src={i.sp_image}
                                                     alt={i.sp_name}
                                                     className="w-10 h-10 rounded-lg object-cover flex-shrink-0 bg-neutral-100"
                                                     onError={(e) => {
-                                                        e.currentTarget.style.display = 'none';
-                                                        e.currentTarget.nextElementSibling.style.display = 'flex';
+                                                        e.currentTarget.style.display = "none";
+                                                        const fallback = e.currentTarget.nextElementSibling;
+                                                        if (fallback) fallback.style.display = "flex";
                                                     }}
                                                     loading="lazy"
                                                     decoding="async"
                                                 />
                                             ) : null}
-                                            <div 
+
+                                            <div
                                                 className="w-10 h-10 rounded-lg bg-gradient-to-br from-neutral-100 to-neutral-200 flex items-center justify-center flex-shrink-0"
-                                                style={{ display: i.sp_image ? 'none' : 'flex' }}
+                                                style={{ display: i.sp_image ? "none" : "flex" }}
                                             >
-                                                <Package className="text-neutral-400" size={20} />
+                                                <Package className="text-neutral-400" size={18} />
                                             </div>
+
                                             <div className="min-w-0 flex-1">
                                                 <p className="font-medium text-neutral-900 truncate">{i.sp_name}</p>
-                                                {i.sp_description && (
-                                                    <p className="text-xs text-neutral-500 mt-1 truncate">{i.sp_description}</p>
-                                                )}
+                                                <p className="text-xs text-neutral-500 mt-1">Mã SP: {i.sp_id}</p>
                                             </div>
                                         </div>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="badge-primary">{i.sp_brand}</span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="badge-success">{i.sp_category}</span>
                                     </td>
                                     <td className="px-6 py-4 text-center">
                                         <span className="font-semibold text-neutral-900">{i.nk_quantity}</span>
@@ -673,11 +575,6 @@ export default function ImportManage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-semibold ${getTierBadgeClass(i.nk_tier)}`}>
-                                            {getTierLabel(i.nk_tier)}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
                                         <span className="text-sm text-neutral-600">{i.nk_date}</span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -688,20 +585,6 @@ export default function ImportManage() {
                                                 title="Xem trước hóa đơn"
                                             >
                                                 <Eye size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDownloadImportInvoice(i)}
-                                                className="p-2 text-neutral-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all duration-200"
-                                                title="Tải hóa đơn PDF"
-                                            >
-                                                <FileDown size={16} />
-                                            </button>
-                                            <button
-                                                onClick={() => handlePrintImportInvoice(i)}
-                                                className="p-2 text-neutral-600 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all duration-200"
-                                                title="In hóa đơn"
-                                            >
-                                                <Printer size={16} />
                                             </button>
                                             <button
                                                 onClick={() => ip.openEdit(i)}
@@ -729,7 +612,7 @@ export default function ImportManage() {
 
                             {!ip.loading && visibleList.length === 0 && (
                                 <tr>
-                                    <td colSpan="11" className="px-6 py-12 text-center">
+                                    <td colSpan="8" className="px-6 py-12 text-center">
                                         <div className="text-center">
                                             <Package className="mx-auto h-12 w-12 text-neutral-400 mb-4" />
                                             <h3 className="text-lg font-medium text-neutral-900 mb-2">Không có dữ liệu nhập kho</h3>

@@ -1,7 +1,9 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-export default function UserDropdown({ open, onClose, onLogout }) {
+export default function UserDropdown({ open, onClose, onLogout, user }) {
   if (!open) return null;
+
+  const isAdmin = user?.roleId === "ROLE_ADMIN";
 
   return (
     <div className="absolute right-0 top-full mt-3 w-52 z-50 origin-top-right">
@@ -23,6 +25,19 @@ export default function UserDropdown({ open, onClose, onLogout }) {
             </span>
             Hồ sơ cá nhân
           </NavLink>
+
+          {isAdmin && (
+            <NavLink
+              to="/admin/dashboard"
+              onClick={onClose}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                dashboard
+              </span>
+              Vào trang quản lí
+            </NavLink>
+          )}
 
           <button
             onClick={onLogout}

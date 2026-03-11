@@ -8,6 +8,11 @@ import {
 import { getAllProducts } from "../../../../services/productService";
 import { showToast } from "../../../../utils/adminToast";
 import { generateSmartNextId } from "../../../../utils/codeGenerator";
+import { getCache, setCache, removeCache } from "../../../../utils/localCache";
+
+const IMPORT_CACHE_KEY = "admin_imports_v1";
+const IMPORT_PRODUCTS_CACHE_KEY = "admin_import_products_v1";
+const IMPORT_CACHE_TTL = 5 * 60 * 1000;
 
 export function useImportLogic() {
     const [list, setList] = useState([]);
@@ -25,6 +30,7 @@ export function useImportLogic() {
     const [loading, setLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
     const emptyForm = {
         nk_id: "",
@@ -37,15 +43,69 @@ export function useImportLogic() {
 
     /* ================= LOAD DATA ================= */
     useEffect(() => {
-        fetchImports();
-        fetchProducts();
+        const cachedImports = getCache(IMPORT_CACHE_KEY, IMPORT_CACHE_TTL);
+        const cachedProducts = getCache(IMPORT_PRODUCTS_CACHE_KEY, IMPORT_CACHE_TTL);
+
+        if (cachedImports) {
+            setList(cachedImports);
+        }
+
+        if (cachedProducts && Array.isArray(cachedProducts) && cachedProducts.length > 0) {
+            setProducts(cachedProducts);
+        }
+
+        const shouldShowLoading = !cachedImports;
+        loadInitialData(shouldShowLoading);
     }, []);
+
+    const mapProductsFromApi = (data) => {
+        if (!data || !Array.isArray(data) || data.length === 0) return null;
+
+        return data.map(p => ({
+            sp_id: p.id || p.sp_id || "",
+            sp_name: p.name || p.sp_name || "",
+            sp_brand: p.brand?.name || p.sp_brand_name || "",
+            sp_category: p.category?.name || p.sp_category_name || "",
+            sp_price: p.price || p.sp_price || 0,
+            sp_stock: p.stock || p.sp_stock || 0
+        }));
+    };
+
+    const loadInitialData = async (showLoading = true) => {
+        try {
+            if (showLoading) setLoading(true);
+
+            const [importsResult, productsResult] = await Promise.allSettled([
+                getAllImports(),
+                getAllProducts(),
+            ]);
+
+            if (importsResult.status === "fulfilled") {
+                setList(importsResult.value);
+                setCache(IMPORT_CACHE_KEY, importsResult.value);
+            } else if (showLoading) {
+                console.error("Lỗi tải danh sách nhập kho:", importsResult.reason);
+                showToast("Không tải được danh sách nhập kho", "error");
+            }
+
+            if (productsResult.status === "fulfilled") {
+                const mappedProducts = mapProductsFromApi(productsResult.value);
+                if (mappedProducts && mappedProducts.length > 0) {
+                    setProducts(mappedProducts);
+                    setCache(IMPORT_PRODUCTS_CACHE_KEY, mappedProducts);
+                }
+            }
+        } finally {
+            if (showLoading) setLoading(false);
+        }
+    };
 
     const fetchImports = async () => {
         try {
             setLoading(true);
             const data = await getAllImports();
             setList(data);
+            setCache(IMPORT_CACHE_KEY, data);
         } catch (err) {
             console.error("Lỗi tải danh sách nhập kho:", err);
             showToast("Không tải được danh sách nhập kho", "error");
@@ -62,16 +122,10 @@ export function useImportLogic() {
             
             // If API returns data, use it (but keep mock as fallback)
             if (data && Array.isArray(data) && data.length > 0) {
-                const mappedProducts = data.map(p => ({
-                    sp_id: p.id || p.sp_id || "",
-                    sp_name: p.name || p.sp_name || "",
-                    sp_brand: p.brand?.name || p.sp_brand_name || "",
-                    sp_category: p.category?.name || p.sp_category_name || "",
-                    sp_price: p.price || p.sp_price || 0,
-                    sp_stock: p.stock || p.sp_stock || 0
-                }));
+                const mappedProducts = mapProductsFromApi(data);
                 console.log("Using API products for import:", mappedProducts);
                 setProducts(mappedProducts);
+                setCache(IMPORT_PRODUCTS_CACHE_KEY, mappedProducts);
             } else {
                 console.log("API returned no data, keeping mock products");
             }
@@ -138,6 +192,7 @@ export function useImportLogic() {
             }
 
             setOpenForm(false);
+            removeCache(IMPORT_CACHE_KEY);
             fetchImports();
         } catch (err) {
             console.error("Lỗi lưu nhập kho:", err);
@@ -155,6 +210,7 @@ export function useImportLogic() {
         try {
             await deleteImport(id);
             showToast("Xóa phiếu nhập kho thành công", "success");
+            removeCache(IMPORT_CACHE_KEY);
             fetchImports();
         } catch (err) {
             console.error("Lỗi xóa nhập kho:", err);
@@ -164,10 +220,37 @@ export function useImportLogic() {
         }
     };
 
+    const handleDeleteMany = async (ids = []) => {
+        const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
+        if (uniqueIds.length === 0) return;
+
+        setIsBulkDeleting(true);
+        try {
+            const results = await Promise.allSettled(uniqueIds.map((id) => deleteImport(id)));
+            const success = results.filter((r) => r.status === "fulfilled").length;
+            const failed = results.length - success;
+
+            removeCache(IMPORT_CACHE_KEY);
+            await fetchImports();
+
+            if (failed === 0) {
+                showToast(`Đã xóa ${success} phiếu nhập`, "success");
+            } else {
+                showToast(`Xóa nhanh: ${success} thành công, ${failed} thất bại`, "warning", 3600);
+            }
+        } catch (err) {
+            console.error("Lỗi xóa nhanh nhập kho:", err);
+            showToast("Xóa nhanh phiếu nhập thất bại", "error", 3400);
+        } finally {
+            setIsBulkDeleting(false);
+        }
+    };
+
     return {
         loading,
         isSubmitting,
         deletingId,
+        isBulkDeleting,
         search,
         setSearch,
         openForm,
@@ -188,6 +271,7 @@ export function useImportLogic() {
             setOpenForm(true);
         },
         handleSubmit,
-        handleDelete
+        handleDelete,
+        handleDeleteMany
     };
 }
