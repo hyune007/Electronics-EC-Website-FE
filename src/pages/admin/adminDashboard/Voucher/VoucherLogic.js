@@ -47,6 +47,118 @@ function clearVoucherCache() {
     }
 }
 
+function parseCsvLine(line) {
+    const out = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+        const ch = line[i];
+        const next = line[i + 1];
+
+        if (ch === '"') {
+            if (inQuotes && next === '"') {
+                current += '"';
+                i += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+
+        if (ch === "," && !inQuotes) {
+            out.push(current.trim());
+            current = "";
+            continue;
+        }
+
+        current += ch;
+    }
+
+    out.push(current.trim());
+    return out;
+}
+
+function parseCsv(text) {
+    const lines = String(text || "")
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+    if (lines.length === 0) return [];
+    const headers = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
+
+    return lines.slice(1).map((line) => {
+        const cells = parseCsvLine(line);
+        const row = {};
+        headers.forEach((header, idx) => {
+            row[header] = cells[idx] ?? "";
+        });
+        return row;
+    });
+}
+
+async function parseExcel(arrayBuffer) {
+    const XLSX = await import("xlsx");
+    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    const firstSheetName = workbook.SheetNames?.[0];
+    if (!firstSheetName) return [];
+
+    const sheet = workbook.Sheets[firstSheetName];
+    return XLSX.utils.sheet_to_json(sheet, {
+        defval: "",
+        raw: true,
+    });
+}
+
+function normalizeHeaderKey(value) {
+    return String(value ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+function normalizeImportRow(row) {
+    const normalized = {};
+    Object.entries(row || {}).forEach(([key, value]) => {
+        const normalizedKey = normalizeHeaderKey(key);
+        if (normalizedKey && !(normalizedKey in normalized)) {
+            normalized[normalizedKey] = value;
+        }
+    });
+    return normalized;
+}
+
+function pickField(row, aliases = []) {
+    for (const alias of aliases) {
+        const value = row?.[normalizeHeaderKey(alias)];
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+            return String(value).trim();
+        }
+    }
+    return "";
+}
+
+async function runWithConcurrency(items, concurrency, worker) {
+    const results = [];
+    let cursor = 0;
+
+    const runner = async () => {
+        while (cursor < items.length) {
+            const index = cursor;
+            cursor += 1;
+            results[index] = await worker(items[index], index);
+        }
+    };
+
+    const workers = Array.from({ length: Math.max(1, concurrency) }, () => runner());
+    await Promise.all(workers);
+    return results;
+}
+
 export function useVoucherLogic() {
     const [vouchers, setVouchers] = useState([]);
     const [search, setSearch] = useState("");
@@ -56,6 +168,8 @@ export function useVoucherLogic() {
     const [editing, setEditing] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isImportingFile, setIsImportingFile] = useState(false);
     const itemsPerPage = 12;
 
     const emptyForm = {
@@ -303,6 +417,107 @@ export function useVoucherLogic() {
         }
     };
 
+    const handleDeleteMany = async (ids = []) => {
+        const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
+        if (uniqueIds.length === 0) return;
+
+        setIsBulkDeleting(true);
+        try {
+            const results = await Promise.allSettled(uniqueIds.map((id) => deletePromotion(id)));
+            const success = results.filter((r) => r.status === "fulfilled").length;
+            const failed = results.length - success;
+
+            const deletedSet = new Set(uniqueIds);
+            const updatedVouchers = vouchers.filter((v) => !deletedSet.has(v.km_id));
+            setVouchers(updatedVouchers);
+            setCachedVouchers(updatedVouchers);
+
+            if (failed === 0) {
+                showToast(`Đã xóa ${success} voucher`, "success");
+            } else {
+                showToast(`Xóa nhanh: ${success} thành công, ${failed} thất bại`, "warning", 3600);
+            }
+        } catch (error) {
+            console.error("Bulk delete failed:", error);
+            showToast("Xóa nhanh voucher thất bại", "error");
+        } finally {
+            setIsBulkDeleting(false);
+        }
+    };
+
+    const handleBulkImportFile = async (file) => {
+        if (!file) return;
+        setIsImportingFile(true);
+
+        try {
+            const lowerName = String(file.name || "").toLowerCase();
+            let rawRows = [];
+
+            if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+                const buffer = await file.arrayBuffer();
+                rawRows = await parseExcel(buffer);
+            } else if (lowerName.endsWith(".json")) {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+                rawRows = Array.isArray(parsed) ? parsed : [];
+            } else {
+                const text = await file.text();
+                rawRows = parseCsv(text);
+            }
+
+            if (!Array.isArray(rawRows) || rawRows.length === 0) {
+                showToast("File không có dữ liệu hợp lệ", "warning");
+                return;
+            }
+
+            const rows = rawRows.map((row, index) => {
+                const normalized = normalizeImportRow(row);
+                const percentRaw = pickField(normalized, ["km_percent", "km percent", "percent", "phan tram", "giam gia"]);
+                return {
+                    rowNo: index + 2,
+                    km_id: pickField(normalized, ["km_id", "km id", "id", "ma", "ma voucher", "ma khuyen mai"]),
+                    km_name: pickField(normalized, ["km_name", "km name", "name", "ten", "ten voucher", "ten khuyen mai"]),
+                    km_description: pickField(normalized, ["km_description", "km description", "description", "mo ta"]),
+                    km_percent: Number(percentRaw || 0),
+                    km_start_date: pickField(normalized, ["km_start_date", "km start date", "start_date", "start date", "ngay bat dau"]),
+                    km_end_date: pickField(normalized, ["km_end_date", "km end date", "end_date", "end date", "ngay ket thuc"]),
+                };
+            });
+
+            const invalidRows = rows.filter((r) => !r.km_id || !r.km_name || !r.km_description || r.km_percent <= 0 || r.km_percent > 100 || !r.km_start_date || !r.km_end_date);
+            if (invalidRows.length > 0) {
+                showToast(`Có ${invalidRows.length} dòng thiếu hoặc sai dữ liệu`, "warning", 3600);
+                return;
+            }
+
+            const results = await runWithConcurrency(rows, 3, async (row) => {
+                try {
+                    await createPromotion(row);
+                    return { ok: true };
+                } catch (error) {
+                    return { ok: false, message: error?.message || "Lỗi thêm voucher" };
+                }
+            });
+
+            const success = results.filter((r) => r.ok).length;
+            const failed = results.length - success;
+
+            clearVoucherCache();
+            await loadVouchers();
+
+            if (failed === 0) {
+                showToast(`Import thành công ${success} voucher`, "success");
+            } else {
+                showToast(`Import xong: ${success} thành công, ${failed} thất bại`, "warning", 4200);
+            }
+        } catch (error) {
+            console.error("Bulk import voucher failed:", error);
+            showToast("Import file voucher thất bại", "error", 3400);
+        } finally {
+            setIsImportingFile(false);
+        }
+    };
+
     return {
         search, setSearch,
         statusFilter, setStatusFilter,
@@ -319,11 +534,15 @@ export function useVoucherLogic() {
         totalPages,
         itemsPerPage,
         isSubmitting,
+        isBulkDeleting,
+        isImportingFile,
         handlePageChange,
         handlePreviousPage,
         handleNextPage,
         openAdd, openEdit,
         handleSubmit,
-        handleDelete
+        handleDelete,
+        handleDeleteMany,
+        handleBulkImportFile
     };
 }

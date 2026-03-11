@@ -1,7 +1,7 @@
-import { Plus, Pencil, Trash2, Search, Percent, Calendar, Tag, Gift, ArrowUpDown, Sparkles, TimerOff, CircleDot, Clock } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Percent, Calendar, Tag, Gift, ArrowUpDown, Sparkles, TimerOff, CircleDot, Clock, Loader2, ChevronDown, FileSpreadsheet, Upload, Download, X } from "lucide-react";
 import { useVoucherLogic } from "./VoucherLogic.js";
 import VoucherForm from "./VoucherForm.jsx";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth.js";
 import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
@@ -10,12 +10,34 @@ import "./Voucher.css";
 export default function VoucherManage() {
     const vm = useVoucherLogic();
     const [mounted, setMounted] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [showAddMenu, setShowAddMenu] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [isDraggingFile, setIsDraggingFile] = useState(false);
+    const fileInputRef = useRef(null);
+    const addMenuRef = useRef(null);
     const { user } = useAuth();
     const isAdmin = user?.roleId === "ROLE_ADMIN";
     const isEmployee = user?.roleId === "ROLE_EMPLOYEE";
 
     useEffect(() => {
         setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        const visibleIds = new Set((vm.paginatedVouchers || []).map((v) => v.km_id));
+        setSelectedIds((prev) => prev.filter((id) => visibleIds.has(id)));
+    }, [vm.paginatedVouchers]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (!addMenuRef.current?.contains(event.target)) {
+                setShowAddMenu(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     // Theo BE security: ADMIN + EMPLOYEE
@@ -39,6 +61,94 @@ export default function VoucherManage() {
         return date.toLocaleDateString("vi-VN");
     };
 
+    const pageIds = (vm.paginatedVouchers || []).map((v) => v.km_id);
+    const allSelectedOnPage = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+
+    const toggleSelectAllOnPage = () => {
+        if (allSelectedOnPage) {
+            setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+            return;
+        }
+        setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+    };
+
+    const toggleSelectOne = (id) => {
+        setSelectedIds((prev) => (
+            prev.includes(id)
+                ? prev.filter((item) => item !== id)
+                : [...prev, id]
+        ));
+    };
+
+    const handleQuickDelete = async () => {
+        if (selectedIds.length === 0 || vm.isBulkDeleting) return;
+        if (!window.confirm(`Xóa nhanh ${selectedIds.length} voucher đã chọn?`)) return;
+
+        await vm.handleDeleteMany(selectedIds);
+        setSelectedIds([]);
+    };
+
+    const getNextNumberFromIds = (ids, prefix) => {
+        const maxNum = (ids || []).reduce((max, id) => {
+            const match = String(id || "").toUpperCase().match(new RegExp(`^${prefix}(\\d+)$`));
+            if (!match) return max;
+            return Math.max(max, Number(match[1]));
+        }, 0);
+        return maxNum + 1;
+    };
+
+    const formatDateTemplate = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+    };
+
+    const downloadTemplateFile = async () => {
+        const XLSX = await import("xlsx");
+        const existingIds = (vm.filteredVouchers || []).map((item) => item?.km_id).filter(Boolean);
+        const nextNum = getNextNumberFromIds(existingIds, "KM");
+        const id1 = `KM${String(nextNum).padStart(3, "0")}`;
+        const id2 = `KM${String(nextNum + 1).padStart(3, "0")}`;
+        const now = new Date();
+        const start1 = formatDateTemplate(now);
+        const end1 = formatDateTemplate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 14));
+        const start2 = formatDateTemplate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 15));
+        const end2 = formatDateTemplate(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 29));
+        const aoa = [
+            ["Mã voucher", "Tên voucher", "Mô tả", "Phần trăm", "Ngày bắt đầu", "Ngày kết thúc"],
+            [id1, "Giam gia don hang", "Ap dung cho don tu 500.000", 10, start1, end1],
+            [id2, "Giam gia thanh vien", "Ap dung cho khach hang than thiet", 15, start2, end2],
+        ];
+        const worksheet = XLSX.utils.aoa_to_sheet(aoa);
+        worksheet["!cols"] = [{ wch: 14 }, { wch: 24 }, { wch: 30 }, { wch: 12 }, { wch: 16 }, { wch: 16 }];
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "MauVoucher");
+        XLSX.writeFile(workbook, "voucher-import-template.xlsx");
+    };
+
+    const onPickFile = () => {
+        if (vm.isImportingFile) return;
+        fileInputRef.current?.click();
+    };
+
+    const onSelectedFile = async (file) => {
+        if (!file) return;
+        await vm.handleBulkImportFile(file);
+        setShowImportModal(false);
+        setIsDraggingFile(false);
+    };
+
+    const onDropFile = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setIsDraggingFile(false);
+
+        if (vm.isImportingFile) return;
+        const file = event.dataTransfer?.files?.[0];
+        await onSelectedFile(file);
+    };
+
     return (
         <div className={`fade-in min-h-full ${mounted ? 'slide-up' : ''}`}>
             {/* Header Section */}
@@ -48,14 +158,72 @@ export default function VoucherManage() {
                         <h1 className="text-3xl font-bold text-neutral-900 mb-2">Quản Lý Voucher</h1>
                         <p className="text-neutral-600">Quản lý mã giảm giá và chương trình khuyến mãi</p>
                     </div>
-                    <button 
-                        onClick={vm.openAdd}
-                        className="btn-primary flex items-center gap-2 shadow-lg"
-                    >
-                        <Plus size={18} />
-                        <span>Thêm Voucher</span>
-                    </button>
+                    <div className="flex items-center gap-3">
+                        {selectedIds.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={handleQuickDelete}
+                                disabled={vm.isBulkDeleting}
+                                className="btn-quick-delete"
+                            >
+                                {vm.isBulkDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                                {vm.isBulkDeleting ? "Đang xóa..." : `Xóa nhanh (${selectedIds.length})`}
+                            </button>
+                        )}
+
+                        <div className="add-product-actions" ref={addMenuRef}>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddMenu((s) => !s)}
+                                className="btn-primary flex items-center gap-2 shadow-lg"
+                            >
+                                <Plus size={18} />
+                                <span>Thêm Voucher</span>
+                                <ChevronDown size={16} />
+                            </button>
+
+                            {showAddMenu && (
+                                <div className="add-menu-dropdown">
+                                    <button
+                                        type="button"
+                                        className="add-menu-item"
+                                        onClick={() => {
+                                            vm.openAdd();
+                                            setShowAddMenu(false);
+                                        }}
+                                    >
+                                        <Plus size={16} />
+                                        Thêm 1 voucher
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="add-menu-item"
+                                        onClick={() => {
+                                            setShowImportModal(true);
+                                            setShowAddMenu(false);
+                                        }}
+                                        disabled={vm.isImportingFile}
+                                    >
+                                        {vm.isImportingFile ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={16} />}
+                                        {vm.isImportingFile ? "Đang import..." : "Thêm nhiều bằng file"}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
+
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xlsx,.xls,.csv,.json"
+                    className="hidden"
+                    onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) await onSelectedFile(file);
+                        e.target.value = "";
+                    }}
+                />
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -168,6 +336,14 @@ export default function VoucherManage() {
                         <thead className="table-header">
                             <tr>
                                 <th className="px-4 py-4 text-center text-xs font-medium text-neutral-600 uppercase tracking-wider">
+                                    <input
+                                        type="checkbox"
+                                        checked={allSelectedOnPage}
+                                        onChange={toggleSelectAllOnPage}
+                                        aria-label="Chọn tất cả voucher trên trang"
+                                    />
+                                </th>
+                                <th className="px-4 py-4 text-center text-xs font-medium text-neutral-600 uppercase tracking-wider">
                                     #
                                 </th>
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
@@ -196,6 +372,14 @@ export default function VoucherManage() {
                         <tbody className="divide-y divide-neutral-100">
                             {vm.paginatedVouchers.map((v, index) => (
                                 <tr key={v.km_id} className="table-row" style={{ animationDelay: `${index * 50}ms` }}>
+                                    <td className="px-4 py-4 text-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.includes(v.km_id)}
+                                            onChange={() => toggleSelectOne(v.km_id)}
+                                            aria-label={`Chọn voucher ${v.km_id}`}
+                                        />
+                                    </td>
                                     <td className="px-4 py-4 text-center">
                                         <span className="inline-flex items-center justify-center min-w-7 h-7 rounded-full bg-neutral-100 text-neutral-700 text-xs font-semibold">
                                             {v.rank}
@@ -277,7 +461,7 @@ export default function VoucherManage() {
 
                             {vm.paginatedVouchers.length === 0 && (
                                 <tr>
-                                    <td colSpan="8" className="px-6 py-12 text-center">
+                                    <td colSpan="9" className="px-6 py-12 text-center">
                                         <div className="text-center">
                                             <Gift className="mx-auto h-12 w-12 text-neutral-400 mb-4" />
                                             <h3 className="text-lg font-medium text-neutral-900 mb-2">Không có voucher</h3>
@@ -319,6 +503,108 @@ export default function VoucherManage() {
                 }}
                 editing={vm.editing}
             />
+
+            {showImportModal && (
+                <div
+                    className="import-modal-backdrop"
+                    onClick={() => {
+                        if (!vm.isImportingFile) {
+                            setShowImportModal(false);
+                            setIsDraggingFile(false);
+                        }
+                    }}
+                >
+                    <div className="import-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="import-modal-header">
+                            <div>
+                                <h3>Nhập file voucher</h3>
+                                <p>Hỗ trợ .xlsx, .xls, .csv, .json. Khuyên dùng file mẫu .xlsx.</p>
+                            </div>
+                            <button
+                                type="button"
+                                className="import-close-btn"
+                                onClick={() => {
+                                    if (!vm.isImportingFile) {
+                                        setShowImportModal(false);
+                                        setIsDraggingFile(false);
+                                    }
+                                }}
+                                disabled={vm.isImportingFile}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="import-modal-hero">
+                            <p>Tải file mẫu để có sẵn cột chuẩn, mã voucher kế tiếp và ngày mẫu hợp lệ.</p>
+                            <div className="import-field-tags">
+                                <span>Mã voucher</span>
+                                <span>Tên voucher</span>
+                                <span>Mô tả</span>
+                                <span>Phần trăm</span>
+                                <span>Ngày bắt đầu</span>
+                                <span>Ngày kết thúc</span>
+                            </div>
+                        </div>
+
+                        <div
+                            className={`import-dropzone ${isDraggingFile ? "dragging" : ""} ${vm.isImportingFile ? "disabled" : ""}`}
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                if (!vm.isImportingFile) setIsDraggingFile(true);
+                            }}
+                            onDragLeave={(e) => {
+                                e.preventDefault();
+                                setIsDraggingFile(false);
+                            }}
+                            onDrop={onDropFile}
+                        >
+                            {vm.isImportingFile ? (
+                                <>
+                                    <Loader2 size={28} className="animate-spin" />
+                                    <p>Đang import file, vui lòng chờ...</p>
+                                </>
+                            ) : (
+                                <>
+                                    <Upload size={28} />
+                                    <p>Kéo thả file vào đây hoặc chọn file từ máy</p>
+                                    <small>File mẫu đã có sẵn cột đúng chuẩn để nhập nhanh.</small>
+                                    <button type="button" className="import-action-btn" onClick={onPickFile}>
+                                        <FileSpreadsheet size={16} />
+                                        Chọn file để import
+                                    </button>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="import-modal-actions">
+                            <button
+                                type="button"
+                                className="import-template-btn"
+                                onClick={downloadTemplateFile}
+                                disabled={vm.isImportingFile}
+                            >
+                                <Download size={16} />
+                                Tải file mẫu
+                            </button>
+
+                            <button
+                                type="button"
+                                className="import-cancel-btn"
+                                onClick={() => {
+                                    if (!vm.isImportingFile) {
+                                        setShowImportModal(false);
+                                        setIsDraggingFile(false);
+                                    }
+                                }}
+                                disabled={vm.isImportingFile}
+                            >
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

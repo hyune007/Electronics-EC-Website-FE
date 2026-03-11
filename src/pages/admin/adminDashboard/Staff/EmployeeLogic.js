@@ -84,6 +84,118 @@ function getKnownEmployeeIds(memoryCache = {}) {
     return Array.from(new Set(ids));
 }
 
+function parseCsvLine(line) {
+    const out = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+        const ch = line[i];
+        const next = line[i + 1];
+
+        if (ch === '"') {
+            if (inQuotes && next === '"') {
+                current += '"';
+                i += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+
+        if (ch === "," && !inQuotes) {
+            out.push(current.trim());
+            current = "";
+            continue;
+        }
+
+        current += ch;
+    }
+
+    out.push(current.trim());
+    return out;
+}
+
+function parseCsv(text) {
+    const lines = String(text || "")
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean);
+
+    if (lines.length === 0) return [];
+    const headers = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
+
+    return lines.slice(1).map((line) => {
+        const cells = parseCsvLine(line);
+        const row = {};
+        headers.forEach((header, idx) => {
+            row[header] = cells[idx] ?? "";
+        });
+        return row;
+    });
+}
+
+async function parseExcel(arrayBuffer) {
+    const XLSX = await import("xlsx");
+    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    const firstSheetName = workbook.SheetNames?.[0];
+    if (!firstSheetName) return [];
+
+    const sheet = workbook.Sheets[firstSheetName];
+    return XLSX.utils.sheet_to_json(sheet, {
+        defval: "",
+        raw: true,
+    });
+}
+
+function normalizeHeaderKey(value) {
+    return String(value ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+function normalizeImportRow(row) {
+    const normalized = {};
+    Object.entries(row || {}).forEach(([key, value]) => {
+        const normalizedKey = normalizeHeaderKey(key);
+        if (normalizedKey && !(normalizedKey in normalized)) {
+            normalized[normalizedKey] = value;
+        }
+    });
+    return normalized;
+}
+
+function pickField(row, aliases = []) {
+    for (const alias of aliases) {
+        const value = row?.[normalizeHeaderKey(alias)];
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+            return String(value).trim();
+        }
+    }
+    return "";
+}
+
+async function runWithConcurrency(items, concurrency, worker) {
+    const results = [];
+    let cursor = 0;
+
+    const runner = async () => {
+        while (cursor < items.length) {
+            const index = cursor;
+            cursor += 1;
+            results[index] = await worker(items[index], index);
+        }
+    };
+
+    const workers = Array.from({ length: Math.max(1, concurrency) }, () => runner());
+    await Promise.all(workers);
+    return results;
+}
+
 export function useEmployeeLogic() {
     const [employees, setEmployees] = useState([]);
     const [search, setSearch] = useState("");
@@ -99,6 +211,8 @@ export function useEmployeeLogic() {
     // submission / deletion states
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [deletingId, setDeletingId] = useState(null);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [isImportingFile, setIsImportingFile] = useState(false);
 
     const itemsPerPage = 12;
 
@@ -332,13 +446,25 @@ export function useEmployeeLogic() {
                 showToast("Cập nhật nhân viên thành công", "success");
             } else {
                 await createEmployee(payload);
+                setEmployees((prev) => [
+                    {
+                        nv_id: payload.nv_id,
+                        nv_name: payload.nv_name,
+                        nv_phone: payload.nv_phone,
+                        nv_mail: payload.nv_mail,
+                        nv_address: payload.nv_address,
+                        nv_birth: payload.nv_birth,
+                        nv_role: payload.nv_role,
+                    },
+                    ...prev,
+                ]);
                 showToast("Thêm nhân viên mới thành công", "success");
             }
 
             setOpenForm(false);
             cacheRef.current = {};
             clearAllEmployeeCache();
-            await fetchEmployees();
+            fetchEmployees();
         } catch (err) {
             console.error("Lỗi lưu nhân viên:", err);
             showToast(err.message || (editing ? "Cập nhật nhân viên thất bại" : "Thêm nhân viên thất bại"), "error", 3400);
@@ -365,6 +491,108 @@ export function useEmployeeLogic() {
         }
     };
 
+    const handleDeleteMany = async (ids = []) => {
+        const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
+        if (uniqueIds.length === 0) return;
+
+        setIsBulkDeleting(true);
+        try {
+            const results = await Promise.allSettled(uniqueIds.map((id) => deleteEmployee(id)));
+            const success = results.filter((r) => r.status === "fulfilled").length;
+            const failed = results.length - success;
+
+            cacheRef.current = {};
+            clearAllEmployeeCache();
+            await fetchEmployees();
+
+            if (failed === 0) {
+                showToast(`Đã xóa ${success} nhân viên`, "success");
+            } else {
+                showToast(`Xóa nhanh: ${success} thành công, ${failed} thất bại`, "warning", 3600);
+            }
+        } catch (err) {
+            showToast("Xóa nhanh nhân viên thất bại", "error", 3400);
+        } finally {
+            setIsBulkDeleting(false);
+        }
+    };
+
+    const handleBulkImportFile = async (file) => {
+        if (!file) return;
+        setIsImportingFile(true);
+
+        try {
+            const lowerName = String(file.name || "").toLowerCase();
+            let rawRows = [];
+
+            if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+                const buffer = await file.arrayBuffer();
+                rawRows = await parseExcel(buffer);
+            } else if (lowerName.endsWith(".json")) {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+                rawRows = Array.isArray(parsed) ? parsed : [];
+            } else {
+                const text = await file.text();
+                rawRows = parseCsv(text);
+            }
+
+            if (!Array.isArray(rawRows) || rawRows.length === 0) {
+                showToast("File không có dữ liệu hợp lệ", "warning");
+                return;
+            }
+
+            const rows = rawRows.map((row, index) => {
+                const normalized = normalizeImportRow(row);
+                return {
+                    rowNo: index + 2,
+                    nv_id: pickField(normalized, ["nv_id", "nv id", "id", "ma", "ma nhan vien"]),
+                    nv_name: pickField(normalized, ["nv_name", "nv name", "name", "ten", "ho ten", "ten nhan vien"]),
+                    nv_password: pickField(normalized, ["nv_password", "nv password", "password", "mat khau"]) || "123456",
+                    nv_phone: pickField(normalized, ["nv_phone", "nv phone", "phone", "sdt", "so dien thoai", "dien thoai"]),
+                    nv_mail: pickField(normalized, ["nv_mail", "nv mail", "mail", "email"]),
+                    nv_address: pickField(normalized, ["nv_address", "nv address", "address", "dia chi"]),
+                    nv_birth: pickField(normalized, ["nv_birth", "nv birth", "birth", "ngay sinh"]),
+                    nv_role: pickField(normalized, ["nv_role", "nv role", "role", "vai tro"]) || "ROLE_EMPLOYEE",
+                };
+            });
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const invalidRows = rows.filter((r) => !r.nv_id || !r.nv_name || !r.nv_phone || !r.nv_mail || !emailRegex.test(r.nv_mail) || !r.nv_address || !r.nv_birth);
+            if (invalidRows.length > 0) {
+                showToast(`Có ${invalidRows.length} dòng thiếu hoặc sai dữ liệu`, "warning", 3600);
+                return;
+            }
+
+            const results = await runWithConcurrency(rows, 3, async (row) => {
+                try {
+                    await createEmployee(row);
+                    return { ok: true };
+                } catch (error) {
+                    return { ok: false, message: error?.message || "Lỗi thêm nhân viên" };
+                }
+            });
+
+            const success = results.filter((r) => r.ok).length;
+            const failed = results.length - success;
+
+            cacheRef.current = {};
+            clearAllEmployeeCache();
+            await fetchEmployees();
+
+            if (failed === 0) {
+                showToast(`Import thành công ${success} nhân viên`, "success");
+            } else {
+                showToast(`Import xong: ${success} thành công, ${failed} thất bại`, "warning", 4200);
+            }
+        } catch (err) {
+            console.error("Bulk import employee failed:", err);
+            showToast("Import file nhân viên thất bại", "error", 3400);
+        } finally {
+            setIsImportingFile(false);
+        }
+    };
+
     /* ================= PAGINATION ================= */
     const handlePageChange = (page) => setCurrentPage(page);
     const handlePreviousPage = () => setCurrentPage(prev => Math.max(0, prev - 1));
@@ -377,6 +605,8 @@ export function useEmployeeLogic() {
         stats,
         isSubmitting,
         deletingId,
+        isBulkDeleting,
+        isImportingFile,
         setSearch,
         openForm,
         setOpenForm,
@@ -392,6 +622,8 @@ export function useEmployeeLogic() {
         openEdit,
         handleSubmit,
         handleDelete,
+        handleDeleteMany,
+        handleBulkImportFile,
         handlePageChange,
         handlePreviousPage,
         handleNextPage,
