@@ -27,7 +27,6 @@ const Product = lazy(() => import("../pages/product/Product/Product.jsx"));
 const ImportManage = lazy(() => import("../pages/admin/adminDashboard/Import/ImportManage.jsx"));
 const VoucherManage = lazy(() => import("../pages/admin/adminDashboard/Voucher/VoucherManage.jsx"));
 import ProtectedRoute from "../components/common/ProtectedRoute.jsx";
-import LoadingCircle from "../components/common/LoadScreen.jsx";
 const ShipperDashboard = lazy(() => import("../pages/shipper/ShipperDashboard/ShipperDashboard.jsx"));
 const ActiveTaskPage = lazy(() => import("../pages/shipper/ActiveTaskPage/ActiveTaskPage.jsx"));
 const Checkout = lazy(() => import("../pages/user/Checkout/Checkout.jsx"));
@@ -40,7 +39,7 @@ const ROLES = {
 export default function AppRoutes({ location }) {
   return (
     <Suspense fallback={null}>
-    <Routes location={location} key={location ? location.pathname : undefined}>
+      <Routes location={location} key={location ? location.pathname : undefined}>
       <Route path="/login" element={<Login />} />
       <Route path="/test-login" element={<TestLogin />} />
       <Route path="/register" element={<Register />} />
@@ -154,7 +153,7 @@ export default function AppRoutes({ location }) {
       </Route>
 
       <Route path="*" element={<NotFound />} />
-    </Routes>
+      </Routes>
     </Suspense>
   );
 }
