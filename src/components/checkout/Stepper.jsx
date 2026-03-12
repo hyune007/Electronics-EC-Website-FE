@@ -30,17 +30,19 @@ export default function Stepper({ currentStep = 0, view, onSelectView }) {
           return (
             <div
               key={step.id}
-              onClick={() => onSelectView?.(step.id)}
-              role={onSelectView ? "button" : undefined}
+              onClick={() => {
+                if (onSelectView && index <= activeIndex) {
+                  onSelectView(step.id);
+                }
+              }}
               className="flex flex-col items-center gap-2 px-4 cursor-pointer"
             >
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all z-0
-                ${
-                  isActive
+                ${isActive
                     ? "bg-primary text-white shadow-lg shadow-primary/30"
                     : "bg-white border-2 border-slate-200 text-slate-400"
-                }`}
+                  }`}
               >
                 <span className="material-symbols-outlined text-xl z-0">
                   {step.icon}
@@ -48,11 +50,10 @@ export default function Stepper({ currentStep = 0, view, onSelectView }) {
               </div>
 
               <span
-                className={`text-sm ${
-                  isActive
+                className={`text-sm ${isActive
                     ? "font-bold text-primary"
                     : "font-medium text-slate-500"
-                }`}
+                  }`}
               >
                 {step.label}
               </span>

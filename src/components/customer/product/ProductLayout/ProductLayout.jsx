@@ -18,15 +18,29 @@ export default function ProductLayout() {
       .map((brand) => brand.trim())
       .filter(Boolean);
   });
-  const [priceRanges, setPriceRanges] = useState([]);
-  const [minPrice, setMinPrice] = useState(null);
-  const [maxPrice, setMaxPrice] = useState(null);
+  const [priceRanges, setPriceRanges] = useState(() => {
+    const pr = searchParams.get("priceRanges");
+    return pr ? pr.split(",") : [];
+  });
+
+  const [minPrice, setMinPrice] = useState(() => {
+    const v = searchParams.get("minPrice");
+    return v ? Number(v) : null;
+  });
+
+  const [maxPrice, setMaxPrice] = useState(() => {
+    const v = searchParams.get("maxPrice");
+    return v ? Number(v) : null;
+  });
+
+  const [priceSort, setPriceSort] = useState(
+    () => searchParams.get("sort") || ""
+  );
   const [filterOpen, setFilterOpen] = useState(false);
   const [page, setPage] = useState(() => {
     const fromUrl = Number(searchParams.get("p") || 1);
     return Number.isFinite(fromUrl) && fromUrl > 0 ? fromUrl - 1 : 0;
   });
-  const [priceSort, setPriceSort] = useState("");
   const [category, setCategory] = useState(
     () => searchParams.get("category") || null,
   );

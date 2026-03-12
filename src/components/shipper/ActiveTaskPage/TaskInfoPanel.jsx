@@ -73,7 +73,7 @@ export default function TaskInfoPanel({ order }) {
                 </div>
               </div>
               <div className="font-semibold text-xs text-primary whitespace-nowrap">
-                {formatCurrency(d.product?.price)}
+                {formatCurrency(d.price)}
               </div>
             </div>
           </div>

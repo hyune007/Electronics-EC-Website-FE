@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { getProductsByPage, createProduct, updateProduct, deleteProduct } from "../../../../services/productService";
 import { getAllBrands } from "../../../../services/brandService";
 import { getAllCategories } from "../../../../services/categoryService";
+import { getAllActivePromotions } from "../../../../services/promotionService";
 import { showToast } from "../../../../utils/adminToast";
 import { getCache, setCache, removeCache, removeCacheByPrefix } from "../../../../utils/localCache";
 
@@ -39,15 +40,17 @@ function sortProducts(list, sortBy) {
             case "name_za":
                 return String(b.sp_name || "").localeCompare(String(a.sp_name || ""), "vi", { sensitivity: "base" });
             case "price_desc":
-                return Number(b.sp_price || 0) - Number(a.sp_price || 0);
+                return Number(b.sp_discountedPrice || b.sp_price || 0)
+                    - Number(a.sp_discountedPrice || a.sp_price || 0);
             case "price_asc":
-                return Number(a.sp_price || 0) - Number(b.sp_price || 0);
+                return Number(a.sp_discountedPrice || a.sp_price || 0)
+                    - Number(b.sp_discountedPrice || b.sp_price || 0);
             case "stock_desc":
                 return Number(b.sp_stock || 0) - Number(a.sp_stock || 0);
             case "stock_asc":
                 return Number(a.sp_stock || 0) - Number(b.sp_stock || 0);
             case "value_desc":
-                return (Number(b.sp_price || 0) * Number(b.sp_stock || 0)) - (Number(a.sp_price || 0) * Number(a.sp_stock || 0));
+                return (Number(b.sp_discountedPrice || b.sp_price || 0) * Number(b.sp_stock || 0)) - (Number(a.sp_discountedPrice || a.sp_price || 0) * Number(a.sp_stock || 0));
             case "low_stock_first":
                 return Number(a.sp_stock || 0) - Number(b.sp_stock || 0);
             case "newest_id":
@@ -80,6 +83,7 @@ function toUiProduct(prod) {
         sp_id: prod.id,
         sp_name: prod.name,
         sp_price: Number(prod.price ?? 0),
+        sp_discountedPrice: Number(prod.discountedPrice ?? prod.price ?? 0),
         sp_stock: Number(prod.stock ?? 0),
         sp_desc: prod.description ?? "",
         sp_image: prod.image ?? "",
@@ -87,13 +91,18 @@ function toUiProduct(prod) {
         sp_brand_id: prod.brand?.id ?? "",
         sp_brand_name: prod.brand?.name ?? "",
         sp_category_id: prod.category?.id ?? "",
-        sp_category_name: prod.category?.name ?? ""
+        sp_category_name: prod.category?.name ?? "",
+        sp_promotion_id: prod.promotion?.id ?? "",
+        sp_promotion_name: prod.promotion?.name ?? ""
     };
 }
 
 function computeGlobalStats(list) {
     const totalProducts = list.length;
-    const totalValue = list.reduce((s, p) => s + (Number(p.sp_price || 0) * Number(p.sp_stock || 0)), 0);
+    const totalValue = list.reduce(
+        (s, p) => s + (Number(p.sp_discountedPrice || p.sp_price || 0) * Number(p.sp_stock || 0)),
+        0
+    );
     const totalStock = list.reduce((s, p) => s + Number(p.sp_stock || 0), 0);
     const lowStock = list.filter((p) => Number(p.sp_stock || 0) > 0 && Number(p.sp_stock || 0) < 10).length;
     const outOfStock = list.filter((p) => Number(p.sp_stock || 0) <= 0).length;
@@ -227,7 +236,8 @@ export function useProductManageLogic() {
         description: "",
         image: "",
         brandId: "",
-        categoryId: ""
+        categoryId: "",
+        promotionId: ""
     });
 
     const [allProducts, setAllProducts] = useState([]); // To keep all products for stats and search
@@ -247,6 +257,8 @@ export function useProductManageLogic() {
     const [allBrands, setAllBrands] = useState([]); // Lưu tất cả brands
     const [categories, setCategories] = useState([]);
     const [allCategories, setAllCategories] = useState([]); // Lưu tất cả categories
+    const [promotions, setPromotions] = useState([]);
+    const [allPromotions, setAllPromotions] = useState([]); // Lưu tất cả promotions
 
     useEffect(() => {
         const cachedStats = getCache(PRODUCT_STATS_CACHE_KEY, PRODUCT_STATS_CACHE_TTL);
@@ -308,6 +320,20 @@ export function useProductManageLogic() {
             }
         };
         loadCategories();
+    }, []);
+
+    useEffect(() => {
+        const loadPromotions = async () => {
+            try {
+                const promotionList = await getAllActivePromotions()
+                setAllPromotions(promotionList);
+                setPromotions(promotionList);
+            } catch (err) {
+                console.error("Failed to load promotions:", err);
+            }
+        };
+
+        loadPromotions();
     }, []);
 
     /* ================= NO BRAND FILTER ================= */
@@ -387,6 +413,7 @@ export function useProductManageLogic() {
                 sp_id: p.id,
                 sp_name: p.name,
                 sp_price: p.price ?? 0,
+                sp_discountedPrice: p.discountedPrice ?? p.price ?? 0,
                 sp_stock: p.stock ?? 0,
                 sp_desc: p.description ?? "",
                 sp_image: p.image ?? "",
@@ -394,7 +421,9 @@ export function useProductManageLogic() {
                 sp_brand_id: p.brand?.id ?? "",
                 sp_brand_name: p.brand?.name ?? "",
                 sp_category_id: p.category?.id ?? "",
-                sp_category_name: p.category?.name ?? ""
+                sp_category_name: p.category?.name ?? "",
+                sp_promotion_id: p.promotion?.id ?? "",
+                sp_promotion_name: p.promotion?.name ?? ""
             }));
 
             const pageData = {
@@ -523,7 +552,8 @@ export function useProductManageLogic() {
                 description: "",
                 image: "",
                 brandId: "",
-                categoryId: ""
+                categoryId: "",
+                promotionId: ""
             });
             setOpenForm(true);
         } catch (err) {
@@ -542,7 +572,8 @@ export function useProductManageLogic() {
             description: p.sp_desc,
             image: p.sp_raw_image, // Lấy đường dẫn gốc thay vì đường dẫn đã gán localhost
             brandId: p.sp_brand_id,
-            categoryId: p.sp_category_id
+            categoryId: p.sp_category_id,
+            promotionId: p.sp_promotion_id
         });
         setOpenForm(true);
     };
@@ -552,6 +583,8 @@ export function useProductManageLogic() {
         const validBrandIds = new Set(allBrands.map((b) => String(b.hang_id || b.id || "")));
         const categoryByName = new Map(allCategories.map((c) => [String(c.name || "").toLowerCase(), String(c.id || "")]));
         const validCategoryIds = new Set(allCategories.map((c) => String(c.id || "")));
+        const promotionByName = new Map(allPromotions.map((p) => [String(p.km_name || p.name || "").toLowerCase(), String(p.km_id || p.id || "")]));
+        const validPromotionIds = new Set(allPromotions.map((p) => String(p.km_id || p.id || "")));
 
         const normalizeHeader = (value) => String(value || "")
             .normalize("NFD")
@@ -587,8 +620,13 @@ export function useProductManageLogic() {
                 "categoryId", "category_id", "category", "categoryname", "danhmuc", "danh mục", "loai", "loại",
             ]);
 
+            const promotionIdRaw = pick([
+                "promotionId", "promotion_id", "promotion", "promotionname", "khuyenmai", "khuyến mãi",
+            ]);
+
             const normalizedBrand = String(brandIdRaw || "").trim();
             const normalizedCategory = String(categoryIdRaw || "").trim();
+            const normalizedPromotion = String(promotionIdRaw || "").trim();
 
             const brandId = validBrandIds.has(normalizedBrand)
                 ? normalizedBrand
@@ -597,6 +635,10 @@ export function useProductManageLogic() {
             const categoryId = validCategoryIds.has(normalizedCategory)
                 ? normalizedCategory
                 : (categoryByName.get(normalizedCategory.toLowerCase()) || "");
+
+            const promotionId = validPromotionIds.has(normalizedPromotion)
+                ? normalizedPromotion
+                : (promotionByName.get(normalizedPromotion.toLowerCase()) || "");
 
             return {
                 rowNo: index + 2,
@@ -608,6 +650,7 @@ export function useProductManageLogic() {
                 image: String(pick(["image", "sp_image", "anh", "ảnh", "hinhanh", "hình ảnh", "url"]) || "").trim(),
                 brandId,
                 categoryId,
+                promotionId,
             };
         });
     };
@@ -664,6 +707,7 @@ export function useProductManageLogic() {
                         image: row.image,
                         brandId: row.brandId,
                         categoryId: row.categoryId,
+                        promotionId: row.promotionId || null
                     });
                     return { ok: true };
                 } catch (error) {
@@ -776,7 +820,8 @@ export function useProductManageLogic() {
             ...form,
             name: form.name.trim(),
             description: form.description.trim(),
-            image: finalImage
+            image: finalImage,
+            promotionId: form.promotionId || null
         };
 
         console.log("=== Payload to submit ===");
@@ -971,6 +1016,7 @@ export function useProductManageLogic() {
         isImportingFile,
         brands,
         categories,
+        promotions,
         globalStats, // Thêm export globalStats
 
         openAdd,

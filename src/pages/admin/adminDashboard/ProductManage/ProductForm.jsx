@@ -1,6 +1,6 @@
 ﻿import { X, Package, DollarSign, Image as ImageIcon, Tag, Building2, FileText, Loader2, Hash } from "lucide-react";
 
-export default function ProductForm({ open, onClose, onSubmit, editing, isSubmitting, brands = [], categories = [] }) {
+export default function ProductForm({ open, onClose, onSubmit, editing, isSubmitting, brands = [], categories = [], promotions = [] }) {
     if (!open) return null;
 
     const { form, setForm, handleSubmit } = onSubmit;
@@ -190,6 +190,50 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isSubmit
                                         </svg>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-neutral-700 mb-2">
+                            Khuyến mãi
+                        </label>
+
+                        <div className="relative">
+                            <Tag
+                                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 pointer-events-none z-10"
+                                size={18}
+                            />
+
+                            <select
+                                name="promotionId"
+                                value={form.promotionId || ""}
+                                onChange={change}
+                                className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 cursor-pointer"
+                            >
+                                <option value="">-- Không khuyến mãi --</option>
+
+                                {promotions.map(promotion => (
+                                    <option key={promotion.km_id} value={promotion.km_id}>
+                                        {promotion.km_name} ({promotion.km_percent}%)
+                                    </option>
+                                ))}
+                            </select>
+
+                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                                <svg
+                                    className="w-4 h-4 text-neutral-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
                             </div>
                         </div>
                     </div>

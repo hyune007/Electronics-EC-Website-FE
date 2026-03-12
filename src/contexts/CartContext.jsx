@@ -1,4 +1,4 @@
-import { createContext, useContext, useState,useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import {
   getCartByCustomer,
@@ -49,12 +49,13 @@ export function CartProvider({ children }) {
                 cartItemId: saved.id,
                 id: item.id,
                 name: item.name,
-                price: item.price,
+                price: item.discountedPrice? Number(item.discountedPrice) : Number(item.price),
                 quantity: item.quantity,
                 image: item.image,
               });
-            } catch (e) {
-              void e;
+            } catch (err) {
+              const msg = err.response?.data;
+              alert(msg);
             }
           }
 
@@ -66,8 +67,9 @@ export function CartProvider({ children }) {
           cartItemId: row.id,
           id: row.product.id,
           name: row.product.name,
-          price: row.product.price,
+          price: row.product.discountedPrice? Number(row.product.discountedPrice) : Number(row.product.price),
           quantity: row.quantity,
+          stock: row.product.stock,
           // image: `http://localhost:8080${row.product.image}`,
           image: `https://ec-website-be-312564370609.asia-southeast1.run.app${row.product.image}`,
         }));
@@ -102,8 +104,9 @@ export function CartProvider({ children }) {
         {
           id: product.id,
           name: product.name,
-          price: product.price,
+          price: product.discountedPrice? Number(product.discountedPrice) : Number(product.price),
           quantity,
+          stock: product.stock,
           // image: `http://localhost:8080${product.image}`,
           image: `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}`,
           cartItemId: null,
@@ -178,7 +181,8 @@ export function CartProvider({ children }) {
             quantity: newQty,
           });
         } catch (err) {
-          void err;
+          const msg = err.response?.data;
+          alert(msg);
         }
       }
     }

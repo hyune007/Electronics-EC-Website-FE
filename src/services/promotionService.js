@@ -34,6 +34,30 @@ export async function getAllPromotions() {
     }
 }
 
+export async function getAllActivePromotions() {
+    try {
+        const res = await fetch(`${API_URL}/active`, {
+            headers: getAuthHeaders()
+        });
+        if (!res.ok) throw new Error("Không lấy được danh sách voucher");
+
+        const data = await res.json();
+
+        // MAP BE → FE
+        return data.map(p => ({
+            km_id: p.id,
+            km_name: p.name,
+            km_description: p.description,
+            km_percent: p.discountPercentage,
+            km_start_date: p.startDate,
+            km_end_date: p.endDate
+        }));
+    } catch (error) {
+        console.error("Get all promotions failed:", error);
+        throw error;
+    }
+}
+
 export async function getPromotionById(id) {
     try {
         const res = await fetch(`${API_URL}/${id}`, {
