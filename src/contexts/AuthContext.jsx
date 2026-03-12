@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useCallback } from "react";
 import { decodeJwtPayload } from "../utils/jwt";
 import { getEmployeeById } from "../services/employeeservice";
+import { removeCacheByPrefix } from "../utils/localCache";
 
 export const AuthContext = createContext(null);
 
@@ -110,6 +111,20 @@ export const AuthProvider = ({ children }) => {
     const logout = useCallback(() => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('authUser');
+      localStorage.removeItem('customerInfo');
+
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        if (key.startsWith('customerInfo_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+      // Clear browser data cache tied to the previous account role/session.
+      removeCacheByPrefix('cache:');
         setToken(null);
         setUser(null);
     }, []);

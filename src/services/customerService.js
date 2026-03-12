@@ -1,3 +1,6 @@
+import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
+import { CACHE_TTL } from "../utils/cachePolicy";
+
 const API_URL = "http://localhost:8080/api/customer";
 //const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/customer";
 
@@ -23,18 +26,19 @@ async function parseError(res) {
 
 /* ================= GET ALL ================= */
 export async function getAllCustomers() {
-    const res = await fetch(`${API_URL}/all`, {
-        headers: getAuthHeaders()
-    });
-    if (!res.ok) {
-        const details = await parseError(res);
-        if (res.status === 403) {
+    let data;
+    try {
+        data = await cachedGetJson(`${API_URL}/all`, {
+            headers: getAuthHeaders(),
+            cacheKey: "cache:customer:all",
+            ttlMs: CACHE_TTL.MEDIUM
+        });
+    } catch (error) {
+        if (error?.status === 403) {
             throw new Error("403: Bạn không có quyền xem danh sách khách hàng");
         }
-        throw new Error(`Không lấy được danh sách khách hàng (${res.status}): ${details || "Không có chi tiết"}`);
+        throw new Error(`Không lấy được danh sách khách hàng: ${error?.message || "Không có chi tiết"}`);
     }
-
-    const data = await res.json();
 
     // MAP BE → FE (null-safe)
     return data.map(c => ({
@@ -77,6 +81,7 @@ export async function createCustomer(customer) {
         }
         throw new Error(`Thêm khách hàng thất bại (${res.status}): ${details || "Không có chi tiết"}`);
     }
+    invalidateCacheByPrefix("cache:customer:");
     return res.json();
 }
 
@@ -104,6 +109,7 @@ export async function updateCustomer(id, customer) {
         }
         throw new Error(`Cập nhật khách hàng thất bại (${res.status}): ${details || "Không có chi tiết"}`);
     }
+    invalidateCacheByPrefix("cache:customer:");
 }
 
 /* ================= DELETE ================= */
@@ -120,4 +126,6 @@ export async function deleteCustomer(id) {
         }
         throw new Error(`Xóa khách hàng thất bại (${res.status}): ${details || "Không có chi tiết"}`);
     }
+
+    invalidateCacheByPrefix("cache:customer:");
 }

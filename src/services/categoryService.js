@@ -1,3 +1,5 @@
+import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
+import { CACHE_TTL } from "../utils/cachePolicy";
  const API_URL = "http://localhost:8080/api/product-category";
 //const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/product-category";
 
@@ -13,13 +15,11 @@ function getAuthHeaders() {
 /* ================= GET ALL CATEGORIES ================= */
 export async function getAllCategories() {
     try {
-        const res = await fetch(`${API_URL}/all`, {
-            headers: getAuthHeaders()
+        const data = await cachedGetJson(`${API_URL}/all`, {
+            headers: getAuthHeaders(),
+            cacheKey: "cache:category:all",
+            ttlMs: CACHE_TTL.STATIC
         });
-        
-        if (!res.ok) throw new Error("Không lấy được danh sách danh mục");
-
-        const data = await res.json();
 
         // MAP BE → FE
         return data.map(c => ({
@@ -36,13 +36,11 @@ export async function getAllCategories() {
 /* ================= GET CATEGORY BY ID ================= */
 export async function getCategoryById(id) {
     try {
-        const res = await fetch(`${API_URL}/${id}`, {
-            headers: getAuthHeaders()
+        const data = await cachedGetJson(`${API_URL}/${id}`, {
+            headers: getAuthHeaders(),
+            cacheKey: `cache:category:detail:${id}`,
+            ttlMs: CACHE_TTL.VERY_LONG
         });
-        
-        if (!res.ok) throw new Error("Không tìm thấy danh mục");
-
-        const data = await res.json();
         
         return {
             dm_id: data.id,
@@ -74,6 +72,7 @@ export async function createCategory(category) {
         }
 
         const data = await res.json();
+        invalidateCacheByPrefix("cache:category:");
         return {
             dm_id: data.id,
             dm_name: data.name,
@@ -104,6 +103,7 @@ export async function updateCategory(id, category) {
         }
 
         const data = await res.json();
+        invalidateCacheByPrefix("cache:category:");
         return {
             dm_id: data.id,
             dm_name: data.name,
@@ -127,6 +127,7 @@ export async function deleteCategory(id) {
             throw new Error("Xóa danh mục thất bại");
         }
 
+    invalidateCacheByPrefix("cache:category:");
         return true;
     } catch (error) {
         console.error("Delete category failed:", error);

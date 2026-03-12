@@ -321,6 +321,13 @@ export function useProductManageLogic() {
         }
     }, []);
 
+    useEffect(() => {
+        const cachedStats = getCache(PRODUCT_STATS_CACHE_KEY, PRODUCT_STATS_CACHE_TTL);
+        if (cachedStats) {
+            setGlobalStats(cachedStats);
+        }
+    }, []);
+
     /* ================= LOAD BRANDS ================= */
     useEffect(() => {
         const loadBrands = async () => {
@@ -439,7 +446,7 @@ export function useProductManageLogic() {
                 return;
             }
 
-            const res = await getProductsByPage(pageNum - 1, pageSize);
+            const res = await getProductsByPage(pageNum - 1, pageSize, false);
 
             // Map data to UI format
             const mappedRaw = res.products.map(p => ({
@@ -484,7 +491,7 @@ export function useProductManageLogic() {
 
         try {
             allProductsLoadingRef.current = true;
-            const first = await getProductsByPage(0, BG_PAGE_SIZE);
+            const first = await getProductsByPage(0, BG_PAGE_SIZE, false);
             const totalPages = Math.max(1, Number(first.totalPages || 1));
             const allLoadedProducts = [...(first.products || [])];
 
@@ -493,7 +500,7 @@ export function useProductManageLogic() {
 
                 for (let i = 0; i < pages.length; i += BG_PAGE_CONCURRENCY) {
                     const chunk = pages.slice(i, i + BG_PAGE_CONCURRENCY);
-                    const results = await Promise.all(chunk.map((p) => getProductsByPage(p, BG_PAGE_SIZE)));
+                    const results = await Promise.all(chunk.map((p) => getProductsByPage(p, BG_PAGE_SIZE, false)));
                     results.forEach((res) => {
                         if (Array.isArray(res?.products)) {
                             allLoadedProducts.push(...res.products);
@@ -511,7 +518,6 @@ export function useProductManageLogic() {
             const stats = computeGlobalStats(uniqueProducts);
             setGlobalStats(stats);
             setCache(PRODUCT_STATS_CACHE_KEY, stats);
-            console.log("✅ Background load completed. Total Loaded:", uniqueProducts.length);
         } catch (err) {
             console.error("Background load failed:", err);
         } finally {
@@ -568,10 +574,6 @@ export function useProductManageLogic() {
     const openAdd = async () => {
         try {
             setEditing(null);
-
-            console.log("=== Opening Add Product Form ===");
-            console.log("Available brands (", brands.length, "):", brands);
-            console.log("Available categories (", categories.length, "):", categories);
 
             if (brands.length === 0) {
                 showToast("Chưa có thương hiệu nào. Vui lòng thêm thương hiệu trước khi thêm sản phẩm.", "warning", 3400);
@@ -774,9 +776,6 @@ const handleBulkImportFile = async (file) => {
     }
 };
     const handleSubmit = async () => {
-        console.log("=== Product Form Submission ===");
-        console.log("Form data before validation:", form);
-        console.log("Editing mode:", editing);
 
         // Validate required fields
         if (!form.name || !form.name.trim()) {
@@ -791,7 +790,6 @@ const handleBulkImportFile = async (file) => {
 
         if (!form.brandId || form.brandId === "") {
             showToast("Vui lòng chọn thương hiệu", "warning");
-            console.log("Brand validation failed. brandId:", form.brandId);
             return;
         }
 
@@ -805,13 +803,11 @@ const handleBulkImportFile = async (file) => {
         if (!brandExists) {
             showToast("Thương hiệu không hợp lệ hoặc không tồn tại trong hệ thống. Vui lòng chọn lại.", "warning", 3400);
             console.error("Brand ID not found in brands list:", form.brandId);
-            console.log("Available brands:", brands);
             return;
         }
 
         if (!form.categoryId || form.categoryId === "") {
             showToast("Vui lòng chọn danh mục", "warning");
-            console.log("Category validation failed. categoryId:", form.categoryId);
             return;
         }
 
@@ -865,9 +861,6 @@ const handleBulkImportFile = async (file) => {
             image: finalImage,
             promotionId: form.promotionId || null
         };
-
-        console.log("=== Payload to submit ===");
-        console.log(JSON.stringify(payload, null, 2));
 
         setIsSubmitting(true);
         try {

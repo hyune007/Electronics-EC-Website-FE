@@ -11,7 +11,7 @@ export default function ProfileLayout() {
   // const [view, setView] = useState("information");
    const [searchParams, setSearchParams] = useSearchParams();
 
-  const view = searchParams.get("tab");
+  const view = searchParams.get("tab") || "information";
 
   const setView = (v) => {
     setSearchParams({ tab: v });

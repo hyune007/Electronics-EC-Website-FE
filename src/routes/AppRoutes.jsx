@@ -39,7 +39,7 @@ const ROLES = {
 
 export default function AppRoutes({ location }) {
   return (
-    <Suspense fallback={<LoadingCircle show={true} />}>
+    <Suspense fallback={null}>
     <Routes location={location} key={location ? location.pathname : undefined}>
       <Route path="/login" element={<Login />} />
       <Route path="/test-login" element={<TestLogin />} />
@@ -50,7 +50,6 @@ export default function AppRoutes({ location }) {
       {/* <Route path="/terms" element={<Terms />} /> */}
       <Route path="/product-filter" element={<ProductFilter />} />
       <Route path="/unauthorized" element={<Unauthorized />} />
-      <Route path="/loading" element={<LoadingCircle show={true} />} />
       <Route path="/shipper-dashboard" element={<ShipperDashboard />} />
       <Route path="/active-task/:orderId" element={<ActiveTaskPage />} />
 

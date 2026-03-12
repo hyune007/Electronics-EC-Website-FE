@@ -2,7 +2,6 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -17,9 +16,9 @@ export function ProductCacheProvider({ children }) {
   const [errorAll, setErrorAll] = useState(null);
   const inFlight = useRef(null);
 
-  const prefetchAllProducts = useCallback(async () => {
+  const prefetchAllProducts = useCallback(async ({ force = false } = {}) => {
     if (allProducts?.length) return allProducts;
-    if (inFlight.current) return inFlight.current;
+    if (!force && inFlight.current) return inFlight.current;
 
     setLoadingAll(true);
     setErrorAll(null);
@@ -66,10 +65,6 @@ export function ProductCacheProvider({ children }) {
     inFlight.current = fetchPromise;
     return fetchPromise;
   }, [allProducts]);
-
-  useEffect(() => {
-    prefetchAllProducts().catch(() => {});
-  }, [prefetchAllProducts]);
 
   const value = useMemo(
     () => ({ allProducts, loadingAll, errorAll, prefetchAllProducts }),

@@ -1,3 +1,6 @@
+import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
+import { CACHE_TTL } from "../utils/cachePolicy";
+
  const API_URL = "http://localhost:8080/api/imports";
  const BASE_URL = "http://localhost:8080";
 const IMPORT_CREATOR_MAP_KEY = "admin_import_creator_map_v1";
@@ -88,12 +91,13 @@ function resolveImageUrl(url, categoryId, productId) {
 
 /* ================= GET ALL ================= */
 export async function getAllImports() {
-    const res = await fetch(`${API_URL}/all`, {
-        headers: getAuthHeaders()
+    const data = await cachedGetJson(`${API_URL}/all`, {
+        headers: getAuthHeaders(),
+        cacheKey: "cache:import:all",
+        ttlMs: CACHE_TTL.MEDIUM
     });
-    if (!res.ok) throw new Error("Không lấy được danh sách nhập kho");
 
-    return (await res.json()).map(i => ({
+    return data.map(i => ({
         nk_id: i.id ?? "",
         sp_id: i.product?.id ?? "",
         sp_name: i.product?.name ?? "",
@@ -139,6 +143,7 @@ export async function createImport(importData) {
         err.rawText = errorText;
         throw err;
     }
+    invalidateCacheByPrefix("cache:import:");
     return res.json();
 }
 
@@ -164,6 +169,8 @@ export async function updateImport(id, importData) {
         console.error("API Error Response:", errorText);
         throw new Error(`Cập nhật nhập kho thất bại: ${errorText}`);
     }
+
+    invalidateCacheByPrefix("cache:import:");
 }
 
 /* ================= DELETE ================= */
@@ -178,4 +185,6 @@ export async function deleteImport(id) {
         console.error("API Error Response:", errorText);
         throw new Error(`Xóa nhập kho thất bại: ${errorText}`);
     }
+
+    invalidateCacheByPrefix("cache:import:");
 }

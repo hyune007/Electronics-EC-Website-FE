@@ -9,7 +9,6 @@ import BrandLogo from "../../../common/BrandLogo.jsx";
 import vi from "../../../../i18n/vi.js";
 import SubMenuHeader from "../../../customer/home/SubMenuHeader/SubMenuheader.jsx";
 import { useAuth } from "../../../../hooks/useAuth";
-import { jwtDecode } from "jwt-decode";
 import { useProductCache } from "../../../../contexts/ProductCacheContext.jsx";
 import demoImg from "../../../../assets/demo/demo.jpg";
 
@@ -196,16 +195,10 @@ export default function Header() {
   };
   //
   const handleLogout = () => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      const decoded = jwtDecode(token);
-      localStorage.removeItem(`customerInfo_${decoded.sub}`);
-    }
-    localStorage.removeItem("customerInfo");
     clearCart();
     logout();
     setShowDropdown(false);
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
   return (
     <>

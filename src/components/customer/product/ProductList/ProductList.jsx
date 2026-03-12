@@ -26,7 +26,7 @@ export default function ProductList({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [searchParams] = useSearchParams();
-  const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
+  const { allProducts, loadingAll } = useProductCache();
 
   useEffect(() => {
     const categoryFromUrl = searchParams.get("category");
@@ -34,10 +34,6 @@ export default function ProductList({
       setCategory(categoryFromUrl);
     }
   }, [searchParams]);
-
-  useEffect(() => {
-    prefetchAllProducts().catch(() => {});
-  }, [prefetchAllProducts]);
 
   const CATEGORIES = [
     { id: "LSP01", name: "Điện thoại" },

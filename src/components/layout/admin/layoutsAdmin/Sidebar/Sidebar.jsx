@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../../../../hooks/useAuth";
 import { useCart } from "../../../../../contexts/CartContext";
-import { jwtDecode } from "jwt-decode";
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
@@ -33,21 +32,9 @@ export default function Sidebar() {
   };
 
   const handleLogout = () => {
-    const token = localStorage.getItem("authToken");
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        localStorage.removeItem(`customerInfo_${decoded.sub}`);
-      } catch (error) {
-        console.error("Error decoding token:", error);
-      }
-    }
-    localStorage.removeItem("customerInfo");
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("authUser");
     clearCart();
     logout();
-    navigate("/login");
+    navigate("/login", { replace: true });
   };
 
   return (

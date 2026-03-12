@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 export default function ImportForm({ open, onClose, onSubmit }) {
-    const { form, setForm, handleSubmit, products, isSubmitting, groupedByDateMap } = onSubmit;
+    const { form, setForm, editing, handleSubmit, products, isSubmitting, groupedByDateMap } = onSubmit;
     const [categorySearch, setCategorySearch] = useState("");
     const [brandSearch, setBrandSearch] = useState("");
     const [productSearch, setProductSearch] = useState("");
@@ -89,7 +89,14 @@ export default function ImportForm({ open, onClose, onSubmit }) {
     const selectedProduct = (products || []).find((product) => product.sp_id === form.sp_id) || null;
     const currentStock = Number(selectedProduct?.sp_stock ?? 0);
     const importQty = Number(form.nk_quantity || 0);
-    const projectedStock = currentStock + (Number.isFinite(importQty) ? importQty : 0);
+    const isEditing = Boolean(editing?.nk_id);
+    const oldQty = Number(editing?.nk_quantity || 0);
+    const oldProductId = String(editing?.sp_id || "").trim();
+    const newProductId = String(form.sp_id || "").trim();
+    const stockDelta = isEditing
+        ? (oldProductId && oldProductId === newProductId ? (importQty - oldQty) : importQty)
+        : importQty;
+    const projectedStock = Math.max(0, currentStock + (Number.isFinite(stockDelta) ? stockDelta : 0));
 
     if (!open) return null;
 
@@ -107,10 +114,12 @@ export default function ImportForm({ open, onClose, onSubmit }) {
                                 Import Management
                             </p>
                             <h2 className="text-lg font-semibold text-neutral-900">
-                                {form.nk_id ? "Cập nhật nhập kho" : "Thêm nhập kho"}
+                                {isEditing ? "Chỉnh sửa phiếu nhập" : "Thêm phiếu nhập"}
                             </h2>
                             <p className="text-xs sm:text-sm text-neutral-600">
-                                {form.nk_id ? "Chỉnh sửa phiếu nhập và cập nhật tồn kho tương ứng" : "Tạo phiếu nhập mới với bộ chọn sản phẩm nhanh"}
+                                {isEditing
+                                    ? "Sửa trực tiếp phiếu hiện tại: số lượng có thể tăng hoặc giảm."
+                                    : "Thêm phiếu mới. Nếu cùng sản phẩm và cùng ngày, hệ thống sẽ cộng dồn số lượng."}
                             </p>
                             <div className="mt-2 flex items-center gap-2 text-[11px]">
                                 <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-semibold">Smart Filter</span>
@@ -426,14 +435,19 @@ export default function ImportForm({ open, onClose, onSubmit }) {
                                                             <p className="text-sm font-semibold text-neutral-900">{currentStock}</p>
                                                         </div>
                                                         <div className="rounded-xl bg-white px-3 py-2 border border-blue-100">
-                                                            <p className="text-[11px] text-neutral-500">Số lượng nhập</p>
+                                                            <p className="text-[11px] text-neutral-500">{isEditing ? "Số lượng mới" : "Số lượng nhập"}</p>
                                                             <p className="text-sm font-semibold text-neutral-900">{importQty || 0}</p>
                                                         </div>
                                                         <div className="rounded-xl bg-blue-600 px-3 py-2 border border-blue-600">
-                                                            <p className="text-[11px] text-blue-100">Sau khi nhập</p>
+                                                            <p className="text-[11px] text-blue-100">{isEditing ? "Tồn kho sau chỉnh sửa" : "Sau khi nhập"}</p>
                                                             <p className="text-sm font-semibold text-white">{projectedStock}</p>
                                                         </div>
                                                     </div>
+                                                    {isEditing ? (
+                                                        <p className="text-[11px] mt-2 text-neutral-600">
+                                                            Chênh lệch tồn kho áp dụng: <span className="font-semibold">{stockDelta >= 0 ? `+${stockDelta}` : stockDelta}</span>
+                                                        </p>
+                                                    ) : null}
                                                 </div>
                                             ) : (
                                                 <div className="text-sm text-neutral-500">
@@ -468,6 +482,10 @@ export default function ImportForm({ open, onClose, onSubmit }) {
                                 <p className="text-sm text-neutral-600 mt-1">
                                     Ngày {form.nk_date || "--"} hiện có <span className="font-semibold">{sameDateImports.length}</span> phiếu, tổng số lượng <span className="font-semibold">{sameDateTotalQty}</span>.
                                 </p>
+                                <p className="text-xs text-neutral-500 mt-1">
+                                    Quy tắc: chỉ khi <span className="font-semibold">Thêm phiếu mới</span> và trùng sản phẩm + ngày thì hệ thống mới cộng dồn.
+                                    Chế độ <span className="font-semibold">Chỉnh sửa</span> luôn cập nhật trực tiếp phiếu hiện tại.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -494,7 +512,7 @@ export default function ImportForm({ open, onClose, onSubmit }) {
                         ) : (
                             <>
                                 <Package size={18} />
-                                {form.nk_id ? "Cập nhật" : "Lưu"}
+                                {isEditing ? "Lưu chỉnh sửa" : "Thêm phiếu"}
                             </>
                         )}
                     </button>

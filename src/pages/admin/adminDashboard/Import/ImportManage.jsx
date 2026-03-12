@@ -735,7 +735,7 @@ export default function ImportManage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-neutral-100">
-                            {ip.loading && (
+                            {ip.loading && groupedVisibleList.length === 0 && (
                                 <tr>
                                     <td colSpan="8" className="px-6 py-12 text-center">
                                         <div className="flex items-center justify-center">
@@ -746,7 +746,7 @@ export default function ImportManage() {
                                 </tr>
                             )}
 
-                            {!ip.loading && paginatedList.map((i, index) => {
+                            {paginatedList.map((i, index) => {
                                 const isExpanded = !!expandedDates[i.nk_date];
 
                                 return (
@@ -927,6 +927,7 @@ export default function ImportManage() {
                 onSubmit={{
                     form: ip.form,
                     setForm: ip.setForm,
+                    editing: ip.editing,
                     handleSubmit: () => ip.handleSubmit(user?.fullname || user?.name || user?.username || "Nhân viên kho"),
                     products: ip.products,
                     isSubmitting: ip.isSubmitting,

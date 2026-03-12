@@ -10,16 +10,18 @@ import {
 } from "../../../../services/importService";
 import {
     getAllProducts,
+    getProductsByPage,
     getProductById,
     updateProduct as updateProductInventory,
 } from "../../../../services/productService";
 import { showToast } from "../../../../utils/adminToast";
+import { CACHE_TTL } from "../../../../utils/cachePolicy";
 import { generateSmartNextId } from "../../../../utils/codeGenerator";
 import { getCache, setCache, removeCache, removeCacheByPrefix } from "../../../../utils/localCache";
 
 const IMPORT_CACHE_KEY = "admin_imports_v1";
 const IMPORT_PRODUCTS_CACHE_KEY = "admin_import_products_v1";
-const IMPORT_CACHE_TTL = 5 * 60 * 1000;
+const IMPORT_CACHE_TTL = CACHE_TTL.VERY_LONG;
 const PRODUCT_CACHE_KEY_PREFIX = "product_page_v2_";
 const PRODUCT_STATS_CACHE_KEY = "product_stats_v1";
 
@@ -222,38 +224,88 @@ export function useImportLogic() {
             sp_category: p.category?.name || p.sp_category_name || "",
             sp_price: p.price || p.sp_price || 0,
             sp_stock: p.stock || p.sp_stock || 0
-        }));
+        })).filter((p) => p.sp_id && p.sp_name);
+    };
+
+    const fetchProductsForImport = async () => {
+        // First strategy: page-based fetch (stable on most BE branches)
+        try {
+            const first = await getProductsByPage(0, 100, false);
+            const firstList = Array.isArray(first?.products) ? first.products : [];
+            const totalPages = Math.max(1, Number(first?.totalPages || 1));
+            const collected = [...firstList];
+
+            if (totalPages > 1) {
+                const pages = Array.from({ length: totalPages - 1 }, (_, idx) => idx + 1);
+                const chunks = [];
+                for (let i = 0; i < pages.length; i += 3) {
+                    chunks.push(pages.slice(i, i + 3));
+                }
+
+                for (const chunk of chunks) {
+                    const results = await Promise.all(chunk.map((p) => getProductsByPage(p, 100, false)));
+                    results.forEach((res) => {
+                        const list = Array.isArray(res?.products) ? res.products : [];
+                        collected.push(...list);
+                    });
+                }
+            }
+
+            const mapped = mapProductsFromApi(collected);
+            if (mapped && mapped.length > 0) return mapped;
+        } catch {
+            // fallback below
+        }
+
+        // Second strategy: get-all helper for branches that support it.
+        try {
+            const all = await getAllProducts(false);
+            const mapped = mapProductsFromApi(all);
+            if (mapped && mapped.length > 0) return mapped;
+        } catch {
+            // fallback below
+        }
+
+        // Third strategy: local cache.
+        const cachedProducts = getCache(IMPORT_PRODUCTS_CACHE_KEY, IMPORT_CACHE_TTL);
+        if (Array.isArray(cachedProducts) && cachedProducts.length > 0) {
+            return cachedProducts;
+        }
+
+        return null;
     };
 
     const loadInitialData = async (showLoading = true) => {
         try {
             if (showLoading) setLoading(true);
 
-            const [importsResult, productsResult] = await Promise.allSettled([
-                getAllImports(),
-                getAllProducts(),
-            ]);
-
-            if (importsResult.status === "fulfilled") {
-                setList(importsResult.value);
-                setCache(IMPORT_CACHE_KEY, importsResult.value);
-            } else {
-                // Fallback: try cache
+            // Ưu tiên hiển thị danh sách nhập kho trước vì đây là nội dung chính của màn.
+            try {
+                const importsData = await getAllImports();
+                setList(importsData);
+                setCache(IMPORT_CACHE_KEY, importsData);
+            } catch (importsError) {
                 const cached = getCache(IMPORT_CACHE_KEY, IMPORT_CACHE_TTL);
                 if (cached && cached.length > 0) {
                     setList(cached);
                 } else if (showLoading) {
-                    console.warn("Không thể tải nhập kho từ API hoặc cache");
+                    console.warn("Không thể tải nhập kho từ API hoặc cache", importsError);
                 }
+            } finally {
+                if (showLoading) setLoading(false);
             }
 
-            if (productsResult.status === "fulfilled") {
-                const mappedProducts = mapProductsFromApi(productsResult.value);
-                if (mappedProducts && mappedProducts.length > 0) {
-                    setProducts(mappedProducts);
-                    setCache(IMPORT_PRODUCTS_CACHE_KEY, mappedProducts);
-                }
-            }
+            // Dữ liệu sản phẩm phục vụ form có thể về sau mà không chặn bảng chính.
+            fetchProductsForImport()
+                .then((mappedProducts) => {
+                    if (mappedProducts && mappedProducts.length > 0) {
+                        setProducts(mappedProducts);
+                        setCache(IMPORT_PRODUCTS_CACHE_KEY, mappedProducts);
+                    }
+                })
+                .catch((productsError) => {
+                    console.warn("Không thể tải danh sách sản phẩm cho nhập kho", productsError);
+                });
         } finally {
             if (showLoading) setLoading(false);
         }
@@ -281,22 +333,13 @@ export function useImportLogic() {
 
     const fetchProducts = async () => {
         try {
-            console.log("Fetching products for import form...");
-            const data = await getAllProducts();
-            console.log("Products data received:", data);
-            
-            // If API returns data, use it (but keep mock as fallback)
-            if (data && Array.isArray(data) && data.length > 0) {
-                const mappedProducts = mapProductsFromApi(data);
-                console.log("Using API products for import:", mappedProducts);
+            const mappedProducts = await fetchProductsForImport();
+            if (mappedProducts && mappedProducts.length > 0) {
                 setProducts(mappedProducts);
                 setCache(IMPORT_PRODUCTS_CACHE_KEY, mappedProducts);
-            } else {
-                console.log("API returned no data, keeping mock products");
             }
         } catch (err) {
             console.error("Lỗi tải danh sách sản phẩm:", err);
-            console.log("API failed, keeping mock products");
         }
     };
 
@@ -388,12 +431,6 @@ export function useImportLogic() {
             return;
         }
 
-        // Log form data for debugging
-        console.log("Submitting import form:", form);
-        console.log("Selected product ID:", form.sp_id);
-        console.log("Quantity:", form.nk_quantity);
-        console.log("Date:", form.nk_date);
-
         setIsSubmitting(true);
         try {
             if (editing) {
@@ -402,7 +439,6 @@ export function useImportLogic() {
                 const oldQty = Number(editing.nk_quantity || 0);
                 const newQty = Number(form.nk_quantity || 0);
 
-                console.log("Updating import with ID:", editing.nk_id);
                 await updateImport(editing.nk_id, {
                     ...form,
                     nk_id: editing.nk_id,
@@ -426,7 +462,6 @@ export function useImportLogic() {
                     sp_id: String(form.sp_id).trim(),
                     nk_date: String(form.nk_date).trim(),
                 };
-                console.log("Creating new import with data:", createPayload);
                 if (!createPayload.sp_id) {
                     showToast("Vui lòng chọn sản phẩm", "warning");
                     setIsSubmitting(false);
@@ -713,8 +748,7 @@ export function useImportLogic() {
         try {
             let sourceProducts = products;
             if (!Array.isArray(sourceProducts) || sourceProducts.length === 0) {
-                const fetched = await getAllProducts();
-                const mapped = mapProductsFromApi(fetched) || [];
+                const mapped = (await fetchProductsForImport()) || [];
                 if (mapped.length > 0) {
                     sourceProducts = mapped;
                     setProducts(mapped);
@@ -885,6 +919,7 @@ export function useImportLogic() {
         isSubmitting,
         deletingId,
         isBulkDeleting,
+        editing,
         search,
         setSearch,
         openForm,

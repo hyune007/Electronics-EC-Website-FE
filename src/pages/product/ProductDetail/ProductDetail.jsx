@@ -64,7 +64,13 @@ export default function ProductDetail() {
   };
 
   useEffect(() => {
-    prefetchAllProducts().catch(() => { });
+    const warmUp = window.setTimeout(() => {
+      prefetchAllProducts().catch(() => {});
+    }, 600);
+
+    return () => {
+      window.clearTimeout(warmUp);
+    };
   }, [prefetchAllProducts]);
 
   useEffect(() => {
@@ -82,13 +88,6 @@ export default function ProductDetail() {
     };
 
     if (cached()) {
-      return () => {
-        mounted = false;
-      };
-    }
-
-    if (loadingAll && !allProducts) {
-      setLoading(true);
       return () => {
         mounted = false;
       };
