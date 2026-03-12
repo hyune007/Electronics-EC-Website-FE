@@ -8,7 +8,6 @@ export default function ShoppingCartStep({ onProceed }) {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const isCartEmpty = cart.length === 0;
   const total = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0,

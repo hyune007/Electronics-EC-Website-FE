@@ -89,6 +89,7 @@ export async function getProductsByPage(pageNum = 0, pageSize = 8) {
             id: p.id ?? "",
             name: p.name ?? "",
             price: Number(p.price ?? 0),
+            discountedPrice: Number(p.discountedPrice ?? p.price ?? 0),
             stock: Number(p.stock ?? 0),
             description: p.description ?? "",
             image: resolveImageUrl(p.image, p.category?.id, p.id),
@@ -100,6 +101,10 @@ export async function getProductsByPage(pageNum = 0, pageSize = 8) {
             category: {
                 id: p.category?.id ?? "",
                 name: p.category?.name ?? ""
+            },
+            promotion: {
+                id: p.promotion?.id ?? "",
+                name: p.promotion?.name ?? ""
             }
         })),
         totalPages: data?.totalPages ?? 0,
@@ -133,6 +138,7 @@ export async function getAllProducts() {
                 id: p.id ?? "",
                 name: p.name ?? "",
                 price: Number(p.price ?? 0),
+                discountedPrice: Number(p.discountedPrice ?? p.price ?? 0),
                 stock: Number(p.stock ?? 0),
                 description: p.description ?? "",
                 image: resolveImageUrl(p.image, p.category?.id, p.id),
@@ -144,6 +150,10 @@ export async function getAllProducts() {
                 category: {
                     id: p.category?.id ?? "",
                     name: p.category?.name ?? ""
+                },
+                promotion: {
+                    id: p.promotion?.id ?? "",
+                    name: p.promotion?.name ?? ""
                 }
             }))
         );
@@ -181,7 +191,8 @@ export async function createProduct(productData) {
         description: productData.description || null, // Gửi null thay vì empty string
         image: productData.image || null, // Gửi null thay vì empty string
         brand: { id: productData.brandId },
-        category: { id: productData.categoryId }
+        category: { id: productData.categoryId },
+        promotion: productData.promotionId ? { id: productData.promotionId } : null
     };
 
     console.log("=== Creating Product ===");
@@ -251,7 +262,9 @@ export async function updateProduct(id, productData) {
 
             brand: { id: productData.brandId },
 
-            category: { id: productData.categoryId }
+            category: { id: productData.categoryId },
+
+            promotion: productData.promotionId ? { id: productData.promotionId } : null
 
         })
 

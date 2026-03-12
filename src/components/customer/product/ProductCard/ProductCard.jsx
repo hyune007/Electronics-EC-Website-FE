@@ -114,12 +114,21 @@ export default function ProductCard({ product }) {
           </h4>
 
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-text-light font-black text-sm">
-              {product?.price}
-            </span>
-            <span className="text-xs text-gray-400 line-through">
-              31.990.000₫
-            </span>
+            {product?.discountedPrice < product?.price ? (
+              <>
+                <span className="text-text-light font-black text-sm">
+                  {product.discountedPrice.toLocaleString("vi-VN")}₫
+                </span>
+
+                <span className="text-xs text-gray-400 line-through">
+                  {product.price.toLocaleString("vi-VN")}₫
+                </span>
+              </>
+            ) : (
+              <span className="text-text-light font-black text-sm">
+                {product?.price?.toLocaleString("vi-VN")}₫
+              </span>
+            )}
           </div>
 
           <button
