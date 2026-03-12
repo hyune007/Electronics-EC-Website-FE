@@ -185,14 +185,11 @@ export function useVoucherLogic() {
 
     /* ================= LOAD DATA ================= */
     const loadVouchers = useCallback(async () => {
-        // Try cache first
         const cachedVouchers = getCachedVouchers();
         if (cachedVouchers) {
             setVouchers(cachedVouchers);
             return;
         }
-
-        // Load from API
         try {
             const data = await getAllPromotions();
             setVouchers(data);

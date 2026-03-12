@@ -36,6 +36,15 @@ function extractRawImage(url) {
     if (httpIdx >= 0) return normalized.substring(httpIdx);
     if (httpsIdx >= 0) return normalized.substring(httpsIdx);
 
+    // Fix duplicated local path like: /photos/products/DM//photos/products/DM/file.jpg
+    const duplicatedRoot = "/photos/products/";
+    if (normalized.includes(duplicatedRoot)) {
+        const chunks = normalized.split(duplicatedRoot).filter(Boolean);
+        if (chunks.length > 0) {
+            normalized = `${duplicatedRoot}${chunks[chunks.length - 1]}`;
+        }
+    }
+
     return normalized;
 }
 
@@ -54,12 +63,12 @@ function resolveImageUrl(url, categoryId, productId) {
         normalized = normalized.replace(/^[A-Za-z]:/, "");
     }
 
-    const photosRootIndex = normalized.indexOf("/photos/");
+    const photosRootIndex = normalized.lastIndexOf("/photos/");
     if (photosRootIndex >= 0) {
         return `${BASE_URL}${normalized.slice(photosRootIndex)}`;
     }
 
-    const photosIndex = normalized.indexOf("photos/");
+    const photosIndex = normalized.lastIndexOf("photos/");
     if (photosIndex >= 0) {
         return `${BASE_URL}/${normalized.slice(photosIndex)}`;
     }
@@ -153,6 +162,35 @@ export async function getAllProducts() {
     }
 
     return allProducts;
+}
+
+export async function getProductById(id) {
+    const res = await fetch(`${API_URL}/detail/${id}`, {
+        headers: getAuthHeaders()
+    });
+
+    if (!res.ok) {
+        throw new Error("Không lấy được chi tiết sản phẩm");
+    }
+
+    const p = await res.json();
+    return {
+        id: p.id ?? "",
+        name: p.name ?? "",
+        price: Number(p.price ?? 0),
+        stock: Number(p.stock ?? 0),
+        description: p.description ?? "",
+        image: resolveImageUrl(p.image, p.category?.id, p.id),
+        raw_image: extractRawImage(p.image),
+        brand: {
+            id: p.brand?.id ?? "",
+            name: p.brand?.name ?? ""
+        },
+        category: {
+            id: p.category?.id ?? "",
+            name: p.category?.name ?? ""
+        }
+    };
 }
 
 

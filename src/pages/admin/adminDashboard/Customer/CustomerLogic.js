@@ -52,118 +52,6 @@ function clearCustomerCache() {
     }
 }
 
-function parseCsvLine(line) {
-    const out = [];
-    let current = "";
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i += 1) {
-        const ch = line[i];
-        const next = line[i + 1];
-
-        if (ch === '"') {
-            if (inQuotes && next === '"') {
-                current += '"';
-                i += 1;
-            } else {
-                inQuotes = !inQuotes;
-            }
-            continue;
-        }
-
-        if (ch === "," && !inQuotes) {
-            out.push(current.trim());
-            current = "";
-            continue;
-        }
-
-        current += ch;
-    }
-
-    out.push(current.trim());
-    return out;
-}
-
-function parseCsv(text) {
-    const lines = String(text || "")
-        .split(/\r?\n/)
-        .map((l) => l.trim())
-        .filter(Boolean);
-
-    if (lines.length === 0) return [];
-    const headers = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
-
-    return lines.slice(1).map((line) => {
-        const cells = parseCsvLine(line);
-        const row = {};
-        headers.forEach((header, idx) => {
-            row[header] = cells[idx] ?? "";
-        });
-        return row;
-    });
-}
-
-async function parseExcel(arrayBuffer) {
-    const XLSX = await import("xlsx");
-    const workbook = XLSX.read(arrayBuffer, { type: "array" });
-    const firstSheetName = workbook.SheetNames?.[0];
-    if (!firstSheetName) return [];
-
-    const sheet = workbook.Sheets[firstSheetName];
-    return XLSX.utils.sheet_to_json(sheet, {
-        defval: "",
-        raw: true,
-    });
-}
-
-function normalizeHeaderKey(value) {
-    return String(value ?? "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/[^a-z0-9]+/g, " ")
-        .trim();
-}
-
-function normalizeImportRow(row) {
-    const normalized = {};
-    Object.entries(row || {}).forEach(([key, value]) => {
-        const normalizedKey = normalizeHeaderKey(key);
-        if (normalizedKey && !(normalizedKey in normalized)) {
-            normalized[normalizedKey] = value;
-        }
-    });
-    return normalized;
-}
-
-function pickField(row, aliases = []) {
-    for (const alias of aliases) {
-        const value = row?.[normalizeHeaderKey(alias)];
-        if (value !== undefined && value !== null && String(value).trim() !== "") {
-            return String(value).trim();
-        }
-    }
-    return "";
-}
-
-async function runWithConcurrency(items, concurrency, worker) {
-    const results = [];
-    let cursor = 0;
-
-    const runner = async () => {
-        while (cursor < items.length) {
-            const index = cursor;
-            cursor += 1;
-            results[index] = await worker(items[index], index);
-        }
-    };
-
-    const workers = Array.from({ length: Math.max(1, concurrency) }, () => runner());
-    await Promise.all(workers);
-    return results;
-}
-
 export function useCustomerLogic() {
     const [customers, setCustomers] = useState([]);
     const [search, setSearch] = useState("");
@@ -171,8 +59,6 @@ export function useCustomerLogic() {
     const [openForm, setOpenForm] = useState(false);
     const [editing, setEditing] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
-    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-    const [isImportingFile, setIsImportingFile] = useState(false);
     const itemsPerPage = 12;
 
 
@@ -190,29 +76,20 @@ export function useCustomerLogic() {
     /* ================= LOAD DATA ================= */
     const fetchCustomers = useCallback(async () => {
         try {
-            // Try localStorage cache first
             const cachedCustomers = getCachedCustomers();
             if (cachedCustomers) {
-                console.log("Loading customers from cache...");
                 setCustomers(cachedCustomers);
                 return;
             }
-
-            console.log("Fetching customers from API...");
             const data = await getAllCustomers();
-
-            console.log("RAW API:", data);
-
             const mapped = data.map((c) => ({
-                kh_id: c.kh_id,
-                kh_name: c.kh_name,
-                kh_phone: c.kh_phone,
-                kh_mail: c.kh_mail,
+                kh_id:       c.kh_id,
+                kh_name:     c.kh_name,
+                kh_phone:    c.kh_phone,
+                kh_mail:     c.kh_mail,
                 kh_password: c.kh_password,
-                kh_role: c.kh_role
+                kh_role:     c.kh_role_id || "ROLE_CUSTOMER",
             }));
-
-            // Cache the data
             setCachedCustomers(mapped);
             setCustomers(mapped);
         } catch (e) {
@@ -221,10 +98,9 @@ export function useCustomerLogic() {
     }, []);
 
     useEffect(() => {
-        // Defer the call to avoid synchronous setState inside the effect
         const t = setTimeout(() => fetchCustomers(), 0);
         return () => clearTimeout(t);
-     }, [fetchCustomers]);
+    }, [fetchCustomers]);
 
     /* ================= FILTER ================= */
     const filteredCustomers = useMemo(() => {
@@ -319,7 +195,8 @@ export function useCustomerLogic() {
             return;
         }
         
-        if (!form.kh_password || !form.kh_password.trim()) {
+        // Password is required only when creating, optional when editing
+        if (!editing && (!form.kh_password || !form.kh_password.trim())) {
             showToast("Vui lòng nhập mật khẩu", "warning");
             return;
         }
@@ -347,7 +224,7 @@ export function useCustomerLogic() {
             kh_password: form.kh_password.trim(),
             kh_phone: form.kh_phone.trim(),
             kh_mail: form.kh_mail.trim(),
-            kh_role_id: form.kh_role || "ROLE_CUSTOMER",
+            kh_role: form.kh_role || "ROLE_CUSTOMER",
         };
         
         console.log("Customer payload after validation:", payload);
@@ -361,24 +238,22 @@ export function useCustomerLogic() {
                 });
             } else {
                 await createCustomer(payload);
-                setCustomers((prev) => [
-                    {
-                        kh_id: payload.kh_id,
-                        kh_name: payload.kh_name,
-                        kh_phone: payload.kh_phone,
-                        kh_mail: payload.kh_mail,
-                        kh_password: payload.kh_password,
-                        kh_role: payload.kh_role_id,
-                    },
-                    ...prev,
-                ]);
             }
 
             setOpenForm(false);
             
-            // Clear cache and reload
             clearCustomerCache();
-            fetchCustomers();
+            const freshRaw = await getAllCustomers();
+            const freshMapped = freshRaw.map((c) => ({
+                kh_id:       c.kh_id,
+                kh_name:     c.kh_name,
+                kh_phone:    c.kh_phone,
+                kh_mail:     c.kh_mail,
+                kh_password: c.kh_password,
+                kh_role:     c.kh_role_id || "ROLE_CUSTOMER",
+            }));
+            setCachedCustomers(freshMapped);
+            setCustomers(freshMapped);
             showToast(editing ? "Cập nhật khách hàng thành công" : "Thêm khách hàng thành công", "success");
         } catch (err) {
             console.error("Lỗi lưu khách hàng:", err);
@@ -393,113 +268,23 @@ export function useCustomerLogic() {
             try {
                 await deleteCustomer(id);
                 
-                // Clear cache and reload
                 clearCustomerCache();
-                await fetchCustomers();
+                const freshRaw = await getAllCustomers();
+                const freshMapped = freshRaw.map((c) => ({
+                    kh_id:       c.kh_id,
+                    kh_name:     c.kh_name,
+                    kh_phone:    c.kh_phone,
+                    kh_mail:     c.kh_mail,
+                    kh_password: c.kh_password,
+                    kh_role:     c.kh_role_id || "ROLE_CUSTOMER",
+                }));
+                setCachedCustomers(freshMapped);
+                setCustomers(freshMapped);
                 showToast("Xóa khách hàng thành công", "success");
             } catch (err) {
                 console.error("Delete customer failed:", err);
                 showToast("Xóa khách hàng thất bại: " + (err.message || ""), "error", 3400);
             }
-        }
-    };
-
-    const handleDeleteMany = async (ids = []) => {
-        const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
-        if (uniqueIds.length === 0) return;
-
-        setIsBulkDeleting(true);
-        try {
-            const results = await Promise.allSettled(uniqueIds.map((id) => deleteCustomer(id)));
-            const success = results.filter((r) => r.status === "fulfilled").length;
-            const failed = results.length - success;
-
-            clearCustomerCache();
-            await fetchCustomers();
-
-            if (failed === 0) {
-                showToast(`Đã xóa ${success} khách hàng`, "success");
-            } else {
-                showToast(`Xóa nhanh: ${success} thành công, ${failed} thất bại`, "warning", 3600);
-            }
-        } catch (err) {
-            console.error("Bulk delete customer failed:", err);
-            showToast("Xóa nhanh khách hàng thất bại", "error", 3400);
-        } finally {
-            setIsBulkDeleting(false);
-        }
-    };
-
-    const handleBulkImportFile = async (file) => {
-        if (!file) return;
-        setIsImportingFile(true);
-
-        try {
-            const lowerName = String(file.name || "").toLowerCase();
-            let rawRows = [];
-
-            if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
-                const buffer = await file.arrayBuffer();
-                rawRows = await parseExcel(buffer);
-            } else if (lowerName.endsWith(".json")) {
-                const text = await file.text();
-                const parsed = JSON.parse(text);
-                rawRows = Array.isArray(parsed) ? parsed : [];
-            } else {
-                const text = await file.text();
-                rawRows = parseCsv(text);
-            }
-
-            if (!Array.isArray(rawRows) || rawRows.length === 0) {
-                showToast("File không có dữ liệu hợp lệ", "warning");
-                return;
-            }
-
-            const rows = rawRows.map((row, index) => {
-                const normalized = normalizeImportRow(row);
-                return {
-                    rowNo: index + 2,
-                    kh_id: pickField(normalized, ["kh_id", "kh id", "id", "ma", "ma khach hang"]),
-                    kh_name: pickField(normalized, ["kh_name", "kh name", "name", "ten", "ho ten", "ten khach hang"]),
-                    kh_password: pickField(normalized, ["kh_password", "kh password", "password", "mat khau"]) || "123456",
-                    kh_phone: pickField(normalized, ["kh_phone", "kh phone", "phone", "sdt", "so dien thoai", "dien thoai"]),
-                    kh_mail: pickField(normalized, ["kh_mail", "kh mail", "mail", "email"]),
-                    kh_role_id: pickField(normalized, ["kh_role_id", "kh role id", "kh_role", "kh role", "role", "vai tro"]) || "ROLE_CUSTOMER",
-                };
-            });
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            const invalidRows = rows.filter((r) => !r.kh_id || !r.kh_name || !r.kh_phone || !r.kh_mail || !emailRegex.test(r.kh_mail));
-            if (invalidRows.length > 0) {
-                showToast(`Có ${invalidRows.length} dòng thiếu hoặc sai dữ liệu`, "warning", 3600);
-                return;
-            }
-
-            const results = await runWithConcurrency(rows, 3, async (row) => {
-                try {
-                    await createCustomer(row);
-                    return { ok: true };
-                } catch (error) {
-                    return { ok: false, message: error?.message || "Lỗi thêm khách hàng" };
-                }
-            });
-
-            const success = results.filter((r) => r.ok).length;
-            const failed = results.length - success;
-
-            clearCustomerCache();
-            await fetchCustomers();
-
-            if (failed === 0) {
-                showToast(`Import thành công ${success} khách hàng`, "success");
-            } else {
-                showToast(`Import xong: ${success} thành công, ${failed} thất bại`, "warning", 4200);
-            }
-        } catch (err) {
-            console.error("Bulk import customer failed:", err);
-            showToast("Import file khách hàng thất bại", "error", 3400);
-        } finally {
-            setIsImportingFile(false);
         }
     };
 
@@ -519,8 +304,6 @@ export function useCustomerLogic() {
         currentPage,
         totalPages,
         itemsPerPage,
-        isBulkDeleting,
-        isImportingFile,
         handlePageChange,
         handlePreviousPage,
         handleNextPage,
@@ -537,7 +320,5 @@ export function useCustomerLogic() {
         },
         handleSubmit,
         handleDelete,
-        handleDeleteMany,
-        handleBulkImportFile,
     };
 }

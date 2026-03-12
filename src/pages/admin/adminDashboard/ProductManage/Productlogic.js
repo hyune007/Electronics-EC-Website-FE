@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { getProductsByPage, createProduct, updateProduct, deleteProduct } from "../../../../services/productService";
+import { getProductsByPage, getAllProducts, createProduct, updateProduct, deleteProduct } from "../../../../services/productService";
 import { getAllBrands } from "../../../../services/brandService";
 import { getAllCategories } from "../../../../services/categoryService";
+import * as XLSX from "xlsx";
 import { showToast } from "../../../../utils/adminToast";
 import { getCache, setCache, removeCache, removeCacheByPrefix } from "../../../../utils/localCache";
 
@@ -166,8 +167,7 @@ function parseCsv(text) {
     });
 }
 
-async function parseExcel(arrayBuffer) {
-    const XLSX = await import("xlsx");
+function parseExcel(arrayBuffer) {
     const workbook = XLSX.read(arrayBuffer, { type: "array" });
     const firstSheetName = workbook.SheetNames?.[0];
     if (!firstSheetName) return [];
@@ -259,18 +259,7 @@ export function useProductManageLogic() {
     useEffect(() => {
         const loadBrands = async () => {
             try {
-                // Clear cache trước khi load
-                localStorage.removeItem('brand_data');
-
                 const brandList = await getAllBrands();
-                console.log("=== Brands loaded from backend ===");
-                console.log("Total brands:", brandList.length);
-                console.log("Brands:", brandList);
-
-                if (brandList.length === 0) {
-                    console.warn("WARNING: No brands loaded! Please add brands first.");
-                }
-
                 setAllBrands(brandList);
                 setBrands(brandList);
             } catch (err) {
@@ -286,20 +275,10 @@ export function useProductManageLogic() {
         const loadCategories = async () => {
             try {
                 const categoryList = await getAllCategories();
-                console.log("=== Categories loaded from backend ===");
-                console.log("Total categories:", categoryList.length);
-                console.log("Categories:", categoryList);
-
-                if (categoryList.length === 0) {
-                    console.warn("WARNING: No categories loaded! Please add categories first.");
-                }
-
-                // Map dm_id -> id and dm_name -> name for consistency
                 const mappedCategories = categoryList.map(c => ({
                     id: c.dm_id,
                     name: c.dm_name
                 }));
-
                 setAllCategories(mappedCategories);
                 setCategories(mappedCategories);
             } catch (err) {
@@ -628,7 +607,7 @@ export function useProductManageLogic() {
             let rawRows = [];
             if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
                 const buffer = await file.arrayBuffer();
-                rawRows = await parseExcel(buffer);
+                rawRows = parseExcel(buffer);
             } else if (lowerName.endsWith(".json")) {
                 const text = await file.text();
                 const parsed = JSON.parse(text);
@@ -750,6 +729,8 @@ export function useProductManageLogic() {
 
         let finalImage = form.image;
         if (finalImage) {
+            finalImage = String(finalImage).trim().replace(/\\/g, "/");
+
             // Nếu phát hiện có chứa link http/https bên trong chuỗi bị nối
             const httpIndex = finalImage.indexOf("http://");
             const httpsIndex = finalImage.indexOf("https://");
@@ -759,6 +740,13 @@ export function useProductManageLogic() {
             } else if (httpsIndex >= 0) {
                 finalImage = finalImage.substring(httpsIndex);
             } else {
+                if (finalImage.includes("/photos/products/")) {
+                    const chunks = finalImage.split("/photos/products/").filter(Boolean);
+                    if (chunks.length > 0) {
+                        finalImage = `/photos/products/${chunks[chunks.length - 1]}`;
+                    }
+                }
+
                 // Chỉ cắt tiền tố thư mục đối với ảnh cục bộ
                 const matchIndex = finalImage.lastIndexOf("/photos/products/");
                 if (matchIndex >= 0) {
@@ -789,52 +777,67 @@ export function useProductManageLogic() {
                 showToast("Cập nhật sản phẩm thành công", "success");
             } else {
                 await createProduct(payload);
+                showToast("Thêm sản phẩm thành công", "success");
 
                 const addedPrice = Number(payload.price || 0);
                 const addedStock = Number(payload.stock || 0);
-                setGlobalStats((prev) => {
-                    const prevTotalProducts = Number(prev?.totalProducts || 0);
-                    const prevTotalValue = Number(prev?.totalValue || 0);
-                    const prevTotalStock = Number(prev?.totalStock || 0);
-                    const prevLowStock = Number(prev?.lowStock || 0);
-                    const prevOutOfStock = Number(prev?.outOfStock || 0);
-                    const prevAveragePrice = Number(prev?.averagePrice || 0);
 
-                    const totalProducts = prevTotalProducts + 1;
-                    const totalValue = prevTotalValue + (addedPrice * addedStock);
-                    const totalStock = prevTotalStock + addedStock;
-                    const lowStock = prevLowStock + (addedStock > 0 && addedStock < 10 ? 1 : 0);
-                    const outOfStock = prevOutOfStock + (addedStock <= 0 ? 1 : 0);
-                    const averagePrice = totalProducts > 0
-                        ? Math.round(((prevAveragePrice * prevTotalProducts) + addedPrice) / totalProducts)
-                        : 0;
-                    const inStockRate = totalProducts > 0
-                        ? Math.round(((totalProducts - outOfStock) / totalProducts) * 100)
-                        : 0;
+                if (allProducts.length > 0) {
+                    const appended = [
+                        ...allProducts,
+                        {
+                            sp_id: payload.id,
+                            sp_name: payload.name,
+                            sp_price: addedPrice,
+                            sp_stock: addedStock,
+                        }
+                    ];
+                    const nextStats = computeGlobalStats(appended);
+                    setGlobalStats(nextStats);
+                    setCache(PRODUCT_STATS_CACHE_KEY, nextStats);
+                    setAllProducts(appended);
+                } else {
+                    setGlobalStats((prev) => {
+                        const baseTotalProducts = Math.max(Number(prev.totalProducts || 0), Number(totalElements || 0));
+                        const baseTotalValue = Number(prev.totalValue || 0);
+                        const baseTotalStock = Number(prev.totalStock || 0);
+                        const baseLowStock = Number(prev.lowStock || 0);
+                        const baseOutOfStock = Number(prev.outOfStock || 0);
 
-                    const optimisticStats = {
-                        totalProducts,
-                        totalValue,
-                        totalStock,
-                        lowStock,
-                        outOfStock,
-                        averagePrice,
-                        inStockRate,
-                    };
+                        const totalProducts = baseTotalProducts + 1;
+                        const totalValue = baseTotalValue + (addedPrice * addedStock);
+                        const totalStock = baseTotalStock + addedStock;
+                        const lowStock = baseLowStock + (addedStock > 0 && addedStock < 10 ? 1 : 0);
+                        const outOfStock = baseOutOfStock + (addedStock <= 0 ? 1 : 0);
+                        const averagePrice = totalProducts > 0 ? Math.round(totalValue / totalProducts) : 0;
+                        const inStockRate = totalProducts > 0
+                            ? Math.round(((totalProducts - outOfStock) / totalProducts) * 100)
+                            : 0;
 
-                    setCache(PRODUCT_STATS_CACHE_KEY, optimisticStats);
-                    return optimisticStats;
-                });
-
-                showToast("Thêm sản phẩm thành công", "success");
+                        const nextStats = {
+                            totalProducts,
+                            totalValue,
+                            totalStock,
+                            lowStock,
+                            outOfStock,
+                            averagePrice,
+                            inStockRate,
+                        };
+                        setCache(PRODUCT_STATS_CACHE_KEY, nextStats);
+                        return nextStats;
+                    });
+                }
             }
             setOpenForm(false);
 
             // Clear all cache to ensure correct data and pagination
             cacheRef.current = {};
             removeCacheByPrefix(CACHE_KEY_PREFIX);
-            removeCache(PRODUCT_STATS_CACHE_KEY);
-            setAllProducts([]);
+
+            if (editing) {
+                removeCache(PRODUCT_STATS_CACHE_KEY);
+                setAllProducts([]);
+            }
 
             if (editing) {
                 await loadProductsPage(page, false);
@@ -887,6 +890,7 @@ export function useProductManageLogic() {
             }
 
             showToast("Xóa sản phẩm thành công", "success");
+
             loadAllInBackground();
         } catch (err) {
             console.error("Delete product error:", err);

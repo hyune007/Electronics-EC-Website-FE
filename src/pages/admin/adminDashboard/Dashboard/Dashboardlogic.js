@@ -62,14 +62,11 @@ export function useDashboardLogic() {
             try {
                 if (!cached) setLoading(true);
 
-                // Fetch song song 3 nguồn dữ liệu chính
                 const [billsResponse, customers, productsResponse] = await Promise.all([
                     getAllBills(),
                     getAllCustomers(),
-                    getProductsByPage(0, 1) // Chỉ cần lấy totalElements, lấy page 0 size 1 cho nhẹ
+                    getProductsByPage(0, 1)
                 ]);
-
-                // Mảng array của Bill do api get axios mặc định trả data ở res.data
                 const billsList = billsResponse?.data || [];
                 const totalCustomers = customers?.length || 0;
                 const totalProducts = productsResponse?.totalElements || 0;

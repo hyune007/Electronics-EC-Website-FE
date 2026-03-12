@@ -11,6 +11,8 @@ import {
   ChevronsDown,
   ChevronsUp,
   RotateCcw,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useOrderLogic } from "./OrderLogic.js";
 import { getBillDetails } from "../../../../services/customer/billDetailServiceCustomer.js";
@@ -134,6 +136,13 @@ export default function OrderManage() {
               Theo dõi và quản lý các đơn hàng của khách hàng
             </p>
           </div>
+
+          {om.isRefreshing && !om.loading && (
+            <div className="order-sync-pill">
+              <Loader2 size={16} className="animate-spin" />
+              <span>Đang đồng bộ dữ liệu...</span>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -333,6 +342,32 @@ export default function OrderManage() {
 
       {/* Table Section */}
       <div className="table-container">
+        {om.loadError && !om.loading && om.orders.length === 0 && (
+          <div className="order-error-state">
+            <div className="order-error-icon">
+              <AlertCircle size={20} />
+            </div>
+            <div>
+              <p className="order-error-title">Không tải được danh sách đơn hàng</p>
+              <p className="order-error-text">{om.loadError}</p>
+            </div>
+            <button
+              type="button"
+              className="order-action-btn"
+              onClick={() => om.refreshOrders().catch(() => {})}
+            >
+              <RotateCcw size={15} /> Thử lại
+            </button>
+          </div>
+        )}
+
+        {om.loading ? (
+          <div className="order-loading-state">
+            <Loader2 size={28} className="animate-spin text-primary-600" />
+            <p className="order-loading-title">Đang tải đơn hàng...</p>
+            <p className="order-loading-text">Hệ thống đang đồng bộ dữ liệu đơn hàng mới nhất.</p>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full order-group-table">
             <thead className="table-header">
@@ -449,13 +484,22 @@ export default function OrderManage() {
 
                               {order.raw_status === "Chờ xác nhận" && (
                                 <button
+                                  type="button"
+                                  disabled={om.updatingOrderId === order.order_id}
                                   className="px-3 py-1 text-xs rounded-md bg-[var(--color-primary)] text-white hover:opacity-90"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     om.handleUpdateStatus(order.order_id, "Đơn đang chờ giao");
                                   }}
                                 >
-                                  Xác nhận đơn
+                                  {om.updatingOrderId === order.order_id ? (
+                                    <span className="inline-flex items-center gap-1">
+                                      <Loader2 size={12} className="animate-spin" />
+                                      Đang cập nhật
+                                    </span>
+                                  ) : (
+                                    "Xác nhận đơn"
+                                  )}
                                 </button>
                               )}
                             </div>
@@ -486,6 +530,7 @@ export default function OrderManage() {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Pagination */}

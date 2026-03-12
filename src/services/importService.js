@@ -1,7 +1,49 @@
  const API_URL = "http://localhost:8080/api/imports";
  const BASE_URL = "http://localhost:8080";
+const IMPORT_CREATOR_MAP_KEY = "admin_import_creator_map_v1";
 //const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/imports";
 //const BASE_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app";
+
+function getImportCreatorMap() {
+    try {
+        const raw = localStorage.getItem(IMPORT_CREATOR_MAP_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return {};
+        return parsed;
+    } catch {
+        return {};
+    }
+}
+
+function setImportCreatorMap(map) {
+    try {
+        localStorage.setItem(IMPORT_CREATOR_MAP_KEY, JSON.stringify(map));
+    } catch {
+        // Ignore storage errors.
+    }
+}
+
+export function getCreatorNameForImport(importId) {
+    if (!importId) return "";
+    const map = getImportCreatorMap();
+    return map[importId] || "";
+}
+
+export function setCreatorNameForImport(importId, creatorName) {
+    if (!importId || !creatorName) return;
+    const map = getImportCreatorMap();
+    map[importId] = creatorName;
+    setImportCreatorMap(map);
+}
+
+export function removeCreatorNameForImport(importId) {
+    if (!importId) return;
+    const map = getImportCreatorMap();
+    if (!map[importId]) return;
+    delete map[importId];
+    setImportCreatorMap(map);
+}
 
 // Helper to get auth token
 function getAuthHeaders() {
@@ -62,7 +104,13 @@ export async function getAllImports() {
         sp_image: resolveImageUrl(i.product?.image, i.product?.category?.id, i.product?.id),
         sp_description: i.product?.description ?? "",
         nk_quantity: i.quantity ?? 0,
-        nk_date: i.importDate ? new Date(i.importDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
+        nk_date: i.importDate ? new Date(i.importDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10),
+        nk_creator:
+            i.createdBy?.name ??
+            i.createdByName ??
+            i.creatorName ??
+            getCreatorNameForImport(i.id ?? "") ??
+            "",
     }));
 }
 
@@ -86,7 +134,10 @@ export async function createImport(importData) {
     if (!res.ok) {
         const errorText = await res.text();
         console.error("API Error Response:", errorText);
-        throw new Error(`Thêm nhập kho thất bại: ${errorText}`);
+        const err = new Error(`Thêm nhập kho thất bại: ${errorText}`);
+        err.status = res.status;
+        err.rawText = errorText;
+        throw err;
     }
     return res.json();
 }

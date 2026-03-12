@@ -1,7 +1,8 @@
-import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Shield, Loader2, ChevronDown, FileSpreadsheet, Upload, Download, X } from "lucide-react";
+
+import { Plus, Pencil, Trash2, Search, Users, Phone, Mail, Shield } from "lucide-react";
 import { useCustomerLogic } from "./CustomerLogic.js";
 import CustomerForm from "./CustomerForm.jsx";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth.js";
 import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
@@ -10,12 +11,6 @@ import "./Customer.css";
 export default function CustomerManage() {
     const cm = useCustomerLogic();
     const [mounted, setMounted] = useState(false);
-    const [selectedIds, setSelectedIds] = useState([]);
-    const [showAddMenu, setShowAddMenu] = useState(false);
-    const [showImportModal, setShowImportModal] = useState(false);
-    const [isDraggingFile, setIsDraggingFile] = useState(false);
-    const fileInputRef = useRef(null);
-    const addMenuRef = useRef(null);
     const { user } = useAuth();
     const isAdmin = user?.roleId === "ROLE_ADMIN";
     const isEmployee = user?.roleId === "ROLE_EMPLOYEE";
@@ -23,99 +18,6 @@ export default function CustomerManage() {
     useEffect(() => {
         setMounted(true);
     }, []);
-
-    useEffect(() => {
-        const visibleIds = new Set((cm.paginatedCustomers || []).map((c) => c.kh_id));
-        setSelectedIds((prev) => prev.filter((id) => visibleIds.has(id)));
-    }, [cm.paginatedCustomers]);
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (!addMenuRef.current?.contains(event.target)) {
-                setShowAddMenu(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const pageIds = (cm.paginatedCustomers || []).map((c) => c.kh_id);
-    const allSelectedOnPage = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
-
-    const toggleSelectAllOnPage = () => {
-        if (allSelectedOnPage) {
-            setSelectedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
-            return;
-        }
-
-        setSelectedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
-    };
-
-    const toggleSelectOne = (id) => {
-        setSelectedIds((prev) => (
-            prev.includes(id)
-                ? prev.filter((item) => item !== id)
-                : [...prev, id]
-        ));
-    };
-
-    const handleQuickDelete = async () => {
-        if (!isAdmin || selectedIds.length === 0 || cm.isBulkDeleting) return;
-        if (!window.confirm(`Xóa nhanh ${selectedIds.length} khách hàng đã chọn?`)) return;
-
-        await cm.handleDeleteMany(selectedIds);
-        setSelectedIds([]);
-    };
-
-    const getNextNumberFromIds = (ids, prefix) => {
-        const maxNum = (ids || []).reduce((max, id) => {
-            const match = String(id || "").toUpperCase().match(new RegExp(`^${prefix}(\\d+)$`));
-            if (!match) return max;
-            return Math.max(max, Number(match[1]));
-        }, 0);
-        return maxNum + 1;
-    };
-
-    const downloadTemplateFile = async () => {
-        const XLSX = await import("xlsx");
-        const existingIds = (cm.filteredCustomers || []).map((item) => item?.kh_id).filter(Boolean);
-        const nextNum = getNextNumberFromIds(existingIds, "KH");
-        const id1 = `KH${String(nextNum).padStart(3, "0")}`;
-        const id2 = `KH${String(nextNum + 1).padStart(3, "0")}`;
-        const aoa = [
-            ["Mã khách hàng", "Họ tên", "Mật khẩu", "Số điện thoại", "Email", "Vai trò"],
-            [id1, "Nguyen Van A", "123456", "0900000001", `kh${nextNum}@example.com`, "ROLE_CUSTOMER"],
-            [id2, "Tran Thi B", "123456", "0900000002", `kh${nextNum + 1}@example.com`, "ROLE_CUSTOMER"],
-        ];
-        const worksheet = XLSX.utils.aoa_to_sheet(aoa);
-        worksheet["!cols"] = [{ wch: 14 }, { wch: 24 }, { wch: 14 }, { wch: 16 }, { wch: 28 }, { wch: 16 }];
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "MauKhachHang");
-        XLSX.writeFile(workbook, "customer-import-template.xlsx");
-    };
-
-    const onPickFile = () => {
-        if (cm.isImportingFile) return;
-        fileInputRef.current?.click();
-    };
-
-    const onSelectedFile = async (file) => {
-        if (!file) return;
-        await cm.handleBulkImportFile(file);
-        setShowImportModal(false);
-        setIsDraggingFile(false);
-    };
-
-    const onDropFile = async (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        setIsDraggingFile(false);
-
-        if (cm.isImportingFile) return;
-        const file = event.dataTransfer?.files?.[0];
-        await onSelectedFile(file);
-    };
 
     // Theo BE security: ADMIN + EMPLOYEE truy cập, nhưng delete customer chỉ ADMIN
     if (!isAdmin && !isEmployee) {
@@ -131,72 +33,14 @@ export default function CustomerManage() {
                         <h1 className="text-3xl font-bold text-neutral-900 mb-2">Quản Lý Khách Hàng</h1>
                         <p className="text-neutral-600">Quản lý thông tin khách hàng và tài khoản</p>
                     </div>
-                    <div className="flex items-center gap-3">
-                        {isAdmin && selectedIds.length > 0 && (
-                            <button
-                                type="button"
-                                onClick={handleQuickDelete}
-                                disabled={cm.isBulkDeleting}
-                                className="btn-quick-delete"
-                            >
-                                {cm.isBulkDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                                {cm.isBulkDeleting ? "Đang xóa..." : `Xóa nhanh (${selectedIds.length})`}
-                            </button>
-                        )}
-
-                        <div className="add-product-actions" ref={addMenuRef}>
-                            <button
-                                type="button"
-                                onClick={() => setShowAddMenu((s) => !s)}
-                                className="btn-primary flex items-center gap-2 shadow-lg"
-                            >
-                                <Plus size={18} />
-                                <span>Thêm Khách Hàng</span>
-                                <ChevronDown size={16} />
-                            </button>
-
-                            {showAddMenu && (
-                                <div className="add-menu-dropdown">
-                                    <button
-                                        type="button"
-                                        className="add-menu-item"
-                                        onClick={() => {
-                                            cm.openAdd();
-                                            setShowAddMenu(false);
-                                        }}
-                                    >
-                                        <Plus size={16} />
-                                        Thêm 1 khách hàng
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="add-menu-item"
-                                        onClick={() => {
-                                            setShowImportModal(true);
-                                            setShowAddMenu(false);
-                                        }}
-                                        disabled={cm.isImportingFile}
-                                    >
-                                        {cm.isImportingFile ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={16} />}
-                                        {cm.isImportingFile ? "Đang import..." : "Thêm nhiều bằng file"}
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <button 
+                        onClick={cm.openAdd}
+                        className="btn-primary flex items-center gap-2 shadow-lg"
+                    >
+                        <Plus size={18} />
+                        <span>Thêm Khách Hàng</span>
+                    </button>
                 </div>
-
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".xlsx,.xls,.csv,.json"
-                    className="hidden"
-                    onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) await onSelectedFile(file);
-                        e.target.value = "";
-                    }}
-                />
 
                 {/* Stats Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -278,16 +122,6 @@ export default function CustomerManage() {
                     <table className="w-full">
                         <thead className="table-header">
                             <tr>
-                                {isAdmin && (
-                                    <th className="px-4 py-4 text-center text-xs font-medium text-neutral-600 uppercase tracking-wider">
-                                        <input
-                                            type="checkbox"
-                                            checked={allSelectedOnPage}
-                                            onChange={toggleSelectAllOnPage}
-                                            aria-label="Chọn tất cả khách hàng trên trang"
-                                        />
-                                    </th>
-                                )}
                                 <th className="px-6 py-4 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider">
                                     Mã Khách Hàng
                                 </th>
@@ -311,16 +145,6 @@ export default function CustomerManage() {
                         <tbody className="divide-y divide-neutral-100">
                             {cm.paginatedCustomers.map((c, index) => (
                                 <tr key={c.kh_id} className="table-row" style={{ animationDelay: `${index * 50}ms` }}>
-                                    {isAdmin && (
-                                        <td className="px-4 py-4 text-center">
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedIds.includes(c.kh_id)}
-                                                onChange={() => toggleSelectOne(c.kh_id)}
-                                                aria-label={`Chọn khách hàng ${c.kh_id}`}
-                                            />
-                                        </td>
-                                    )}
                                     <td className="px-6 py-4">
                                         <span className="font-mono text-sm text-neutral-900 bg-neutral-100 px-3 py-1 rounded-lg">
                                             {c.kh_id}
@@ -377,7 +201,7 @@ export default function CustomerManage() {
 
                             {cm.paginatedCustomers.length === 0 && (
                                 <tr>
-                                    <td colSpan={isAdmin ? 7 : 6} className="px-6 py-12 text-center">
+                                    <td colSpan="6" className="px-6 py-12 text-center">
                                         <div className="text-center">
                                             <Users className="mx-auto h-12 w-12 text-neutral-400 mb-4" />
                                             <h3 className="text-lg font-medium text-neutral-900 mb-2">Không có khách hàng</h3>
@@ -418,108 +242,6 @@ export default function CustomerManage() {
                 }}
                 editing={cm.editing}
             />
-
-            {showImportModal && (
-                <div
-                    className="import-modal-backdrop"
-                    onClick={() => {
-                        if (!cm.isImportingFile) {
-                            setShowImportModal(false);
-                            setIsDraggingFile(false);
-                        }
-                    }}
-                >
-                    <div className="import-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="import-modal-header">
-                            <div>
-                                <h3>Nhập file khách hàng</h3>
-                                <p>Hỗ trợ .xlsx, .xls, .csv, .json. Khuyên dùng file mẫu .xlsx.</p>
-                            </div>
-                            <button
-                                type="button"
-                                className="import-close-btn"
-                                onClick={() => {
-                                    if (!cm.isImportingFile) {
-                                        setShowImportModal(false);
-                                        setIsDraggingFile(false);
-                                    }
-                                }}
-                                disabled={cm.isImportingFile}
-                            >
-                                <X size={18} />
-                            </button>
-                        </div>
-
-                        <div className="import-modal-hero">
-                            <p>Tải file mẫu để có sẵn cột chuẩn và mã khách hàng kế tiếp.</p>
-                            <div className="import-field-tags">
-                                <span>Mã khách hàng</span>
-                                <span>Họ tên</span>
-                                <span>Mật khẩu</span>
-                                <span>Số điện thoại</span>
-                                <span>Email</span>
-                                <span>Vai trò</span>
-                            </div>
-                        </div>
-
-                        <div
-                            className={`import-dropzone ${isDraggingFile ? "dragging" : ""} ${cm.isImportingFile ? "disabled" : ""}`}
-                            onDragOver={(e) => {
-                                e.preventDefault();
-                                if (!cm.isImportingFile) setIsDraggingFile(true);
-                            }}
-                            onDragLeave={(e) => {
-                                e.preventDefault();
-                                setIsDraggingFile(false);
-                            }}
-                            onDrop={onDropFile}
-                        >
-                            {cm.isImportingFile ? (
-                                <>
-                                    <Loader2 size={28} className="animate-spin" />
-                                    <p>Đang import file, vui lòng chờ...</p>
-                                </>
-                            ) : (
-                                <>
-                                    <Upload size={28} />
-                                    <p>Kéo thả file vào đây hoặc chọn file từ máy</p>
-                                    <small>File mẫu đã có sẵn cột đúng chuẩn để nhập nhanh.</small>
-                                    <button type="button" className="import-action-btn" onClick={onPickFile}>
-                                        <FileSpreadsheet size={16} />
-                                        Chọn file để import
-                                    </button>
-                                </>
-                            )}
-                        </div>
-
-                        <div className="import-modal-actions">
-                            <button
-                                type="button"
-                                className="import-template-btn"
-                                onClick={downloadTemplateFile}
-                                disabled={cm.isImportingFile}
-                            >
-                                <Download size={16} />
-                                Tải file mẫu
-                            </button>
-
-                            <button
-                                type="button"
-                                className="import-cancel-btn"
-                                onClick={() => {
-                                    if (!cm.isImportingFile) {
-                                        setShowImportModal(false);
-                                        setIsDraggingFile(false);
-                                    }
-                                }}
-                                disabled={cm.isImportingFile}
-                            >
-                                Đóng
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

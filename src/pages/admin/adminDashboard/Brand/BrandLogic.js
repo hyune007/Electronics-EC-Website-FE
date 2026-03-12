@@ -188,20 +188,13 @@ export function useBrandLogic() {
     const fetchBrands = useCallback(async () => {
         setLoading(true);
         try {
-            // Try localStorage cache first
             const cachedBrands = getCachedBrands();
             if (cachedBrands) {
-                console.log("Loading brands from cache...");
                 setBrands(cachedBrands);
                 setLoading(false);
                 return;
             }
-
-            console.log("Fetching brands from API...");
             const data = await getAllBrands();
-            console.log("Brands loaded:", data);
-            
-            // Cache the data
             setCachedBrands(data);
             setBrands(data);
         } catch (err) {
@@ -338,10 +331,11 @@ export function useBrandLogic() {
                 setBrands((prev) => [payload, ...prev]);
             }
             
-            // Clear cache and reload
             clearBrandCache();
-            fetchBrands();
-            
+            const freshBrands = await getAllBrands();
+            setCachedBrands(freshBrands);
+            setBrands(freshBrands);
+
             setOpenForm(false);
             showToast(editing ? "Cập nhật thương hiệu thành công" : "Thêm thương hiệu thành công", "success");
         } catch (err) {
@@ -359,10 +353,11 @@ export function useBrandLogic() {
         setDeletingId(id);
         try {
             await deleteBrand(id);
-            
-            // Clear cache and reload
+
             clearBrandCache();
-            await fetchBrands();
+            const freshBrands = await getAllBrands();
+            setCachedBrands(freshBrands);
+            setBrands(freshBrands);
             showToast("Xóa thương hiệu thành công", "success");
         } catch (err) {
             console.error(err);
@@ -383,7 +378,9 @@ export function useBrandLogic() {
             const failed = results.length - success;
 
             clearBrandCache();
-            await fetchBrands();
+            const freshBrands = await getAllBrands();
+            setCachedBrands(freshBrands);
+            setBrands(freshBrands);
 
             if (failed === 0) {
                 showToast(`Đã xóa ${success} thương hiệu`, "success");

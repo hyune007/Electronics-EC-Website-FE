@@ -22,6 +22,7 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth.js";
 import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
+import * as XLSX from "xlsx";
 import "./Product.css";
 
 export default function ProductManage() {
@@ -64,8 +65,7 @@ export default function ProductManage() {
 
     const toProductCode = (num) => `SP${String(num).padStart(3, "0")}`;
 
-    const downloadTemplateFile = async () => {
-        const XLSX = await import("xlsx");
+    const downloadTemplateFile = () => {
         const loadedMaxId = (pm.products || []).reduce((max, p) => {
             const value = getProductIdNum(p?.sp_id);
             return Math.max(max, Number.isNaN(value) ? 0 : value);

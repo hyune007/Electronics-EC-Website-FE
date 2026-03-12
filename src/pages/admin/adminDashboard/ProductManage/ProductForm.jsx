@@ -106,7 +106,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isSubmit
 
                             <div>
                                 <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                    Số lượng tồn kho <span className="text-red-500">*</span>
+                                    Số lượng tồn kho
                                 </label>
                                 <div className="relative">
                                     <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400" size={18} />
@@ -114,13 +114,16 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isSubmit
                                         type="number"
                                         name="stock"
                                         value={form.stock}
-                                        onChange={change}
                                         placeholder="0"
                                         min="0"
-                                        className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
-                                        required
+                                        readOnly
+                                        disabled
+                                        className="w-full pl-10 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-xl text-neutral-700 disabled:opacity-100"
                                     />
                                 </div>
+                                <p className="text-xs text-neutral-500 mt-1">
+                                    Tồn kho được tự động cập nhật theo Quản lý nhập kho.
+                                </p>
                             </div>
                         </div>
                     </div>
