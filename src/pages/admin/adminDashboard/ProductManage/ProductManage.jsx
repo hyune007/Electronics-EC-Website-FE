@@ -22,7 +22,6 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth.js";
 import PaginationComponent from "../../../../components/common/PaginationComponent.jsx";
-import * as XLSX from "xlsx";
 import "./Product.css";
 
 export default function ProductManage() {
@@ -65,7 +64,8 @@ export default function ProductManage() {
 
     const toProductCode = (num) => `SP${String(num).padStart(3, "0")}`;
 
-    const downloadTemplateFile = () => {
+    const downloadTemplateFile = async () => {
+        const XLSX = await import("xlsx");
         const loadedMaxId = (pm.products || []).reduce((max, p) => {
             const value = getProductIdNum(p?.sp_id);
             return Math.max(max, Number.isNaN(value) ? 0 : value);
@@ -324,6 +324,7 @@ export default function ProductManage() {
                                 <th className="text-center">Kho</th>
                                 <th>Danh mục</th>
                                 <th>Thương hiệu</th>
+                                <th>Khuyến mãi</th>
                                 <th className="text-center">Ảnh</th>
                                 <th className="text-center">Hành động</th>
                             </tr>
@@ -400,10 +401,18 @@ export default function ProductManage() {
                                         </td>
 
                                         <td className="text-right font-medium">
-                                            {p.sp_price.toLocaleString(
-                                                "vi-VN"
-                                            )}{" "}
-                                            ₫
+                                            {p?.sp_discountedPrice && p.sp_discountedPrice < p.sp_price ? (
+                                                <>
+                                                    <span className="line-through text-gray-400 mr-2">
+                                                        {p.sp_price.toLocaleString("vi-VN")} ₫
+                                                    </span>
+                                                    <span className="text-red-600 font-semibold">
+                                                        {p.sp_discountedPrice.toLocaleString("vi-VN")} ₫
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span>{p.sp_price.toLocaleString("vi-VN")} ₫</span>
+                                            )}
                                         </td>
 
                                         <td className="text-center">
@@ -428,6 +437,12 @@ export default function ProductManage() {
                                         <td>
                                             <span className="badge-primary">
                                                 {p.sp_brand_name}
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span className="badge-warning">
+                                                {p.sp_promotion_name}
                                             </span>
                                         </td>
 
@@ -521,6 +536,7 @@ export default function ProductManage() {
                 isSubmitting={pm.isSubmitting}
                 brands={pm.brands}
                 categories={pm.categories}
+                promotions={pm.promotions}
             />
 
             {showImportModal && (

@@ -47,37 +47,40 @@ function clearOrderCache() {
   }
 }
 
-// Shared mapping helper – keeps loadOrders and handleUpdateStatus in sync
 function mapBillsToOrders(bills) {
   return (bills || []).map((bill) => {
     const rawStatus = bill.status || "";
+
     let status = rawStatus;
-    if (rawStatus === "Chờ xác nhận")       status = "PENDING";
+    if (rawStatus === "Chờ xác nhận") status = "PENDING";
     else if (rawStatus === "Đơn đang chờ giao") status = "PENDING";
-    else if (rawStatus === "Đang giao")      status = "PENDING";
-    else if (rawStatus === "Đã giao")        status = "COMPLETED";
-    else if (rawStatus === "Đã hủy")         status = "CANCELLED";
+    else if (rawStatus === "Đang giao") status = "PENDING";
+    else if (rawStatus === "Đã giao") status = "COMPLETED";
+    else if (rawStatus === "Đã hủy") status = "CANCELLED";
+
     const createdAt = bill.date
       ? new Date(bill.date).toISOString().slice(0, 10)
       : "";
+
     const addressParts = [
       bill.address?.detailAddress,
       bill.address?.ward,
       bill.address?.city,
     ].filter(Boolean);
+
     return {
-      order_id:       bill.id || "",
-      customer_name:  bill.customer?.name || "N/A",
-      customer_id:    bill.customer?.id || "",
+      order_id: bill.id || "",
+      customer_name: bill.customer?.name || "N/A",
+      customer_id: bill.customer?.id || "",
       customer_phone: bill.customer?.phone || "",
-      total_amount:   bill.totalAmount || 0,
+      total_amount: bill.totalAmount || 0,
       status,
-      raw_status:     rawStatus,
-      created_at:     createdAt,
+      raw_status: rawStatus,
+      created_at: createdAt,
       payment_method: bill.paymentMethod || "",
-      address_id:     bill.address?.id || "",
+      address_id: bill.address?.id || "",
       address_detail: addressParts.join(", "),
-      employee_id:    bill.employee?.id || "",
+      employee_id: bill.employee?.id || "",
     };
   });
 }
@@ -93,7 +96,7 @@ export function useOrderLogic() {
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 8;
 
-  /* ================= LOAD DATA ================= */
+  /* ================= LOAD ORDERS ================= */
   const loadOrders = useCallback(async () => {
     const cachedOrders = getCachedOrders();
     if (cachedOrders) {
@@ -109,15 +112,16 @@ export function useOrderLogic() {
         .catch((error) => {
           console.error("Background refresh orders failed:", error);
         });
+      setLoading(false);
       return;
     }
 
+    // Load from API
+    setLoading(true);
     try {
-      setLoading(true);
       const response = await getAllBills();
       const bills = response.data || [];
       const mappedOrders = mapBillsToOrders(bills);
-
       setCachedOrders(mappedOrders);
       setOrders(mappedOrders);
     } catch (error) {

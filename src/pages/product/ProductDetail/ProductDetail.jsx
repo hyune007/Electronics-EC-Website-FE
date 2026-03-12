@@ -64,7 +64,7 @@ export default function ProductDetail() {
   };
 
   useEffect(() => {
-    prefetchAllProducts().catch(() => {});
+    prefetchAllProducts().catch(() => { });
   }, [prefetchAllProducts]);
 
   useEffect(() => {
@@ -170,9 +170,8 @@ export default function ProductDetail() {
                 {[1, 2, 3, 4, 5].map((star) => (
                   <span
                     key={star}
-                    className={`material-symbols-outlined ${
-                      star <= Math.round(reviewStats.average) ? "filled" : ""
-                    }`}
+                    className={`material-symbols-outlined ${star <= Math.round(reviewStats.average) ? "filled" : ""
+                      }`}
                   >
                     star
                   </span>
@@ -187,10 +186,20 @@ export default function ProductDetail() {
               </span>
             </div>
             <div className="text-base font-bold text-primary dark:text-white mb-2">
-              {product?.price || "0"} VNĐ
-              <span className="text-[10px] text-slate-400 line-through ml-3 font-normal">
-                31,990,000 VNĐ
-              </span>
+              <div className="text-base font-bold text-primary dark:text-white mb-2">
+                {product?.discountedPrice && product.discountedPrice < product.price ? (
+                  <>
+                    {product.discountedPrice.toLocaleString("vi-VN")} VNĐ
+                    <span className="text-[10px] text-slate-400 line-through ml-3 font-normal">
+                      {product.price.toLocaleString("vi-VN")} VNĐ
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    {product?.price?.toLocaleString("vi-VN") || "0"} VNĐ
+                  </>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex flex-col gap-4">

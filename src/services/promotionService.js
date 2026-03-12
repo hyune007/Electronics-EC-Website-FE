@@ -1,6 +1,27 @@
  const API_URL = "http://localhost:8080/api/promotion";
 //const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/promotion";
 
+function mapPromotion(p) {
+    return {
+        km_id: p.id,
+        km_name: p.name,
+        km_description: p.description,
+        km_percent: p.discountPercentage,
+        km_start_date: p.startDate,
+        km_end_date: p.endDate
+    };
+}
+
+function isPromotionActive(promotion) {
+    const now = new Date();
+    const start = promotion?.km_start_date ? new Date(promotion.km_start_date) : null;
+    const end = promotion?.km_end_date ? new Date(promotion.km_end_date) : null;
+
+    if (start && !Number.isNaN(start.getTime()) && now < start) return false;
+    if (end && !Number.isNaN(end.getTime()) && now > end) return false;
+    return true;
+}
+
 // Helper to get auth token
 function getAuthHeaders() {
     const token = localStorage.getItem('authToken');
@@ -20,14 +41,31 @@ export async function getAllPromotions() {
         const data = await res.json();
 
         // MAP BE → FE
-        return data.map(p => ({
-            km_id: p.id,
-            km_name: p.name,
-            km_description: p.description,
-            km_percent: p.discountPercentage,
-            km_start_date: p.startDate,
-            km_end_date: p.endDate
-        }));
+        return data.map(mapPromotion);
+    } catch (error) {
+        console.error("Get all promotions failed:", error);
+        throw error;
+    }
+}
+
+export async function getAllActivePromotions() {
+    try {
+        const res = await fetch(`${API_URL}/active`, {
+            headers: getAuthHeaders()
+        });
+
+        // Some BE branches do not expose /active yet.
+        if (res.status === 404) {
+            const all = await getAllPromotions();
+            return all.filter(isPromotionActive);
+        }
+
+        if (!res.ok) throw new Error("Không lấy được danh sách voucher");
+
+        const data = await res.json();
+
+        // MAP BE → FE
+        return data.map(mapPromotion);
     } catch (error) {
         console.error("Get all promotions failed:", error);
         throw error;

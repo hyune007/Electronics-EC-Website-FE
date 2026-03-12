@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { getProductsByPage, getAllProducts, createProduct, updateProduct, deleteProduct } from "../../../../services/productService";
 import { getAllBrands } from "../../../../services/brandService";
 import { getAllCategories } from "../../../../services/categoryService";
-import * as XLSX from "xlsx";
+import { getAllPromotions } from "../../../../services/promotionService";
 import { showToast } from "../../../../utils/adminToast";
 import { getCache, setCache, removeCache, removeCacheByPrefix } from "../../../../utils/localCache";
 
@@ -40,15 +40,17 @@ function sortProducts(list, sortBy) {
             case "name_za":
                 return String(b.sp_name || "").localeCompare(String(a.sp_name || ""), "vi", { sensitivity: "base" });
             case "price_desc":
-                return Number(b.sp_price || 0) - Number(a.sp_price || 0);
+                return Number(b.sp_discountedPrice || b.sp_price || 0)
+                    - Number(a.sp_discountedPrice || a.sp_price || 0);
             case "price_asc":
-                return Number(a.sp_price || 0) - Number(b.sp_price || 0);
+                return Number(a.sp_discountedPrice || a.sp_price || 0)
+                    - Number(b.sp_discountedPrice || b.sp_price || 0);
             case "stock_desc":
                 return Number(b.sp_stock || 0) - Number(a.sp_stock || 0);
             case "stock_asc":
                 return Number(a.sp_stock || 0) - Number(b.sp_stock || 0);
             case "value_desc":
-                return (Number(b.sp_price || 0) * Number(b.sp_stock || 0)) - (Number(a.sp_price || 0) * Number(a.sp_stock || 0));
+                return (Number(b.sp_discountedPrice || b.sp_price || 0) * Number(b.sp_stock || 0)) - (Number(a.sp_discountedPrice || a.sp_price || 0) * Number(a.sp_stock || 0));
             case "low_stock_first":
                 return Number(a.sp_stock || 0) - Number(b.sp_stock || 0);
             case "newest_id":
@@ -66,13 +68,67 @@ const PRODUCT_STATS_CACHE_KEY = "product_stats_v1";
 const PRODUCT_STATS_CACHE_TTL = 10 * 60 * 1000;
 const BG_PAGE_SIZE = 100;
 const BG_PAGE_CONCURRENCY = 4;
+const PRODUCT_PROMOTION_OVERRIDE_KEY = "product_promotion_override_v1";
+
+function getPromotionOverrides() {
+    try {
+        return JSON.parse(localStorage.getItem(PRODUCT_PROMOTION_OVERRIDE_KEY) || "{}");
+    } catch {
+        return {};
+    }
+}
+
+function savePromotionOverrides(overrides) {
+    try {
+        localStorage.setItem(PRODUCT_PROMOTION_OVERRIDE_KEY, JSON.stringify(overrides || {}));
+    } catch {
+        // Ignore storage write errors.
+    }
+}
+
+function setPromotionOverride(productId, promotionId, promotionName = "") {
+    if (!productId || !promotionId) return;
+    const overrides = getPromotionOverrides();
+    overrides[String(productId)] = {
+        id: String(promotionId),
+        name: String(promotionName || "")
+    };
+    savePromotionOverrides(overrides);
+}
+
+function removePromotionOverride(productId) {
+    if (!productId) return;
+    const overrides = getPromotionOverrides();
+    delete overrides[String(productId)];
+    savePromotionOverrides(overrides);
+}
+
+function applyPromotionOverrides(products) {
+    const overrides = getPromotionOverrides();
+    return (products || []).map((item) => {
+        const key = String(item?.sp_id || "");
+        const override = overrides[key];
+        if (!override) return item;
+
+        const hasId = String(item?.sp_promotion_id || "").trim() !== "";
+        const hasName = String(item?.sp_promotion_name || "").trim() !== "";
+
+        if (hasId && hasName) return item;
+
+        return {
+            ...item,
+            sp_promotion_id: hasId ? item.sp_promotion_id : override.id,
+            sp_promotion_name: hasName ? item.sp_promotion_name : (override.name || override.id)
+        };
+    });
+}
 
 function getCachedPage(pageNum) {
     return getCache(`${CACHE_KEY_PREFIX}${pageNum}`, PRODUCT_PAGE_CACHE_TTL);
 }
 
 function setCachedPage(pageNum, data) {
-    setCache(`${CACHE_KEY_PREFIX}${pageNum}`, data);
+setCache(`${CACHE_KEY_PREFIX}${pageNum}`, data);
 }
 
 function toUiProduct(prod) {
@@ -81,6 +137,7 @@ function toUiProduct(prod) {
         sp_id: prod.id,
         sp_name: prod.name,
         sp_price: Number(prod.price ?? 0),
+        sp_discountedPrice: Number(prod.discountedPrice ?? prod.price ?? 0),
         sp_stock: Number(prod.stock ?? 0),
         sp_desc: prod.description ?? "",
         sp_image: prod.image ?? "",
@@ -88,13 +145,18 @@ function toUiProduct(prod) {
         sp_brand_id: prod.brand?.id ?? "",
         sp_brand_name: prod.brand?.name ?? "",
         sp_category_id: prod.category?.id ?? "",
-        sp_category_name: prod.category?.name ?? ""
+        sp_category_name: prod.category?.name ?? "",
+        sp_promotion_id: prod.promotion?.id ?? "",
+        sp_promotion_name: prod.promotion?.name ?? ""
     };
 }
 
 function computeGlobalStats(list) {
     const totalProducts = list.length;
-    const totalValue = list.reduce((s, p) => s + (Number(p.sp_price || 0) * Number(p.sp_stock || 0)), 0);
+    const totalValue = list.reduce(
+        (s, p) => s + (Number(p.sp_discountedPrice || p.sp_price || 0) * Number(p.sp_stock || 0)),
+        0
+    );
     const totalStock = list.reduce((s, p) => s + Number(p.sp_stock || 0), 0);
     const lowStock = list.filter((p) => Number(p.sp_stock || 0) > 0 && Number(p.sp_stock || 0) < 10).length;
     const outOfStock = list.filter((p) => Number(p.sp_stock || 0) <= 0).length;
@@ -167,7 +229,8 @@ function parseCsv(text) {
     });
 }
 
-function parseExcel(arrayBuffer) {
+async function parseExcel(arrayBuffer) {
+    const XLSX = await import("xlsx");
     const workbook = XLSX.read(arrayBuffer, { type: "array" });
     const firstSheetName = workbook.SheetNames?.[0];
     if (!firstSheetName) return [];
@@ -227,7 +290,8 @@ export function useProductManageLogic() {
         description: "",
         image: "",
         brandId: "",
-        categoryId: ""
+        categoryId: "",
+        promotionId: ""
     });
 
     const [allProducts, setAllProducts] = useState([]); // To keep all products for stats and search
@@ -247,6 +311,8 @@ export function useProductManageLogic() {
     const [allBrands, setAllBrands] = useState([]); // Lưu tất cả brands
     const [categories, setCategories] = useState([]);
     const [allCategories, setAllCategories] = useState([]); // Lưu tất cả categories
+    const [promotions, setPromotions] = useState([]);
+    const [allPromotions, setAllPromotions] = useState([]); // Lưu tất cả promotions
 
     useEffect(() => {
         const cachedStats = getCache(PRODUCT_STATS_CACHE_KEY, PRODUCT_STATS_CACHE_TTL);
@@ -287,6 +353,20 @@ export function useProductManageLogic() {
             }
         };
         loadCategories();
+    }, []);
+
+    useEffect(() => {
+        const loadPromotions = async () => {
+            try {
+                const promotionList = await getAllPromotions();
+                setAllPromotions(promotionList);
+                setPromotions(promotionList);
+            } catch (err) {
+                console.error("Failed to load promotions:", err);
+            }
+        };
+
+        loadPromotions();
     }, []);
 
     /* ================= NO BRAND FILTER ================= */
@@ -344,7 +424,7 @@ export function useProductManageLogic() {
             // Try localStorage cache first
             const cachedPage = getCachedPage(pageNum);
             if (cachedPage) {
-                setProducts(cachedPage.products);
+                setProducts(applyPromotionOverrides(cachedPage.products));
                 setTotalElements(cachedPage.totalElements);
                 cacheRef.current[cacheKey] = cachedPage;
                 setLoading(false);
@@ -353,7 +433,7 @@ export function useProductManageLogic() {
 
             // Check memory cache
             if (cacheRef.current[cacheKey]) {
-                setProducts(cacheRef.current[cacheKey].products);
+                setProducts(applyPromotionOverrides(cacheRef.current[cacheKey].products));
                 setTotalElements(cacheRef.current[cacheKey].totalElements);
                 setLoading(false);
                 return;
@@ -362,10 +442,11 @@ export function useProductManageLogic() {
             const res = await getProductsByPage(pageNum - 1, pageSize);
 
             // Map data to UI format
-            const mapped = res.products.map(p => ({
+            const mappedRaw = res.products.map(p => ({
                 sp_id: p.id,
                 sp_name: p.name,
                 sp_price: p.price ?? 0,
+                sp_discountedPrice: p.discountedPrice ?? p.price ?? 0,
                 sp_stock: p.stock ?? 0,
                 sp_desc: p.description ?? "",
                 sp_image: p.image ?? "",
@@ -373,8 +454,11 @@ export function useProductManageLogic() {
                 sp_brand_id: p.brand?.id ?? "",
                 sp_brand_name: p.brand?.name ?? "",
                 sp_category_id: p.category?.id ?? "",
-                sp_category_name: p.category?.name ?? ""
+                sp_category_name: p.category?.name ?? "",
+                sp_promotion_id: p.promotion?.id ?? "",
+                sp_promotion_name: p.promotion?.name ?? ""
             }));
+            const mapped = applyPromotionOverrides(mappedRaw);
 
             const pageData = {
                 products: mapped,
@@ -418,7 +502,7 @@ export function useProductManageLogic() {
                 }
             }
 
-            const mappedAll = allLoadedProducts.map(toUiProduct);
+            const mappedAll = applyPromotionOverrides(allLoadedProducts.map(toUiProduct));
 
             // Xóa trùng lặp (nếu có) do sai sót logic BE
             const uniqueProducts = Array.from(new Map(mappedAll.map(p => [p.sp_id, p])).values());
@@ -502,7 +586,8 @@ export function useProductManageLogic() {
                 description: "",
                 image: "",
                 brandId: "",
-                categoryId: ""
+                categoryId: "",
+                promotionId: ""
             });
             setOpenForm(true);
         } catch (err) {
@@ -521,160 +606,173 @@ export function useProductManageLogic() {
             description: p.sp_desc,
             image: p.sp_raw_image, // Lấy đường dẫn gốc thay vì đường dẫn đã gán localhost
             brandId: p.sp_brand_id,
-            categoryId: p.sp_category_id
+            categoryId: p.sp_category_id,
+            promotionId: p.sp_promotion_id
         });
         setOpenForm(true);
     };
 
-    const normalizeImportRows = (rows) => {
-        const brandByName = new Map(allBrands.map((b) => [String(b.hang_name || b.name || "").toLowerCase(), String(b.hang_id || b.id || "")]));
-        const validBrandIds = new Set(allBrands.map((b) => String(b.hang_id || b.id || "")));
-        const categoryByName = new Map(allCategories.map((c) => [String(c.name || "").toLowerCase(), String(c.id || "")]));
-        const validCategoryIds = new Set(allCategories.map((c) => String(c.id || "")));
+const normalizeImportRows = (rows) => {
+    const brandByName = new Map(allBrands.map((b) => [String(b.hang_name || b.name || "").toLowerCase(), String(b.hang_id || b.id || "")]));
+    const validBrandIds = new Set(allBrands.map((b) => String(b.hang_id || b.id || "")));
+    const categoryByName = new Map(allCategories.map((c) => [String(c.name || "").toLowerCase(), String(c.id || "")]));
+    const validCategoryIds = new Set(allCategories.map((c) => String(c.id || "")));
+    const promotionByName = new Map(allPromotions.map((p) => [String(p.km_name || p.name || "").toLowerCase(), String(p.km_id || p.id || "")]));
+    const validPromotionIds = new Set(allPromotions.map((p) => String(p.km_id || p.id || "")));
 
-        const normalizeHeader = (value) => String(value || "")
-            .normalize("NFD")
-            .replace(/\p{Diacritic}/gu, "")
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "");
+    const normalizeHeader = (value) => String(value || "")
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
 
-        return rows.map((row, index) => {
-            const normalizedRow = new Map(
-                Object.entries(row || {}).map(([key, value]) => [normalizeHeader(key), value]),
-            );
+    return rows.map((row, index) => {
+        const normalizedRow = new Map(
+            Object.entries(row || {}).map(([key, value]) => [normalizeHeader(key), value]),
+        );
 
-            const pick = (aliases) => {
-                for (const alias of aliases) {
-                    const direct = row?.[alias];
-                    if (direct !== undefined && direct !== null && String(direct).trim() !== "") {
-                        return direct;
-                    }
-
-                    const normalized = normalizedRow.get(normalizeHeader(alias));
-                    if (normalized !== undefined && normalized !== null && String(normalized).trim() !== "") {
-                        return normalized;
-                    }
+        const pick = (aliases) => {
+            for (const alias of aliases) {
+                const direct = row?.[alias];
+                if (direct !== undefined && direct !== null && String(direct).trim() !== "") {
+                    return direct;
                 }
-                return "";
-            };
 
-            const brandIdRaw = pick([
-                "brandId", "brand_id", "brand", "brandname", "thuonghieu", "thương hiệu", "hang", "hãng",
-            ]);
+                const normalized = normalizedRow.get(normalizeHeader(alias));
+                if (normalized !== undefined && normalized !== null && String(normalized).trim() !== "") {
+                    return normalized;
+                }
+            }
+            return "";
+        };
 
-            const categoryIdRaw = pick([
-                "categoryId", "category_id", "category", "categoryname", "danhmuc", "danh mục", "loai", "loại",
-            ]);
+        const brandIdRaw = pick([
+            "brandId", "brand_id", "brand", "brandname", "thuonghieu", "thương hiệu", "hang", "hãng",
+        ]);
 
-            const normalizedBrand = String(brandIdRaw || "").trim();
-            const normalizedCategory = String(categoryIdRaw || "").trim();
+        const categoryIdRaw = pick([
+            "categoryId", "category_id", "category", "categoryname", "danhmuc", "danh mục", "loai", "loại",
+        ]);
 
-            const brandId = validBrandIds.has(normalizedBrand)
-                ? normalizedBrand
-                : (brandByName.get(normalizedBrand.toLowerCase()) || "");
+        const promotionIdRaw = pick([
+            "promotionId", "promotion_id", "promotion", "promotionname", "khuyenmai", "khuyến mãi",
+        ]);
 
-            const categoryId = validCategoryIds.has(normalizedCategory)
-                ? normalizedCategory
-                : (categoryByName.get(normalizedCategory.toLowerCase()) || "");
+        const normalizedBrand = String(brandIdRaw || "").trim();
+        const normalizedCategory = String(categoryIdRaw || "").trim();
+        const normalizedPromotion = String(promotionIdRaw || "").trim();
 
-            return {
-                rowNo: index + 2,
-                id: String(pick(["id", "sp_id", "ma", "mã", "ma san pham", "mã sản phẩm", "masanpham"]) || "").trim(),
-                name: String(pick(["name", "sp_name", "ten", "tên", "sanpham", "sản phẩm", "tensanpham"]) || "").trim(),
-                price: Number(pick(["price", "sp_price", "gia", "giá", "dongia", "đơn giá"]) || 0),
-                stock: Number(pick(["stock", "sp_stock", "kho", "soluong", "số lượng", "tonkho", "tồn kho"]) || 0),
-                description: String(pick(["description", "sp_desc", "mota", "mô tả"]) || "").trim(),
-                image: String(pick(["image", "sp_image", "anh", "ảnh", "hinhanh", "hình ảnh", "url"]) || "").trim(),
-                brandId,
-                categoryId,
-            };
-        });
-    };
+        const brandId = validBrandIds.has(normalizedBrand)
+            ? normalizedBrand
+            : (brandByName.get(normalizedBrand.toLowerCase()) || "");
 
-    const handleBulkImportFile = async (file) => {
-        if (!file) return;
+        const categoryId = validCategoryIds.has(normalizedCategory)
+            ? normalizedCategory
+            : (categoryByName.get(normalizedCategory.toLowerCase()) || "");
 
-        if (allBrands.length === 0 || allCategories.length === 0) {
-            showToast("Cần có dữ liệu thương hiệu và danh mục trước khi import", "warning", 3400);
+        const promotionId = validPromotionIds.has(normalizedPromotion)
+            ? normalizedPromotion
+            : (promotionByName.get(normalizedPromotion.toLowerCase()) || "");
+
+        return {
+            rowNo: index + 2,
+            id: String(pick(["id", "sp_id", "ma", "mã", "ma san pham", "mã sản phẩm", "masanpham"]) || "").trim(),
+            name: String(pick(["name", "sp_name", "ten", "tên", "sanpham", "sản phẩm", "tensanpham"]) || "").trim(),
+            price: Number(pick(["price", "sp_price", "gia", "giá", "dongia", "đơn giá"]) || 0),
+            stock: Number(pick(["stock", "sp_stock", "kho", "soluong", "số lượng", "tonkho", "tồn kho"]) || 0),
+            description: String(pick(["description", "sp_desc", "mota", "mô tả"]) || "").trim(),
+            image: String(pick(["image", "sp_image", "anh", "ảnh", "hinhanh", "hình ảnh", "url"]) || "").trim(),
+            brandId,
+            categoryId,
+            promotionId,
+        };
+    });
+};
+
+const handleBulkImportFile = async (file) => {
+    if (!file) return;
+
+    if (allBrands.length === 0 || allCategories.length === 0) {
+        showToast("Cần có dữ liệu thương hiệu và danh mục trước khi import", "warning", 3400);
+        return;
+    }
+
+    setIsImportingFile(true);
+
+    try {
+        const lowerName = String(file.name || "").toLowerCase();
+
+        let rawRows = [];
+        if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+            const buffer = await file.arrayBuffer();
+            rawRows = await parseExcel(buffer);
+        } else if (lowerName.endsWith(".json")) {
+            const text = await file.text();
+            const parsed = JSON.parse(text);
+            rawRows = Array.isArray(parsed) ? parsed : [];
+        } else {
+            const text = await file.text();
+            rawRows = parseCsv(text);
+        }
+
+        if (!Array.isArray(rawRows) || rawRows.length === 0) {
+            showToast("File không có dữ liệu hợp lệ", "warning");
             return;
         }
 
-        setIsImportingFile(true);
+        const rows = normalizeImportRows(rawRows);
+        const invalidRows = rows.filter((row) => {
+            return !row.id || !row.name || row.price <= 0 || row.stock < 0 || !row.brandId || !row.categoryId;
+        });
 
-        try {
-            const lowerName = String(file.name || "").toLowerCase();
-
-            let rawRows = [];
-            if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
-                const buffer = await file.arrayBuffer();
-                rawRows = parseExcel(buffer);
-            } else if (lowerName.endsWith(".json")) {
-                const text = await file.text();
-                const parsed = JSON.parse(text);
-                rawRows = Array.isArray(parsed) ? parsed : [];
-            } else {
-                const text = await file.text();
-                rawRows = parseCsv(text);
-            }
-
-            if (!Array.isArray(rawRows) || rawRows.length === 0) {
-                showToast("File không có dữ liệu hợp lệ", "warning");
-                return;
-            }
-
-            const rows = normalizeImportRows(rawRows);
-            const invalidRows = rows.filter((row) => {
-                return !row.id || !row.name || row.price <= 0 || row.stock < 0 || !row.brandId || !row.categoryId;
-            });
-
-            if (invalidRows.length > 0) {
-                showToast(`Có ${invalidRows.length} dòng lỗi dữ liệu. Vui lòng kiểm tra lại file.`, "warning", 4200);
-                return;
-            }
-
-            const results = await runWithConcurrency(rows, 3, async (row) => {
-                try {
-                    await createProduct({
-                        id: row.id,
-                        name: row.name,
-                        price: row.price,
-                        stock: row.stock,
-                        description: row.description,
-                        image: row.image,
-                        brandId: row.brandId,
-                        categoryId: row.categoryId,
-                    });
-                    return { ok: true };
-                } catch (error) {
-                    return { ok: false, message: error?.message || "Lỗi tạo sản phẩm" };
-                }
-            });
-
-            const success = results.filter((r) => r.ok).length;
-            const failed = results.length - success;
-
-            cacheRef.current = {};
-            removeCacheByPrefix(CACHE_KEY_PREFIX);
-            removeCache(PRODUCT_STATS_CACHE_KEY);
-            setAllProducts([]);
-
-            await loadProductsPage(1, false);
-            setPage(1);
-            loadAllInBackground();
-
-            if (failed === 0) {
-                showToast(`Import thành công ${success} sản phẩm`, "success");
-            } else {
-                showToast(`Import xong: ${success} thành công, ${failed} thất bại`, "warning", 4200);
-            }
-        } catch (err) {
-            console.error("Bulk import failed:", err);
-            showToast("Import file thất bại. Hỗ trợ: XLSX, XLS, CSV, JSON.", "error", 3600);
-        } finally {
-            setIsImportingFile(false);
+        if (invalidRows.length > 0) {
+            showToast(`Có ${invalidRows.length} dòng lỗi dữ liệu. Vui lòng kiểm tra lại file.`, "warning", 4200);
+            return;
         }
-    };
 
+        const results = await runWithConcurrency(rows, 3, async (row) => {
+            try {
+                await createProduct({
+                    id: row.id,
+                    name: row.name,
+                    price: row.price,
+                    stock: row.stock,
+                    description: row.description,
+                    image: row.image,
+                    brandId: row.brandId,
+                    categoryId: row.categoryId,
+                    promotionId: row.promotionId || null
+                });
+                return { ok: true };
+            } catch (error) {
+                return { ok: false, message: error?.message || "Lỗi tạo sản phẩm" };
+            }
+        });
+
+        const success = results.filter((r) => r.ok).length;
+        const failed = results.length - success;
+
+        cacheRef.current = {};
+        removeCacheByPrefix(CACHE_KEY_PREFIX);
+        removeCache(PRODUCT_STATS_CACHE_KEY);
+        setAllProducts([]);
+
+        await loadProductsPage(1, false);
+        setPage(1);
+        loadAllInBackground();
+
+        if (failed === 0) {
+            showToast(`Import thành công ${success} sản phẩm`, "success");
+        } else {
+            showToast(`Import xong: ${success} thành công, ${failed} thất bại`, "warning", 4200);
+        }
+    } catch (err) {
+        console.error("Bulk import failed:", err);
+        showToast("Import file thất bại. Hỗ trợ: XLSX, XLS, CSV, JSON.", "error", 3600);
+    } finally {
+        setIsImportingFile(false);
+    }
+};
     const handleSubmit = async () => {
         console.log("=== Product Form Submission ===");
         console.log("Form data before validation:", form);
@@ -764,7 +862,8 @@ export function useProductManageLogic() {
             ...form,
             name: form.name.trim(),
             description: form.description.trim(),
-            image: finalImage
+            image: finalImage,
+            promotionId: form.promotionId || null
         };
 
         console.log("=== Payload to submit ===");
@@ -772,6 +871,11 @@ export function useProductManageLogic() {
 
         setIsSubmitting(true);
         try {
+            const targetProductId = editing?.sp_id || payload.id;
+            const selectedPromotion = allPromotions.find(
+                (km) => String(km.km_id || km.id || "") === String(payload.promotionId || "")
+            );
+
             if (editing) {
                 await updateProduct(editing.sp_id, payload);
                 showToast("Cập nhật sản phẩm thành công", "success");
@@ -828,16 +932,20 @@ export function useProductManageLogic() {
                     });
                 }
             }
+
+            if (payload.promotionId) {
+                setPromotionOverride(targetProductId, payload.promotionId, selectedPromotion?.km_name || selectedPromotion?.name || "");
+            } else {
+                removePromotionOverride(targetProductId);
+            }
+
             setOpenForm(false);
 
             // Clear all cache to ensure correct data and pagination
             cacheRef.current = {};
-            removeCacheByPrefix(CACHE_KEY_PREFIX);
-
-            if (editing) {
-                removeCache(PRODUCT_STATS_CACHE_KEY);
-                setAllProducts([]);
-            }
+removeCacheByPrefix(CACHE_KEY_PREFIX);
+removeCache(PRODUCT_STATS_CACHE_KEY);
+setAllProducts([]);
 
             if (editing) {
                 await loadProductsPage(page, false);
@@ -871,6 +979,7 @@ export function useProductManageLogic() {
         setDeletingId(sp_id);
         try {
             await deleteProduct(sp_id);
+            removePromotionOverride(sp_id);
 
             // Clear all cache to ensure correct data and pagination
             cacheRef.current = {};
@@ -909,14 +1018,15 @@ export function useProductManageLogic() {
             const results = await runWithConcurrency(uniqueIds, 3, async (id) => {
                 try {
                     await deleteProduct(id);
-                    return { ok: true };
+                    return { ok: true, id };
                 } catch (error) {
-                    return { ok: false, message: error?.message || "Lỗi xóa sản phẩm" };
+                    return { ok: false, id, message: error?.message || "Lỗi xóa sản phẩm" };
                 }
             });
 
             const success = results.filter((r) => r.ok).length;
             const failed = results.length - success;
+            results.filter((r) => r.ok).forEach((r) => removePromotionOverride(r.id));
 
             cacheRef.current = {};
             removeCacheByPrefix(CACHE_KEY_PREFIX);
@@ -975,6 +1085,7 @@ export function useProductManageLogic() {
         isImportingFile,
         brands,
         categories,
+        promotions,
         globalStats, // Thêm export globalStats
 
         openAdd,
