@@ -2,7 +2,13 @@ import React, { useEffect, useState } from "react";
 import { getBillDetails } from "../../../services/customer/billDetailServiceCustomer";
 import { formatVND } from "../../../utils/priceFormatter";
 
-export default function OrderDetailModal({ open, onClose, orderId, order, user }) {
+export default function OrderDetailModal({
+  open,
+  onClose,
+  orderId,
+  order,
+  user,
+}) {
   const [loading, setLoading] = useState(false);
   const [payload, setPayload] = useState(null);
 
@@ -32,10 +38,45 @@ export default function OrderDetailModal({ open, onClose, orderId, order, user }
       }
     };
     fetch();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [open, orderId, order]);
 
   if (!open) return null;
+
+  const getStatusBadge = (s) => {
+    const key = String(s || "").toLowerCase();
+    const base =
+      "px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-tight";
+    if (
+      key.includes("hủy") ||
+      key.includes("cancel") ||
+      key.includes("canceled")
+    )
+      return <span className={base + " bg-red-100 text-red-800"}>{s}</span>;
+    if (key.includes("giao") || key.includes("delivered"))
+      return <span className={base + " bg-green-100 text-green-800"}>{s}</span>;
+    if (
+      key.includes("vận") ||
+      key.includes("đang") ||
+      key.includes("pending") ||
+      key.includes("processing")
+    )
+      return (
+        <span className={base + " bg-yellow-100 text-yellow-800"}>{s}</span>
+      );
+    return (
+      <span
+        className={
+          base +
+          " bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100"
+        }
+      >
+        {s}
+      </span>
+    );
+  };
 
   const items = ((p) => {
     if (!p) return [];
@@ -44,38 +85,60 @@ export default function OrderDetailModal({ open, onClose, orderId, order, user }
   })(payload);
 
   const shippingCost = Number(payload?.shippingFee ?? payload?.ship_fee ?? 0);
-  const itemsTotal = items.reduce((sum, it) => sum + Number(it?.subtotal ?? it?.total ?? (Number(it?.price || 0) * Number(it?.quantity || 1))), 0);
-  const totalAmount = Number(order?.totalAmount ?? order?.total_amount ?? (itemsTotal + shippingCost));
-  
+  const itemsTotal = items.reduce(
+    (sum, it) =>
+      sum +
+      Number(
+        it?.subtotal ??
+          it?.total ??
+          Number(it?.price || 0) * Number(it?.quantity || 1),
+      ),
+    0,
+  );
+  const totalAmount = Number(
+    order?.totalAmount ?? order?.total_amount ?? itemsTotal + shippingCost,
+  );
+
   const formatAddress = (addr) => {
     if (!addr) return "-";
     if (typeof addr === "string") return addr;
     const detail = addr.detailAddress || addr.detail_address || "";
-    const ward = typeof addr.ward === "string" ? addr.ward : addr.ward?.name || "";
-    const district = typeof addr.district === "string" ? addr.district : addr.district?.name || "";
-    const city = typeof addr.city === "string" ? addr.city : addr.city?.name || "";
+    const ward =
+      typeof addr.ward === "string" ? addr.ward : addr.ward?.name || "";
+    const district =
+      typeof addr.district === "string"
+        ? addr.district
+        : addr.district?.name || "";
+    const city =
+      typeof addr.city === "string" ? addr.city : addr.city?.name || "";
     return [detail, ward, district, city].filter(Boolean).join(", ") || "-";
   };
 
   const status = payload?.status || order?.status || "Đang xử lý";
 
   return (
-    <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4">
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-[1px]" onClick={onClose} />
-      
-      {/* Giảm bo góc từ rounded-2xl xuống rounded-lg */}
+    <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 font-sans">
+      <div
+        className="fixed inset-0 bg-slate-900/60 backdrop-blur-[1px]"
+        onClick={onClose}
+      />
       <div className="relative z-[9999] w-full max-w-4xl bg-white dark:bg-slate-800 rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col border border-slate-100 dark:border-slate-700">
-        
-        {/* Header - Navy Dark, Giảm bo góc */}
-        <div style={{ backgroundColor: navyDark }} className="flex items-center justify-between p-5 border-b border-white/10">
+        <div
+          style={{ backgroundColor: navyDark }}
+          className="flex items-center justify-between p-5 border-b border-white/10"
+        >
           <div>
-            <h3 className="text-xl font-semibold text-white">Chi tiết đơn hàng</h3>
+            <h3 className="text-xl font-semibold text-white">
+              Chi tiết đơn hàng
+            </h3>
             <p className="text-xs font-medium text-slate-300 mt-1 uppercase tracking-wider">
-              Mã: <span className="font-bold text-white">{orderId || order?.id}</span>
+              Mã:{" "}
+              <span className="font-bold text-white">
+                {orderId || order?.id}
+              </span>
             </p>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="w-9 h-9 flex items-center justify-center rounded-md bg-white/10 text-white hover:bg-white/20 transition-all"
           >
@@ -85,54 +148,73 @@ export default function OrderDetailModal({ open, onClose, orderId, order, user }
 
         <div className="p-6 overflow-y-auto space-y-8 bg-white dark:bg-slate-800">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Thông tin giao hàng */}
             <div className="md:col-span-2 space-y-4">
               <div className="flex items-center gap-2 border-l-4 border-slate-900 dark:border-slate-400 pl-3">
-                <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase text-xs tracking-widest">Thông tin giao hàng</h4>
+                <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase text-xs tracking-widest">
+                  Thông tin giao hàng
+                </h4>
               </div>
               <div className="grid grid-cols-2 gap-y-4 gap-x-6 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-md border border-slate-100 dark:border-slate-700">
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Người nhận</div>
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">{order?.customer?.name || "-"}</div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
+                    Người nhận
+                  </div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-200">
+                    {order?.customer?.name || "-"}
+                  </div>
                 </div>
                 <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Điện thoại</div>
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">{order?.customer?.phone || order?.phone || "-"}</div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
+                    Điện thoại
+                  </div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-200">
+                    {order?.customer?.phone || order?.phone || "-"}
+                  </div>
                 </div>
                 <div className="col-span-2">
-                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">Địa chỉ</div>
-                  <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{formatAddress(order?.address)}</div>
+                  <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
+                    Địa chỉ
+                  </div>
+                  <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                    {formatAddress(order?.address)}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Thẻ thanh toán & Trạng thái */}
             <div className="space-y-4">
-               {/* Giảm bo góc */}
-               <div style={{ backgroundColor: navyDark }} className="rounded-md p-5 text-white shadow-lg border border-white/5">
-                  <div className="text-[10px] uppercase font-bold opacity-70">Tổng thanh toán</div>
-                  <div className="text-3xl font-black mt-2 text-white">{formatVND(totalAmount)}</div>
-                  <div className="mt-5 pt-3 border-t border-white/10 flex justify-between items-center text-sm">
-                    <span className="opacity-70 text-xs">Phí giao:</span>
-                    <span className="font-semibold text-xs">{formatVND(shippingCost)}</span>
-                  </div>
-               </div>
-               <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-md flex items-center justify-between border border-slate-100 dark:border-slate-700">
-                  <span className="text-xs font-bold text-slate-400 uppercase">Trạng thái</span>
-                  {/* Badge tối giản, không màu */}
-                  <span className="px-3 py-1 rounded-md bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-100 text-[10px] font-bold uppercase tracking-tight">
-                    {status}
+              <div
+                style={{ backgroundColor: navyDark }}
+                className="rounded-md p-5 text-white shadow-lg border border-white/5"
+              >
+                <div className="text-[10px] uppercase font-bold opacity-70">
+                  Tổng thanh toán
+                </div>
+                <div className="text-3xl font-black mt-2 text-white">
+                  {formatVND(totalAmount)}
+                </div>
+                <div className="mt-5 pt-3 border-t border-white/10 flex justify-between items-center text-sm">
+                  <span className="opacity-70 text-xs">Phí giao:</span>
+                  <span className="font-semibold text-xs">
+                    {formatVND(shippingCost)}
                   </span>
-               </div>
+                </div>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-md flex items-center justify-between border border-slate-100 dark:border-slate-700">
+                <span className="text-xs font-bold text-slate-400 uppercase">
+                  Trạng thái
+                </span>
+                {getStatusBadge(status)}
+              </div>
             </div>
           </div>
-
-          {/* Table sản phẩm */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 border-l-4 border-slate-900 dark:border-slate-400 pl-3">
-                <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase text-xs tracking-widest">Sản phẩm đã chọn</h4>
+              <h4 className="font-bold text-slate-900 dark:text-slate-100 uppercase text-xs tracking-widest">
+                Sản phẩm đã chọn
+              </h4>
             </div>
-            
+
             <div className="bg-white dark:bg-slate-800 overflow-hidden">
               <table className="w-full text-left border-none">
                 <thead>
@@ -145,32 +227,62 @@ export default function OrderDetailModal({ open, onClose, orderId, order, user }
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {loading ? (
-                    <tr><td colSpan="4" className="py-10 text-center text-slate-400 animate-pulse uppercase text-xs tracking-widest">Đang tải dữ liệu...</td></tr>
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="py-10 text-center text-slate-400 animate-pulse uppercase text-xs tracking-widest"
+                      >
+                        Đang tải dữ liệu...
+                      </td>
+                    </tr>
                   ) : items.length === 0 ? (
-                    <tr><td colSpan="4" className="py-10 text-center text-slate-400 italic">Danh sách trống</td></tr>
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="py-10 text-center text-slate-400 italic"
+                      >
+                        Danh sách trống
+                      </td>
+                    </tr>
                   ) : (
                     items.map((it, idx) => {
                       const qty = Number(it?.quantity ?? it?.qty ?? 1);
                       const price = Number(it?.price ?? it?.unit_price ?? 0);
-                      const subtotal = Number(it?.subtotal ?? (price * qty));
+                      const subtotal = Number(it?.subtotal ?? price * qty);
                       const imagePath = it?.image || it?.product?.image || "";
-                      const imageUrl = imagePath ? (imagePath.startsWith("http") ? imagePath : `https://ec-website-be-312564370609.asia-southeast1.run.app${imagePath}`) : null;
+                      const imageUrl = imagePath
+                        ? imagePath.startsWith("http")
+                          ? imagePath
+                          : `https://ec-website-be-312564370609.asia-southeast1.run.app${imagePath}`
+                        : null;
 
                       return (
-                        <tr key={idx} className="group hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
+                        <tr
+                          key={idx}
+                          className="group hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+                        >
                           <td className="py-4 pl-1">
                             <div className="flex items-center gap-3">
-                              {/* Giảm bo góc ảnh */}
                               <div className="w-12 h-12 rounded bg-slate-100 dark:bg-slate-700 overflow-hidden flex-shrink-0 border border-slate-200 dark:border-slate-600">
                                 {imageUrl ? (
-                                  <img src={imageUrl} alt="product" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                  <img
+                                    src={imageUrl}
+                                    alt="product"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
                                 ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">No Pic</div>
+                                  <div className="w-full h-full flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">
+                                    No Pic
+                                  </div>
                                 )}
                               </div>
                               <div className="flex flex-col">
-                                <span className="font-semibold text-sm text-slate-800 dark:text-slate-100">{it?.name || it?.productName || "Sản phẩm"}</span>
-                                <span className="text-[9px] text-slate-400 uppercase tracking-tighter">SKU: {it?.id || idx}</span>
+                                <span className="font-semibold text-sm text-slate-800 dark:text-slate-100">
+                                  {it?.name || it?.productName || "Sản phẩm"}
+                                </span>
+                                <span className="text-[9px] text-slate-400 uppercase tracking-tighter">
+                                  SKU: {it?.id || idx}
+                                </span>
                               </div>
                             </div>
                           </td>
@@ -179,10 +291,13 @@ export default function OrderDetailModal({ open, onClose, orderId, order, user }
                               {qty}
                             </span>
                           </td>
-                          <td className="py-4 text-right text-xs font-medium text-slate-500">{formatVND(price)}</td>
+                          <td className="py-4 text-right text-xs font-medium text-slate-500">
+                            {formatVND(price)}
+                          </td>
                           <td className="py-4 text-right pr-1">
-                             {/* Giá tiền dùng màu xám đậm mặc định, không dùng màu tím/xanh */}
-                             <span className="font-semibold text-slate-900 dark:text-slate-100">{formatVND(subtotal)}</span>
+                            <span className="font-semibold text-slate-900 dark:text-slate-100">
+                              {formatVND(subtotal)}
+                            </span>
                           </td>
                         </tr>
                       );
@@ -193,15 +308,13 @@ export default function OrderDetailModal({ open, onClose, orderId, order, user }
             </div>
           </div>
         </div>
-        
-        {/* Bottom Bar - Đơn giản */}
         <div className="p-4 bg-slate-50 dark:bg-slate-900/80 flex justify-end items-center border-t border-slate-100 dark:border-slate-700">
-           <button 
-             onClick={onClose}
-             className="px-6 py-2 rounded-md text-sm font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all"
-           >
-             Đóng
-           </button>
+          <button
+            onClick={onClose}
+            className="px-6 py-2 rounded-md text-sm font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all"
+          >
+            Đóng
+          </button>
         </div>
       </div>
     </div>
