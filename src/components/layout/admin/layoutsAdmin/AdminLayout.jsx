@@ -3,6 +3,9 @@ import Sidebar from "./Sidebar/Sidebar.jsx";
 import Footer from "./Footer.jsx";
 import { Outlet, Navigate } from "react-router-dom";
 import { useAuth } from "../../../../hooks/useAuth.js";
+// Preload page-level CSS so it's available on hard-refresh (F5) before lazy chunks inject their own CSS
+import "../../../../pages/admin/adminDashboard/Customer/Customer.css";
+import "../../../../pages/admin/adminDashboard/Order/Order.css";
 
 export default function AdminLayout() {
     const { user, isLoading } = useAuth();

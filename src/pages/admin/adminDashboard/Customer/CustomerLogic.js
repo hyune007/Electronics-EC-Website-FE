@@ -190,29 +190,20 @@ export function useCustomerLogic() {
     /* ================= LOAD DATA ================= */
     const fetchCustomers = useCallback(async () => {
         try {
-            // Try localStorage cache first
             const cachedCustomers = getCachedCustomers();
             if (cachedCustomers) {
-                console.log("Loading customers from cache...");
                 setCustomers(cachedCustomers);
                 return;
             }
-
-            console.log("Fetching customers from API...");
             const data = await getAllCustomers();
-
-            console.log("RAW API:", data);
-
             const mapped = data.map((c) => ({
-                kh_id: c.kh_id,
-                kh_name: c.kh_name,
-                kh_phone: c.kh_phone,
-                kh_mail: c.kh_mail,
+                kh_id:       c.kh_id,
+                kh_name:     c.kh_name,
+                kh_phone:    c.kh_phone,
+                kh_mail:     c.kh_mail,
                 kh_password: c.kh_password,
-                kh_role: c.kh_role
+                kh_role:     c.kh_role_id || "ROLE_CUSTOMER",
             }));
-
-            // Cache the data
             setCachedCustomers(mapped);
             setCustomers(mapped);
         } catch (e) {
@@ -221,10 +212,9 @@ export function useCustomerLogic() {
     }, []);
 
     useEffect(() => {
-        // Defer the call to avoid synchronous setState inside the effect
         const t = setTimeout(() => fetchCustomers(), 0);
         return () => clearTimeout(t);
-     }, [fetchCustomers]);
+    }, [fetchCustomers]);
 
     /* ================= FILTER ================= */
     const filteredCustomers = useMemo(() => {
@@ -319,7 +309,8 @@ export function useCustomerLogic() {
             return;
         }
         
-        if (!form.kh_password || !form.kh_password.trim()) {
+        // Password is required only when creating, optional when editing
+        if (!editing && (!form.kh_password || !form.kh_password.trim())) {
             showToast("Vui lòng nhập mật khẩu", "warning");
             return;
         }
@@ -347,7 +338,7 @@ export function useCustomerLogic() {
             kh_password: form.kh_password.trim(),
             kh_phone: form.kh_phone.trim(),
             kh_mail: form.kh_mail.trim(),
-            kh_role_id: form.kh_role || "ROLE_CUSTOMER",
+            kh_role: form.kh_role || "ROLE_CUSTOMER",
         };
         
         console.log("Customer payload after validation:", payload);
@@ -375,10 +366,19 @@ export function useCustomerLogic() {
             }
 
             setOpenForm(false);
-            
-            // Clear cache and reload
+
             clearCustomerCache();
-            fetchCustomers();
+            const freshRaw = await getAllCustomers();
+            const freshMapped = freshRaw.map((c) => ({
+                kh_id:       c.kh_id,
+                kh_name:     c.kh_name,
+                kh_phone:    c.kh_phone,
+                kh_mail:     c.kh_mail,
+                kh_password: c.kh_password,
+                kh_role:     c.kh_role_id || "ROLE_CUSTOMER",
+            }));
+            setCachedCustomers(freshMapped);
+            setCustomers(freshMapped);
             showToast(editing ? "Cập nhật khách hàng thành công" : "Thêm khách hàng thành công", "success");
         } catch (err) {
             console.error("Lỗi lưu khách hàng:", err);
@@ -392,10 +392,19 @@ export function useCustomerLogic() {
         if (window.confirm("Xóa khách hàng này?")) {
             try {
                 await deleteCustomer(id);
-                
-                // Clear cache and reload
+
                 clearCustomerCache();
-                await fetchCustomers();
+                const freshRaw = await getAllCustomers();
+                const freshMapped = freshRaw.map((c) => ({
+                    kh_id:       c.kh_id,
+                    kh_name:     c.kh_name,
+                    kh_phone:    c.kh_phone,
+                    kh_mail:     c.kh_mail,
+                    kh_password: c.kh_password,
+                    kh_role:     c.kh_role_id || "ROLE_CUSTOMER",
+                }));
+                setCachedCustomers(freshMapped);
+                setCustomers(freshMapped);
                 showToast("Xóa khách hàng thành công", "success");
             } catch (err) {
                 console.error("Delete customer failed:", err);

@@ -331,7 +331,7 @@ export default function ProductManage() {
                         </thead>
 
                         <tbody className="divide-y page-animate">
-                            {pm.loading && (
+                            {pm.loading && pm.products.length === 0 && (
                                 <tr>
                                     <td colSpan="9" className="py-10 text-center">
                                         <div className="flex justify-center items-center">
@@ -342,8 +342,7 @@ export default function ProductManage() {
                                 </tr>
                             )}
 
-                            {!pm.loading &&
-                                pm.products.map((p, index) => (
+                            {pm.products.map((p, index) => (
                                     <tr
                                         key={p.sp_id}
                                         className="table-row"

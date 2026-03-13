@@ -64,7 +64,13 @@ export default function ProductDetail() {
   };
 
   useEffect(() => {
-    prefetchAllProducts().catch(() => { });
+    const warmUp = window.setTimeout(() => {
+      prefetchAllProducts().catch(() => { });
+    }, 600);
+
+    return () => {
+      window.clearTimeout(warmUp);
+    };
   }, [prefetchAllProducts]);
 
   useEffect(() => {
@@ -82,13 +88,6 @@ export default function ProductDetail() {
     };
 
     if (cached()) {
-      return () => {
-        mounted = false;
-      };
-    }
-
-    if (loadingAll && !allProducts) {
-      setLoading(true);
       return () => {
         mounted = false;
       };
@@ -181,9 +180,15 @@ export default function ProductDetail() {
                 {reviewStats.average.toFixed(1)} ({reviewStats.total} Đánh giá)
               </span>
               <span className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700"></span>
-              <span className="text-green-600 dark:text-green-400 text-xs font-semibold">
-                Còn hàng
-              </span>
+              {product?.stock > 0 ? (
+                <span className="text-green-600 dark:text-green-400 text-xs font-semibold">
+                  Còn hàng
+                </span>
+              ) : (
+                <span className="text-red-600 dark:text-red-400 text-xs font-semibold">
+                  Hết hàng
+                </span>
+              )}
             </div>
             <div className="text-base font-bold text-primary dark:text-white mb-2">
               <div className="text-base font-bold text-primary dark:text-white mb-2">

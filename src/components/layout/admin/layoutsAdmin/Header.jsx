@@ -1,9 +1,8 @@
-import { Menu, Bell, Settings, LogOut, House } from "lucide-react";
+import { Menu, Bell, LogOut, House } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useAuth } from "../../../../hooks/useAuth.js";
 import { useCart } from "../../../../contexts/CartContext.jsx";
-import { jwtDecode } from "jwt-decode";
 import { ROUTE_TITLE_MAP } from "../../../../routes/routesConfig/admin/routeTitle.js";
 import { subscribeToast } from "../../../../utils/adminToast.js";
 
@@ -45,18 +44,6 @@ export default function Header() {
         ROUTE_TITLE_MAP[location.pathname] || "Trang quản trị";
 
     const handleLogout = () => {
-        const token = localStorage.getItem("authToken");
-        if (token) {
-            try {
-                const decoded = jwtDecode(token);
-                localStorage.removeItem(`customerInfo_${decoded.sub}`);
-            } catch (error) {
-                console.error("Error decoding token:", error);
-            }
-        }
-        localStorage.removeItem("customerInfo");
-        localStorage.removeItem("authToken");
-        localStorage.removeItem("authUser");
         clearCart();
         logout();
         navigate("/login", { replace: true });
@@ -273,10 +260,6 @@ export default function Header() {
                                         </div>
                                     </div>
                                 </div>
-                                <button className="w-full px-4 py-2.5 text-left text-sm text-neutral-700 hover:bg-neutral-50 flex items-center gap-3 transition-colors">
-                                    <Settings size={16} />
-                                    Cài đặt
-                                </button>
                                 <button 
                                     onClick={handleLogout}
                                     className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3 transition-colors"

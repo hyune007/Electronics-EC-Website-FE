@@ -1,7 +1,8 @@
-import { decodeJwtPayload } from "../utils/jwt";
+import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
+import { CACHE_TTL } from "../utils/cachePolicy";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-const API_URL = `${API_BASE_URL}/api/customer`;
+const API_URL = "http://localhost:8080/api/customer";
+//const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/customer";
 
 // Helper to get auth token
 function getAuthHeaders() {
@@ -23,26 +24,21 @@ async function parseError(res) {
     }
 }
 
-function getCurrentRole() {
-    const token = localStorage.getItem("authToken");
-    const payload = decodeJwtPayload(token);
-    return payload?.roleId || "UNKNOWN_ROLE";
-}
-
 /* ================= GET ALL ================= */
 export async function getAllCustomers() {
-    const res = await fetch(`${API_URL}/all`, {
-        headers: getAuthHeaders()
-    });
-    if (!res.ok) {
-        const details = await parseError(res);
-        if (res.status === 403) {
-            throw new Error(`403: Bạn không có quyền xem danh sách khách hàng (role hiện tại: ${getCurrentRole()})`);
+    let data;
+    try {
+        data = await cachedGetJson(`${API_URL}/all`, {
+            headers: getAuthHeaders(),
+            cacheKey: "cache:customer:all",
+            ttlMs: CACHE_TTL.MEDIUM
+        });
+    } catch (error) {
+        if (error?.status === 403) {
+            throw new Error("403: Bạn không có quyền xem danh sách khách hàng");
         }
-        throw new Error(`Không lấy được danh sách khách hàng (${res.status}): ${details || "Không có chi tiết"}`);
+        throw new Error(`Không lấy được danh sách khách hàng: ${error?.message || "Không có chi tiết"}`);
     }
-
-    const data = await res.json();
 
     // MAP BE → FE (null-safe)
     return data.map(c => ({
@@ -51,7 +47,7 @@ export async function getAllCustomers() {
         kh_password: c.password ?? "",
         kh_phone: c.phone ?? "",
         kh_mail: c.email ?? "",
-        kh_role_id: c.role?.id ?? "ROLE_CUSTOMER",
+        kh_role: c.role?.id ?? "ROLE_CUSTOMER",
         kh_role_name: c.role?.name ?? "Khách hàng"
     }));
 }
@@ -60,13 +56,12 @@ export async function getAllCustomers() {
 export async function createCustomer(customer) {
     const payload = {
         id: customer.kh_id,
-        username: customer.kh_mail,
         name: customer.kh_name,
         password: customer.kh_password,
         phone: customer.kh_phone,
         email: customer.kh_mail,
         role: {
-            id: customer.kh_role_id ?? "ROLE_CUSTOMER"
+            id: customer.kh_role ?? "ROLE_CUSTOMER"
         }
     };
     
@@ -82,10 +77,11 @@ export async function createCustomer(customer) {
         const details = await parseError(res);
         console.error("Backend error:", details);
         if (res.status === 403) {
-            throw new Error(`403: Không có quyền thêm khách hàng (role hiện tại: ${getCurrentRole()})`);
+            throw new Error("403: Không có quyền thêm khách hàng");
         }
         throw new Error(`Thêm khách hàng thất bại (${res.status}): ${details || "Không có chi tiết"}`);
     }
+    invalidateCacheByPrefix("cache:customer:");
     return res.json();
 }
 
@@ -101,7 +97,7 @@ export async function updateCustomer(id, customer) {
             phone: customer.kh_phone,
             email: customer.kh_mail,
             role: {
-                id: customer.kh_role_id ?? "ROLE_CUSTOMER"
+                id: customer.kh_role ?? "ROLE_CUSTOMER"
             }
         })
     });
@@ -109,10 +105,11 @@ export async function updateCustomer(id, customer) {
     if (!res.ok) {
         const details = await parseError(res);
         if (res.status === 403) {
-            throw new Error(`403: Không có quyền cập nhật khách hàng (role hiện tại: ${getCurrentRole()})`);
+            throw new Error("403: Không có quyền cập nhật khách hàng");
         }
         throw new Error(`Cập nhật khách hàng thất bại (${res.status}): ${details || "Không có chi tiết"}`);
     }
+    invalidateCacheByPrefix("cache:customer:");
 }
 
 /* ================= DELETE ================= */
@@ -125,8 +122,10 @@ export async function deleteCustomer(id) {
     if (!res.ok) {
         const details = await parseError(res);
         if (res.status === 403) {
-            throw new Error(`403: Chỉ Admin được quyền xóa khách hàng (role hiện tại: ${getCurrentRole()})`);
+            throw new Error("403: Chỉ Admin được quyền xóa khách hàng");
         }
         throw new Error(`Xóa khách hàng thất bại (${res.status}): ${details || "Không có chi tiết"}`);
     }
+
+    invalidateCacheByPrefix("cache:customer:");
 }

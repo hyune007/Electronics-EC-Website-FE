@@ -18,26 +18,13 @@ export default function UserDropdown({ open, onClose, onLogout, user }) {
 
         <div className="py-1">
           {!isAdmin && (
-            <NavLink to="/profile" onClick={onClose}
+            <NavLink to="/profile?tab=information" onClick={onClose}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors" >
 
               <span className="material-symbols-outlined text-[18px]">
                 person
               </span>
               Hồ sơ cá nhân
-            </NavLink>
-          )}
-
-          {isAdmin && (
-            <NavLink
-              to="/admin/dashboard"
-              onClick={onClose}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[18px]">
-                dashboard
-              </span>
-              Vào trang quản lí
             </NavLink>
           )}
 

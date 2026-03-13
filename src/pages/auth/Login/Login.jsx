@@ -9,7 +9,6 @@ import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx"
 import BrandLogo from "../../../components/common/BrandLogo.jsx";
 import { login as loginApi, loginEmployee as loginEmployeeApi, loginWithGoogle as loginWithGoogleApi } from "../../../services/authService.js";
 import { useAuth } from "../../../hooks/useAuth";
-import { decodeJwtPayload } from "../../../utils/jwt.js";
 
 export default function Login() {
   const { toggleTheme } = useTheme();
@@ -23,18 +22,29 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
+  const resolvePostLoginPath = (roleId) => {
+    const fromPath = location.state?.from?.pathname;
+    const isAdminRole = roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE";
+
+    if (isAdminRole) {
+      return "/admin/dashboard";
+    }
+
+    if (fromPath && fromPath.startsWith("/admin")) {
+      return "/home";
+    }
+
+    return fromPath || "/home";
+  };
+
   // Redirect based on role if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       const roleId = user.roleId;
-      if (roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE") {
-        navigate("/admin/dashboard", { replace: true });
-      } else {
-        const from = location.state?.from?.pathname || "/";
-        navigate(from, { replace: true });
-      }
+      const destination = resolvePostLoginPath(roleId);
+      navigate(destination, { replace: true });
     }
-  }, [isAuthenticated, user, navigate, location]);
+  }, [isAuthenticated, user, navigate]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -64,16 +74,6 @@ export default function Login() {
 
       // Store auth data
       login({ ...response, email: formData.email });
-
-      // Redirect based on role (decode JWT since backend only returns token)
-      const payload = decodeJwtPayload(response.token);
-      const roleId = payload?.roleId;
-      if (roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE") {
-        navigate("/admin/dashboard", { replace: true });
-      } else {
-        const from = location.state?.from?.pathname || "/";
-        navigate(from, { replace: true });
-      }
     } catch (error) {
       const message =
         error?.response?.data?.message ||
@@ -100,16 +100,6 @@ export default function Login() {
 
       // Store auth data
       login(response);
-
-      // Redirect based on role
-      const payload = decodeJwtPayload(response.token);
-      const roleId = payload?.roleId;
-      if (roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE") {
-        navigate("/admin/dashboard", { replace: true });
-      } else {
-        const from = location.state?.from?.pathname || "/";
-        navigate(from, { replace: true });
-      }
     } catch (error) {
       const message =
         error?.response?.data?.message ||

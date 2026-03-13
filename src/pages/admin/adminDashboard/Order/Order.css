@@ -225,3 +225,74 @@ tbody tr:hover {
     border-radius: 999px;
     padding: 5px 10px;
 }
+
+.order-sync-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.order-loading-state,
+.order-error-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 280px;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+}
+
+.order-loading-state {
+    flex-direction: column;
+    text-align: center;
+}
+
+.order-loading-title,
+.order-error-title {
+    margin: 0;
+    color: #111827;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.order-loading-text,
+.order-error-text {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.order-error-state {
+    justify-content: space-between;
+    margin-bottom: 16px;
+    min-height: auto;
+}
+
+.order-error-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: #fef2f2;
+    color: #dc2626;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .order-error-state {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

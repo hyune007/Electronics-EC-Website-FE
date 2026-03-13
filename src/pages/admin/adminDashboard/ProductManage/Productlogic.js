@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { getProductsByPage, createProduct, updateProduct, deleteProduct } from "../../../../services/productService";
+import { getProductsByPage, getAllProducts, createProduct, updateProduct, deleteProduct } from "../../../../services/productService";
 import { getAllBrands } from "../../../../services/brandService";
 import { getAllCategories } from "../../../../services/categoryService";
-import { getAllActivePromotions } from "../../../../services/promotionService";
+import { getAllPromotions } from "../../../../services/promotionService";
 import { showToast } from "../../../../utils/adminToast";
 import { getCache, setCache, removeCache, removeCacheByPrefix } from "../../../../utils/localCache";
 
@@ -68,13 +68,67 @@ const PRODUCT_STATS_CACHE_KEY = "product_stats_v1";
 const PRODUCT_STATS_CACHE_TTL = 10 * 60 * 1000;
 const BG_PAGE_SIZE = 100;
 const BG_PAGE_CONCURRENCY = 4;
+const PRODUCT_PROMOTION_OVERRIDE_KEY = "product_promotion_override_v1";
+
+function getPromotionOverrides() {
+    try {
+        return JSON.parse(localStorage.getItem(PRODUCT_PROMOTION_OVERRIDE_KEY) || "{}");
+    } catch {
+        return {};
+    }
+}
+
+function savePromotionOverrides(overrides) {
+    try {
+        localStorage.setItem(PRODUCT_PROMOTION_OVERRIDE_KEY, JSON.stringify(overrides || {}));
+    } catch {
+        // Ignore storage write errors.
+    }
+}
+
+function setPromotionOverride(productId, promotionId, promotionName = "") {
+    if (!productId || !promotionId) return;
+    const overrides = getPromotionOverrides();
+    overrides[String(productId)] = {
+        id: String(promotionId),
+        name: String(promotionName || "")
+    };
+    savePromotionOverrides(overrides);
+}
+
+function removePromotionOverride(productId) {
+    if (!productId) return;
+    const overrides = getPromotionOverrides();
+    delete overrides[String(productId)];
+    savePromotionOverrides(overrides);
+}
+
+function applyPromotionOverrides(products) {
+    const overrides = getPromotionOverrides();
+    return (products || []).map((item) => {
+        const key = String(item?.sp_id || "");
+        const override = overrides[key];
+        if (!override) return item;
+
+        const hasId = String(item?.sp_promotion_id || "").trim() !== "";
+        const hasName = String(item?.sp_promotion_name || "").trim() !== "";
+
+        if (hasId && hasName) return item;
+
+        return {
+            ...item,
+            sp_promotion_id: hasId ? item.sp_promotion_id : override.id,
+            sp_promotion_name: hasName ? item.sp_promotion_name : (override.name || override.id)
+        };
+    });
+}
 
 function getCachedPage(pageNum) {
     return getCache(`${CACHE_KEY_PREFIX}${pageNum}`, PRODUCT_PAGE_CACHE_TTL);
 }
 
 function setCachedPage(pageNum, data) {
-    setCache(`${CACHE_KEY_PREFIX}${pageNum}`, data);
+setCache(`${CACHE_KEY_PREFIX}${pageNum}`, data);
 }
 
 function toUiProduct(prod) {
@@ -271,18 +325,7 @@ export function useProductManageLogic() {
     useEffect(() => {
         const loadBrands = async () => {
             try {
-                // Clear cache trước khi load
-                localStorage.removeItem('brand_data');
-
                 const brandList = await getAllBrands();
-                console.log("=== Brands loaded from backend ===");
-                console.log("Total brands:", brandList.length);
-                console.log("Brands:", brandList);
-
-                if (brandList.length === 0) {
-                    console.warn("WARNING: No brands loaded! Please add brands first.");
-                }
-
                 setAllBrands(brandList);
                 setBrands(brandList);
             } catch (err) {
@@ -298,20 +341,10 @@ export function useProductManageLogic() {
         const loadCategories = async () => {
             try {
                 const categoryList = await getAllCategories();
-                console.log("=== Categories loaded from backend ===");
-                console.log("Total categories:", categoryList.length);
-                console.log("Categories:", categoryList);
-
-                if (categoryList.length === 0) {
-                    console.warn("WARNING: No categories loaded! Please add categories first.");
-                }
-
-                // Map dm_id -> id and dm_name -> name for consistency
                 const mappedCategories = categoryList.map(c => ({
                     id: c.dm_id,
                     name: c.dm_name
                 }));
-
                 setAllCategories(mappedCategories);
                 setCategories(mappedCategories);
             } catch (err) {
@@ -325,7 +358,7 @@ export function useProductManageLogic() {
     useEffect(() => {
         const loadPromotions = async () => {
             try {
-                const promotionList = await getAllActivePromotions()
+                const promotionList = await getAllPromotions();
                 setAllPromotions(promotionList);
                 setPromotions(promotionList);
             } catch (err) {
@@ -391,7 +424,7 @@ export function useProductManageLogic() {
             // Try localStorage cache first
             const cachedPage = getCachedPage(pageNum);
             if (cachedPage) {
-                setProducts(cachedPage.products);
+                setProducts(applyPromotionOverrides(cachedPage.products));
                 setTotalElements(cachedPage.totalElements);
                 cacheRef.current[cacheKey] = cachedPage;
                 setLoading(false);
@@ -400,16 +433,16 @@ export function useProductManageLogic() {
 
             // Check memory cache
             if (cacheRef.current[cacheKey]) {
-                setProducts(cacheRef.current[cacheKey].products);
+                setProducts(applyPromotionOverrides(cacheRef.current[cacheKey].products));
                 setTotalElements(cacheRef.current[cacheKey].totalElements);
                 setLoading(false);
                 return;
             }
 
-            const res = await getProductsByPage(pageNum - 1, pageSize);
+            const res = await getProductsByPage(pageNum - 1, pageSize, false);
 
             // Map data to UI format
-            const mapped = res.products.map(p => ({
+            const mappedRaw = res.products.map(p => ({
                 sp_id: p.id,
                 sp_name: p.name,
                 sp_price: p.price ?? 0,
@@ -425,6 +458,7 @@ export function useProductManageLogic() {
                 sp_promotion_id: p.promotion?.id ?? "",
                 sp_promotion_name: p.promotion?.name ?? ""
             }));
+            const mapped = applyPromotionOverrides(mappedRaw);
 
             const pageData = {
                 products: mapped,
@@ -450,7 +484,7 @@ export function useProductManageLogic() {
 
         try {
             allProductsLoadingRef.current = true;
-            const first = await getProductsByPage(0, BG_PAGE_SIZE);
+            const first = await getProductsByPage(0, BG_PAGE_SIZE, false);
             const totalPages = Math.max(1, Number(first.totalPages || 1));
             const allLoadedProducts = [...(first.products || [])];
 
@@ -459,7 +493,7 @@ export function useProductManageLogic() {
 
                 for (let i = 0; i < pages.length; i += BG_PAGE_CONCURRENCY) {
                     const chunk = pages.slice(i, i + BG_PAGE_CONCURRENCY);
-                    const results = await Promise.all(chunk.map((p) => getProductsByPage(p, BG_PAGE_SIZE)));
+                    const results = await Promise.all(chunk.map((p) => getProductsByPage(p, BG_PAGE_SIZE, false)));
                     results.forEach((res) => {
                         if (Array.isArray(res?.products)) {
                             allLoadedProducts.push(...res.products);
@@ -468,7 +502,7 @@ export function useProductManageLogic() {
                 }
             }
 
-            const mappedAll = allLoadedProducts.map(toUiProduct);
+            const mappedAll = applyPromotionOverrides(allLoadedProducts.map(toUiProduct));
 
             // Xóa trùng lặp (nếu có) do sai sót logic BE
             const uniqueProducts = Array.from(new Map(mappedAll.map(p => [p.sp_id, p])).values());
@@ -477,7 +511,6 @@ export function useProductManageLogic() {
             const stats = computeGlobalStats(uniqueProducts);
             setGlobalStats(stats);
             setCache(PRODUCT_STATS_CACHE_KEY, stats);
-            console.log("✅ Background load completed. Total Loaded:", uniqueProducts.length);
         } catch (err) {
             console.error("Background load failed:", err);
         } finally {
@@ -535,10 +568,6 @@ export function useProductManageLogic() {
         try {
             setEditing(null);
 
-            console.log("=== Opening Add Product Form ===");
-            console.log("Available brands (", brands.length, "):", brands);
-            console.log("Available categories (", categories.length, "):", categories);
-
             if (brands.length === 0) {
                 showToast("Chưa có thương hiệu nào. Vui lòng thêm thương hiệu trước khi thêm sản phẩm.", "warning", 3400);
                 return;
@@ -578,172 +607,168 @@ export function useProductManageLogic() {
         setOpenForm(true);
     };
 
-    const normalizeImportRows = (rows) => {
-        const brandByName = new Map(allBrands.map((b) => [String(b.hang_name || b.name || "").toLowerCase(), String(b.hang_id || b.id || "")]));
-        const validBrandIds = new Set(allBrands.map((b) => String(b.hang_id || b.id || "")));
-        const categoryByName = new Map(allCategories.map((c) => [String(c.name || "").toLowerCase(), String(c.id || "")]));
-        const validCategoryIds = new Set(allCategories.map((c) => String(c.id || "")));
-        const promotionByName = new Map(allPromotions.map((p) => [String(p.km_name || p.name || "").toLowerCase(), String(p.km_id || p.id || "")]));
-        const validPromotionIds = new Set(allPromotions.map((p) => String(p.km_id || p.id || "")));
+const normalizeImportRows = (rows) => {
+    const brandByName = new Map(allBrands.map((b) => [String(b.hang_name || b.name || "").toLowerCase(), String(b.hang_id || b.id || "")]));
+    const validBrandIds = new Set(allBrands.map((b) => String(b.hang_id || b.id || "")));
+    const categoryByName = new Map(allCategories.map((c) => [String(c.name || "").toLowerCase(), String(c.id || "")]));
+    const validCategoryIds = new Set(allCategories.map((c) => String(c.id || "")));
+    const promotionByName = new Map(allPromotions.map((p) => [String(p.km_name || p.name || "").toLowerCase(), String(p.km_id || p.id || "")]));
+    const validPromotionIds = new Set(allPromotions.map((p) => String(p.km_id || p.id || "")));
 
-        const normalizeHeader = (value) => String(value || "")
-            .normalize("NFD")
-            .replace(/\p{Diacritic}/gu, "")
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "");
+    const normalizeHeader = (value) => String(value || "")
+        .normalize("NFD")
+        .replace(/\p{Diacritic}/gu, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "");
 
-        return rows.map((row, index) => {
-            const normalizedRow = new Map(
-                Object.entries(row || {}).map(([key, value]) => [normalizeHeader(key), value]),
-            );
+    return rows.map((row, index) => {
+        const normalizedRow = new Map(
+            Object.entries(row || {}).map(([key, value]) => [normalizeHeader(key), value]),
+        );
 
-            const pick = (aliases) => {
-                for (const alias of aliases) {
-                    const direct = row?.[alias];
-                    if (direct !== undefined && direct !== null && String(direct).trim() !== "") {
-                        return direct;
-                    }
-
-                    const normalized = normalizedRow.get(normalizeHeader(alias));
-                    if (normalized !== undefined && normalized !== null && String(normalized).trim() !== "") {
-                        return normalized;
-                    }
+        const pick = (aliases) => {
+            for (const alias of aliases) {
+                const direct = row?.[alias];
+                if (direct !== undefined && direct !== null && String(direct).trim() !== "") {
+                    return direct;
                 }
-                return "";
-            };
 
-            const brandIdRaw = pick([
-                "brandId", "brand_id", "brand", "brandname", "thuonghieu", "thương hiệu", "hang", "hãng",
-            ]);
+                const normalized = normalizedRow.get(normalizeHeader(alias));
+                if (normalized !== undefined && normalized !== null && String(normalized).trim() !== "") {
+                    return normalized;
+                }
+            }
+            return "";
+        };
 
-            const categoryIdRaw = pick([
-                "categoryId", "category_id", "category", "categoryname", "danhmuc", "danh mục", "loai", "loại",
-            ]);
+        const brandIdRaw = pick([
+            "brandId", "brand_id", "brand", "brandname", "thuonghieu", "thương hiệu", "hang", "hãng",
+        ]);
 
-            const promotionIdRaw = pick([
-                "promotionId", "promotion_id", "promotion", "promotionname", "khuyenmai", "khuyến mãi",
-            ]);
+        const categoryIdRaw = pick([
+            "categoryId", "category_id", "category", "categoryname", "danhmuc", "danh mục", "loai", "loại",
+        ]);
 
-            const normalizedBrand = String(brandIdRaw || "").trim();
-            const normalizedCategory = String(categoryIdRaw || "").trim();
-            const normalizedPromotion = String(promotionIdRaw || "").trim();
+        const promotionIdRaw = pick([
+            "promotionId", "promotion_id", "promotion", "promotionname", "khuyenmai", "khuyến mãi",
+        ]);
 
-            const brandId = validBrandIds.has(normalizedBrand)
-                ? normalizedBrand
-                : (brandByName.get(normalizedBrand.toLowerCase()) || "");
+        const normalizedBrand = String(brandIdRaw || "").trim();
+        const normalizedCategory = String(categoryIdRaw || "").trim();
+        const normalizedPromotion = String(promotionIdRaw || "").trim();
 
-            const categoryId = validCategoryIds.has(normalizedCategory)
-                ? normalizedCategory
-                : (categoryByName.get(normalizedCategory.toLowerCase()) || "");
+        const brandId = validBrandIds.has(normalizedBrand)
+            ? normalizedBrand
+            : (brandByName.get(normalizedBrand.toLowerCase()) || "");
 
-            const promotionId = validPromotionIds.has(normalizedPromotion)
-                ? normalizedPromotion
-                : (promotionByName.get(normalizedPromotion.toLowerCase()) || "");
+        const categoryId = validCategoryIds.has(normalizedCategory)
+            ? normalizedCategory
+            : (categoryByName.get(normalizedCategory.toLowerCase()) || "");
 
-            return {
-                rowNo: index + 2,
-                id: String(pick(["id", "sp_id", "ma", "mã", "ma san pham", "mã sản phẩm", "masanpham"]) || "").trim(),
-                name: String(pick(["name", "sp_name", "ten", "tên", "sanpham", "sản phẩm", "tensanpham"]) || "").trim(),
-                price: Number(pick(["price", "sp_price", "gia", "giá", "dongia", "đơn giá"]) || 0),
-                stock: Number(pick(["stock", "sp_stock", "kho", "soluong", "số lượng", "tonkho", "tồn kho"]) || 0),
-                description: String(pick(["description", "sp_desc", "mota", "mô tả"]) || "").trim(),
-                image: String(pick(["image", "sp_image", "anh", "ảnh", "hinhanh", "hình ảnh", "url"]) || "").trim(),
-                brandId,
-                categoryId,
-                promotionId,
-            };
-        });
-    };
+        const promotionId = validPromotionIds.has(normalizedPromotion)
+            ? normalizedPromotion
+            : (promotionByName.get(normalizedPromotion.toLowerCase()) || "");
 
-    const handleBulkImportFile = async (file) => {
-        if (!file) return;
+        return {
+            rowNo: index + 2,
+            id: String(pick(["id", "sp_id", "ma", "mã", "ma san pham", "mã sản phẩm", "masanpham"]) || "").trim(),
+            name: String(pick(["name", "sp_name", "ten", "tên", "sanpham", "sản phẩm", "tensanpham"]) || "").trim(),
+            price: Number(pick(["price", "sp_price", "gia", "giá", "dongia", "đơn giá"]) || 0),
+            stock: Number(pick(["stock", "sp_stock", "kho", "soluong", "số lượng", "tonkho", "tồn kho"]) || 0),
+            description: String(pick(["description", "sp_desc", "mota", "mô tả"]) || "").trim(),
+            image: String(pick(["image", "sp_image", "anh", "ảnh", "hinhanh", "hình ảnh", "url"]) || "").trim(),
+            brandId,
+            categoryId,
+            promotionId,
+        };
+    });
+};
 
-        if (allBrands.length === 0 || allCategories.length === 0) {
-            showToast("Cần có dữ liệu thương hiệu và danh mục trước khi import", "warning", 3400);
+const handleBulkImportFile = async (file) => {
+    if (!file) return;
+
+    if (allBrands.length === 0 || allCategories.length === 0) {
+        showToast("Cần có dữ liệu thương hiệu và danh mục trước khi import", "warning", 3400);
+        return;
+    }
+
+    setIsImportingFile(true);
+
+    try {
+        const lowerName = String(file.name || "").toLowerCase();
+
+        let rawRows = [];
+        if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
+            const buffer = await file.arrayBuffer();
+            rawRows = await parseExcel(buffer);
+        } else if (lowerName.endsWith(".json")) {
+            const text = await file.text();
+            const parsed = JSON.parse(text);
+            rawRows = Array.isArray(parsed) ? parsed : [];
+        } else {
+            const text = await file.text();
+            rawRows = parseCsv(text);
+        }
+
+        if (!Array.isArray(rawRows) || rawRows.length === 0) {
+            showToast("File không có dữ liệu hợp lệ", "warning");
             return;
         }
 
-        setIsImportingFile(true);
+        const rows = normalizeImportRows(rawRows);
+        const invalidRows = rows.filter((row) => {
+            return !row.id || !row.name || row.price <= 0 || row.stock < 0 || !row.brandId || !row.categoryId;
+        });
 
-        try {
-            const lowerName = String(file.name || "").toLowerCase();
-
-            let rawRows = [];
-            if (lowerName.endsWith(".xlsx") || lowerName.endsWith(".xls")) {
-                const buffer = await file.arrayBuffer();
-                rawRows = await parseExcel(buffer);
-            } else if (lowerName.endsWith(".json")) {
-                const text = await file.text();
-                const parsed = JSON.parse(text);
-                rawRows = Array.isArray(parsed) ? parsed : [];
-            } else {
-                const text = await file.text();
-                rawRows = parseCsv(text);
-            }
-
-            if (!Array.isArray(rawRows) || rawRows.length === 0) {
-                showToast("File không có dữ liệu hợp lệ", "warning");
-                return;
-            }
-
-            const rows = normalizeImportRows(rawRows);
-            const invalidRows = rows.filter((row) => {
-                return !row.id || !row.name || row.price <= 0 || row.stock < 0 || !row.brandId || !row.categoryId;
-            });
-
-            if (invalidRows.length > 0) {
-                showToast(`Có ${invalidRows.length} dòng lỗi dữ liệu. Vui lòng kiểm tra lại file.`, "warning", 4200);
-                return;
-            }
-
-            const results = await runWithConcurrency(rows, 3, async (row) => {
-                try {
-                    await createProduct({
-                        id: row.id,
-                        name: row.name,
-                        price: row.price,
-                        stock: row.stock,
-                        description: row.description,
-                        image: row.image,
-                        brandId: row.brandId,
-                        categoryId: row.categoryId,
-                        promotionId: row.promotionId || null
-                    });
-                    return { ok: true };
-                } catch (error) {
-                    return { ok: false, message: error?.message || "Lỗi tạo sản phẩm" };
-                }
-            });
-
-            const success = results.filter((r) => r.ok).length;
-            const failed = results.length - success;
-
-            cacheRef.current = {};
-            removeCacheByPrefix(CACHE_KEY_PREFIX);
-            removeCache(PRODUCT_STATS_CACHE_KEY);
-            setAllProducts([]);
-
-            await loadProductsPage(1, false);
-            setPage(1);
-            loadAllInBackground();
-
-            if (failed === 0) {
-                showToast(`Import thành công ${success} sản phẩm`, "success");
-            } else {
-                showToast(`Import xong: ${success} thành công, ${failed} thất bại`, "warning", 4200);
-            }
-        } catch (err) {
-            console.error("Bulk import failed:", err);
-            showToast("Import file thất bại. Hỗ trợ: XLSX, XLS, CSV, JSON.", "error", 3600);
-        } finally {
-            setIsImportingFile(false);
+        if (invalidRows.length > 0) {
+            showToast(`Có ${invalidRows.length} dòng lỗi dữ liệu. Vui lòng kiểm tra lại file.`, "warning", 4200);
+            return;
         }
-    };
 
+        const results = await runWithConcurrency(rows, 3, async (row) => {
+            try {
+                await createProduct({
+                    id: row.id,
+                    name: row.name,
+                    price: row.price,
+                    stock: row.stock,
+                    description: row.description,
+                    image: row.image,
+                    brandId: row.brandId,
+                    categoryId: row.categoryId,
+                    promotionId: row.promotionId || null
+                });
+                return { ok: true };
+            } catch (error) {
+                return { ok: false, message: error?.message || "Lỗi tạo sản phẩm" };
+            }
+        });
+
+        const success = results.filter((r) => r.ok).length;
+        const failed = results.length - success;
+
+        cacheRef.current = {};
+        removeCacheByPrefix(CACHE_KEY_PREFIX);
+        removeCache(PRODUCT_STATS_CACHE_KEY);
+        setAllProducts([]);
+
+        await loadProductsPage(1, false);
+        setPage(1);
+        loadAllInBackground();
+
+        if (failed === 0) {
+            showToast(`Import thành công ${success} sản phẩm`, "success");
+        } else {
+            showToast(`Import xong: ${success} thành công, ${failed} thất bại`, "warning", 4200);
+        }
+    } catch (err) {
+        console.error("Bulk import failed:", err);
+        showToast("Import file thất bại. Hỗ trợ: XLSX, XLS, CSV, JSON.", "error", 3600);
+    } finally {
+        setIsImportingFile(false);
+    }
+};
     const handleSubmit = async () => {
-        console.log("=== Product Form Submission ===");
-        console.log("Form data before validation:", form);
-        console.log("Editing mode:", editing);
 
         // Validate required fields
         if (!form.name || !form.name.trim()) {
@@ -758,7 +783,6 @@ export function useProductManageLogic() {
 
         if (!form.brandId || form.brandId === "") {
             showToast("Vui lòng chọn thương hiệu", "warning");
-            console.log("Brand validation failed. brandId:", form.brandId);
             return;
         }
 
@@ -772,13 +796,11 @@ export function useProductManageLogic() {
         if (!brandExists) {
             showToast("Thương hiệu không hợp lệ hoặc không tồn tại trong hệ thống. Vui lòng chọn lại.", "warning", 3400);
             console.error("Brand ID not found in brands list:", form.brandId);
-            console.log("Available brands:", brands);
             return;
         }
 
         if (!form.categoryId || form.categoryId === "") {
             showToast("Vui lòng chọn danh mục", "warning");
-            console.log("Category validation failed. categoryId:", form.categoryId);
             return;
         }
 
@@ -794,6 +816,8 @@ export function useProductManageLogic() {
 
         let finalImage = form.image;
         if (finalImage) {
+            finalImage = String(finalImage).trim().replace(/\\/g, "/");
+
             // Nếu phát hiện có chứa link http/https bên trong chuỗi bị nối
             const httpIndex = finalImage.indexOf("http://");
             const httpsIndex = finalImage.indexOf("https://");
@@ -803,6 +827,13 @@ export function useProductManageLogic() {
             } else if (httpsIndex >= 0) {
                 finalImage = finalImage.substring(httpsIndex);
             } else {
+                if (finalImage.includes("/photos/products/")) {
+                    const chunks = finalImage.split("/photos/products/").filter(Boolean);
+                    if (chunks.length > 0) {
+                        finalImage = `/photos/products/${chunks[chunks.length - 1]}`;
+                    }
+                }
+
                 // Chỉ cắt tiền tố thư mục đối với ảnh cục bộ
                 const matchIndex = finalImage.lastIndexOf("/photos/products/");
                 if (matchIndex >= 0) {
@@ -824,62 +855,83 @@ export function useProductManageLogic() {
             promotionId: form.promotionId || null
         };
 
-        console.log("=== Payload to submit ===");
-        console.log(JSON.stringify(payload, null, 2));
-
         setIsSubmitting(true);
         try {
+            const targetProductId = editing?.sp_id || payload.id;
+            const selectedPromotion = allPromotions.find(
+                (km) => String(km.km_id || km.id || "") === String(payload.promotionId || "")
+            );
+
             if (editing) {
                 await updateProduct(editing.sp_id, payload);
                 showToast("Cập nhật sản phẩm thành công", "success");
             } else {
                 await createProduct(payload);
+                showToast("Thêm sản phẩm thành công", "success");
 
                 const addedPrice = Number(payload.price || 0);
                 const addedStock = Number(payload.stock || 0);
-                setGlobalStats((prev) => {
-                    const prevTotalProducts = Number(prev?.totalProducts || 0);
-                    const prevTotalValue = Number(prev?.totalValue || 0);
-                    const prevTotalStock = Number(prev?.totalStock || 0);
-                    const prevLowStock = Number(prev?.lowStock || 0);
-                    const prevOutOfStock = Number(prev?.outOfStock || 0);
-                    const prevAveragePrice = Number(prev?.averagePrice || 0);
 
-                    const totalProducts = prevTotalProducts + 1;
-                    const totalValue = prevTotalValue + (addedPrice * addedStock);
-                    const totalStock = prevTotalStock + addedStock;
-                    const lowStock = prevLowStock + (addedStock > 0 && addedStock < 10 ? 1 : 0);
-                    const outOfStock = prevOutOfStock + (addedStock <= 0 ? 1 : 0);
-                    const averagePrice = totalProducts > 0
-                        ? Math.round(((prevAveragePrice * prevTotalProducts) + addedPrice) / totalProducts)
-                        : 0;
-                    const inStockRate = totalProducts > 0
-                        ? Math.round(((totalProducts - outOfStock) / totalProducts) * 100)
-                        : 0;
+                if (allProducts.length > 0) {
+                    const appended = [
+                        ...allProducts,
+                        {
+                            sp_id: payload.id,
+                            sp_name: payload.name,
+                            sp_price: addedPrice,
+                            sp_stock: addedStock,
+                        }
+                    ];
+                    const nextStats = computeGlobalStats(appended);
+                    setGlobalStats(nextStats);
+                    setCache(PRODUCT_STATS_CACHE_KEY, nextStats);
+                    setAllProducts(appended);
+                } else {
+                    setGlobalStats((prev) => {
+                        const baseTotalProducts = Math.max(Number(prev.totalProducts || 0), Number(totalElements || 0));
+                        const baseTotalValue = Number(prev.totalValue || 0);
+                        const baseTotalStock = Number(prev.totalStock || 0);
+                        const baseLowStock = Number(prev.lowStock || 0);
+                        const baseOutOfStock = Number(prev.outOfStock || 0);
 
-                    const optimisticStats = {
-                        totalProducts,
-                        totalValue,
-                        totalStock,
-                        lowStock,
-                        outOfStock,
-                        averagePrice,
-                        inStockRate,
-                    };
+                        const totalProducts = baseTotalProducts + 1;
+                        const totalValue = baseTotalValue + (addedPrice * addedStock);
+                        const totalStock = baseTotalStock + addedStock;
+                        const lowStock = baseLowStock + (addedStock > 0 && addedStock < 10 ? 1 : 0);
+                        const outOfStock = baseOutOfStock + (addedStock <= 0 ? 1 : 0);
+                        const averagePrice = totalProducts > 0 ? Math.round(totalValue / totalProducts) : 0;
+                        const inStockRate = totalProducts > 0
+                            ? Math.round(((totalProducts - outOfStock) / totalProducts) * 100)
+                            : 0;
 
-                    setCache(PRODUCT_STATS_CACHE_KEY, optimisticStats);
-                    return optimisticStats;
-                });
-
-                showToast("Thêm sản phẩm thành công", "success");
+                        const nextStats = {
+                            totalProducts,
+                            totalValue,
+                            totalStock,
+                            lowStock,
+                            outOfStock,
+                            averagePrice,
+                            inStockRate,
+                        };
+                        setCache(PRODUCT_STATS_CACHE_KEY, nextStats);
+                        return nextStats;
+                    });
+                }
             }
+
+            if (payload.promotionId) {
+                setPromotionOverride(targetProductId, payload.promotionId, selectedPromotion?.km_name || selectedPromotion?.name || "");
+            } else {
+                removePromotionOverride(targetProductId);
+            }
+
             setOpenForm(false);
 
             // Clear all cache to ensure correct data and pagination
             cacheRef.current = {};
-            removeCacheByPrefix(CACHE_KEY_PREFIX);
-            removeCache(PRODUCT_STATS_CACHE_KEY);
-            setAllProducts([]);
+removeCacheByPrefix(CACHE_KEY_PREFIX);
+removeCache(PRODUCT_STATS_CACHE_KEY);
+setAllProducts([]);
 
             if (editing) {
                 await loadProductsPage(page, false);
@@ -913,6 +965,7 @@ export function useProductManageLogic() {
         setDeletingId(sp_id);
         try {
             await deleteProduct(sp_id);
+            removePromotionOverride(sp_id);
 
             // Clear all cache to ensure correct data and pagination
             cacheRef.current = {};
@@ -932,6 +985,7 @@ export function useProductManageLogic() {
             }
 
             showToast("Xóa sản phẩm thành công", "success");
+
             loadAllInBackground();
         } catch (err) {
             console.error("Delete product error:", err);
@@ -950,14 +1004,15 @@ export function useProductManageLogic() {
             const results = await runWithConcurrency(uniqueIds, 3, async (id) => {
                 try {
                     await deleteProduct(id);
-                    return { ok: true };
+                    return { ok: true, id };
                 } catch (error) {
-                    return { ok: false, message: error?.message || "Lỗi xóa sản phẩm" };
+                    return { ok: false, id, message: error?.message || "Lỗi xóa sản phẩm" };
                 }
             });
 
             const success = results.filter((r) => r.ok).length;
             const failed = results.length - success;
+            results.filter((r) => r.ok).forEach((r) => removePromotionOverride(r.id));
 
             cacheRef.current = {};
             removeCacheByPrefix(CACHE_KEY_PREFIX);

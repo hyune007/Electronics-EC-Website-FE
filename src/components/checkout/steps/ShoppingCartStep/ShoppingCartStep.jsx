@@ -22,12 +22,6 @@ export default function ShoppingCartStep({ onProceed }) {
     removeFromCart(id);
   };
 
-  const hasOutOfStock = cart.some(
-    (item) => item.quantity > item.stock
-  );
-
-  const disableOrder = hasOutOfStock || cart.length === 0;
-
   const handleProceed = () => {
     if (!isAuthenticated || !isCustomer) {
       setShowLoginPrompt(true);
@@ -139,12 +133,7 @@ export default function ShoppingCartStep({ onProceed }) {
 
           <button
             type="button"
-            disabled={disableOrder}
-            className={`w-full py-4 rounded-md font-bold flex items-center justify-center gap-2
-    ${disableOrder
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-primary hover:bg-primary/90 text-white"
-              }`}
+            className="w-full py-4 rounded-md font-bold flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white"
             onClick={handleProceed}
           >
             Tiến hành đặt hàng

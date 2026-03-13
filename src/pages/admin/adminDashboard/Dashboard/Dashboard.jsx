@@ -138,19 +138,18 @@ export default function Dashboard() {
       </div>
 
       {loading && (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-neutral-600 font-medium">Đang tải dữ liệu, vui lòng chờ...</p>
+        <div className="mb-4 px-4 py-3 rounded-xl bg-blue-50 text-blue-700 text-sm">
+          Đang tải dần dữ liệu. Mục nào có dữ liệu sẽ hiển thị trước.
         </div>
       )}
 
-      {error && !loading && (
+      {error && (
         <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 text-center">
           Có lỗi xảy ra khi tải dữ liệu: {error}
         </div>
       )}
 
-      {!loading && !error && (
+      {!error && (
         <>
           {/* Hero */}
           <div className="dashboard-hero mb-8 table-row" style={{ animationDelay: "120ms" }}>

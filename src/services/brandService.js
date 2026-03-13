@@ -1,3 +1,5 @@
+import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
+import { CACHE_TTL } from "../utils/cachePolicy";
  const API_URL = "http://localhost:8080/api/brand";
 //const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/brand";
 
@@ -12,11 +14,11 @@ function getAuthHeaders() {
 
 export async function getAllBrands() {
     try {
-        const res = await fetch(`${API_URL}/all`, {
-            headers: getAuthHeaders()
+        const data = await cachedGetJson(`${API_URL}/all`, {
+            headers: getAuthHeaders(),
+            cacheKey: "cache:brand:all",
+            ttlMs: CACHE_TTL.STATIC
         });
-        if (!res.ok) throw new Error("Không lấy được danh sách hãng");
-        const data = await res.json();
         // MAP BE → FE
         return data.map(b => ({
             hang_id: b.id,
@@ -46,6 +48,7 @@ export async function createBrand(brand) {
         console.error("Backend error:", errorText);
         throw new Error(`Thêm hãng thất bại: ${errorText}`);
     }
+    invalidateCacheByPrefix("cache:brand:");
     return res.json();
 }
 
@@ -60,6 +63,7 @@ export async function updateBrand(id, brand) {
     });
 
     if (!res.ok) throw new Error("Cập nhật thất bại");
+    invalidateCacheByPrefix("cache:brand:");
 }
 
 export async function deleteBrand(id) {
@@ -69,4 +73,5 @@ export async function deleteBrand(id) {
     });
 
     if (!res.ok) throw new Error("Xóa thất bại");
+    invalidateCacheByPrefix("cache:brand:");
 }

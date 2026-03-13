@@ -1,5 +1,28 @@
+import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
+import { CACHE_TTL } from "../utils/cachePolicy";
  const API_URL = "http://localhost:8080/api/promotion";
 //const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/promotion";
+
+function mapPromotion(p) {
+    return {
+        km_id: p.id,
+        km_name: p.name,
+        km_description: p.description,
+        km_percent: p.discountPercentage,
+        km_start_date: p.startDate,
+        km_end_date: p.endDate
+    };
+}
+
+function isPromotionActive(promotion) {
+    const now = new Date();
+    const start = promotion?.km_start_date ? new Date(promotion.km_start_date) : null;
+    const end = promotion?.km_end_date ? new Date(promotion.km_end_date) : null;
+
+    if (start && !Number.isNaN(start.getTime()) && now < start) return false;
+    if (end && !Number.isNaN(end.getTime()) && now > end) return false;
+    return true;
+}
 
 // Helper to get auth token
 function getAuthHeaders() {
@@ -12,22 +35,14 @@ function getAuthHeaders() {
 
 export async function getAllPromotions() {
     try {
-        const res = await fetch(`${API_URL}/all`, {
-            headers: getAuthHeaders()
+        const data = await cachedGetJson(`${API_URL}/all`, {
+            headers: getAuthHeaders(),
+            cacheKey: "cache:promotion:all",
+            ttlMs: CACHE_TTL.LONG
         });
-        if (!res.ok) throw new Error("Không lấy được danh sách voucher");
-
-        const data = await res.json();
 
         // MAP BE → FE
-        return data.map(p => ({
-            km_id: p.id,
-            km_name: p.name,
-            km_description: p.description,
-            km_percent: p.discountPercentage,
-            km_start_date: p.startDate,
-            km_end_date: p.endDate
-        }));
+        return data.map(mapPromotion);
     } catch (error) {
         console.error("Get all promotions failed:", error);
         throw error;
@@ -36,23 +51,20 @@ export async function getAllPromotions() {
 
 export async function getAllActivePromotions() {
     try {
-        const res = await fetch(`${API_URL}/active`, {
-            headers: getAuthHeaders()
+        const data = await cachedGetJson(`${API_URL}/active`, {
+            headers: getAuthHeaders(),
+            cacheKey: "cache:promotion:active",
+            ttlMs: CACHE_TTL.LONG
         });
-        if (!res.ok) throw new Error("Không lấy được danh sách voucher");
-
-        const data = await res.json();
 
         // MAP BE → FE
-        return data.map(p => ({
-            km_id: p.id,
-            km_name: p.name,
-            km_description: p.description,
-            km_percent: p.discountPercentage,
-            km_start_date: p.startDate,
-            km_end_date: p.endDate
-        }));
+        return data.map(mapPromotion);
     } catch (error) {
+        // Some BE branches do not expose /active yet.
+        if (error?.status === 404) {
+            const all = await getAllPromotions();
+            return all.filter(isPromotionActive);
+        }
         console.error("Get all promotions failed:", error);
         throw error;
     }
@@ -60,12 +72,11 @@ export async function getAllActivePromotions() {
 
 export async function getPromotionById(id) {
     try {
-        const res = await fetch(`${API_URL}/${id}`, {
-            headers: getAuthHeaders()
+        const data = await cachedGetJson(`${API_URL}/${id}`, {
+            headers: getAuthHeaders(),
+            cacheKey: `cache:promotion:detail:${id}`,
+            ttlMs: CACHE_TTL.VERY_LONG
         });
-        if (!res.ok) throw new Error("Không tìm thấy voucher");
-
-        const data = await res.json();
         
         return {
             km_id: data.id,
@@ -102,6 +113,7 @@ export async function createPromotion(promotion) {
         }
 
         const data = await res.json();
+        invalidateCacheByPrefix("cache:promotion:");
         return {
             km_id: data.id,
             km_name: data.name,
@@ -137,6 +149,7 @@ export async function updatePromotion(id, promotion) {
         }
 
         const data = await res.json();
+        invalidateCacheByPrefix("cache:promotion:");
         return {
             km_id: data.id,
             km_name: data.name,
@@ -162,6 +175,7 @@ export async function deletePromotion(id) {
             throw new Error("Xóa voucher thất bại");
         }
 
+        invalidateCacheByPrefix("cache:promotion:");
         return true;
     } catch (error) {
         console.error("Delete promotion failed:", error);

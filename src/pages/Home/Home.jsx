@@ -92,7 +92,13 @@ export default function Home() {
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
 
   useEffect(() => {
-    prefetchAllProducts().catch(() => {});
+    const warmUp = window.setTimeout(() => {
+      prefetchAllProducts().catch(() => {});
+    }, 500);
+
+    return () => {
+      window.clearTimeout(warmUp);
+    };
   }, [prefetchAllProducts]);
 
   const popularComputers = useMemo(

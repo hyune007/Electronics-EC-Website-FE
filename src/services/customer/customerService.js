@@ -1,10 +1,12 @@
-import api from "../api"; 
+import api, { apiGetCached, invalidateApiCache } from "../api"; 
 const API_URL = "http://localhost:8080/api/customer";
 // const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/customer";
 
 export const getCustomerById = async (id) => {
-  const response = await api.get(`${API_URL}/${id}`);
-  return response.data;
+  return apiGetCached(`${API_URL}/${id}`, {}, {
+    cacheKey: `cache:api:customer:detail:${id}`,
+    ttlMs: 15000,
+  });
 };
 export const updateCustomerInfor = async (id, customer) => {
   const response = await api.put(`${API_URL}/update/${id}`, {
@@ -18,6 +20,8 @@ export const updateCustomerInfor = async (id, customer) => {
     }
   });
 
+  invalidateApiCache("cache:api:customer:");
+
   return response.data;
 };
 
@@ -29,6 +33,8 @@ export const changePassword = async (id, newPassword) => {
       id: "ROLE_CUSTOMER"
     }
   });
+
+  invalidateApiCache("cache:api:customer:");
 
   return response.data;
 };
