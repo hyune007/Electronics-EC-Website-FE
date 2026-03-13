@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import vi from "../../i18n/vi";
+import OrderDetailModal from "../customer/product/OrderDetailModalCustomer.jsx";
 import { useAuth } from "../../hooks/useAuth";
 import { getBillsByCustomer } from "../../services/customer/billServiceCustomer";
 
@@ -42,6 +43,7 @@ export default function MyOrder() {
             date: formattedDate,
             total: Number(bill?.totalAmount) || 0,
             status: String(bill?.status || "pending"),
+            raw: bill,
           };
         });
 
@@ -107,6 +109,19 @@ export default function MyOrder() {
   };
 
   const showingText = `Hiển thị ${filtered.length} trên ${orders.length} đơn hàng`;
+
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailOrder, setDetailOrder] = useState(null);
+
+  const openDetail = (o) => {
+    setDetailOrder(o || null);
+    setDetailModalOpen(true);
+  };
+
+  const closeDetail = () => {
+    setDetailModalOpen(false);
+    setDetailOrder(null);
+  };
 
   const renderBody = () => {
     if (isLoading) {
@@ -175,7 +190,10 @@ export default function MyOrder() {
             </td>
 
             <td className="px-6 py-5 text-right">
-              <button className="text-sm font-medium dark:text-[var(--accent-light)] flex items-center gap-1 ml-auto nav-link">
+              <button
+                onClick={() => openDetail(o)}
+                className="text-sm font-medium dark:text-[var(--accent-light)] flex items-center gap-1 ml-auto nav-link"
+              >
                 {vi.profile.myOrder.viewDetail}
                 <span className="material-symbols-outlined text-[18px]">
                   chevron_right
@@ -266,6 +284,13 @@ export default function MyOrder() {
           </div>
         </div>
       </div>
+      <OrderDetailModal
+        open={detailModalOpen}
+        onClose={closeDetail}
+        orderId={detailOrder?.id}
+        order={detailOrder?.raw}
+        user={user}
+      />
     </div>
   );
 }

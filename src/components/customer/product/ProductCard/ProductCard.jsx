@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import demoImg from "../../../../assets/demo/demo.jpg";
 import { useNavigate } from "react-router-dom";
+import { formatVND } from "../../../../utils/priceFormatter";
 
 export default function ProductCard({ product }) {
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0 });
@@ -99,7 +100,9 @@ export default function ProductCard({ product }) {
                  group-hover:scale-105 transition-transform duration-300"
             src={
               // product?.image ? `http://localhost:8080${product.image}` : demoImg
-              product?.image ? `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}` : demoImg
+              product?.image
+                ? `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}`
+                : demoImg
             }
           />
         </div>
@@ -117,16 +120,16 @@ export default function ProductCard({ product }) {
             {product?.discountedPrice < product?.price ? (
               <>
                 <span className="text-text-light font-black text-sm">
-                  {product.discountedPrice.toLocaleString("vi-VN")}₫
+                  {formatVND(product.discountedPrice)}
                 </span>
 
                 <span className="text-xs text-gray-400 line-through">
-                  {product.price.toLocaleString("vi-VN")}₫
+                  {formatVND(product.price)}
                 </span>
               </>
             ) : (
               <span className="text-text-light font-black text-sm">
-                {product?.price?.toLocaleString("vi-VN")}₫
+                {formatVND(product?.price)}
               </span>
             )}
           </div>
