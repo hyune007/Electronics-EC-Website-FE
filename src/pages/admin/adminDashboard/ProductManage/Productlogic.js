@@ -6,8 +6,8 @@ import { getAllPromotions } from "../../../../services/promotionService";
 import { showToast } from "../../../../utils/adminToast";
 import { getCache, setCache, removeCache, removeCacheByPrefix } from "../../../../utils/localCache";
 
-function getNextProductIdFromList(products, totalElements) {
-    const ids = (products || []).map((item) => item?.sp_id).filter(Boolean);
+function getNextProductIdFromList(products) {
+    const ids = (products || []).map((item) => item?.sp_id || item?.id).filter(Boolean);
     let maxNumber = 0;
 
     ids.forEach((id) => {
@@ -19,8 +19,9 @@ function getNextProductIdFromList(products, totalElements) {
         }
     });
 
-    const fallbackByTotal = Number(totalElements || 0) + 1;
-    const nextNumber = Math.max(maxNumber + 1, fallbackByTotal, 1);
+    // Ensure we strictly rely on the highest ID found, not the total count 
+    // to avoid collisions when items are deleted.
+    const nextNumber = maxNumber > 0 ? maxNumber + 1 : (products.length > 0 ? products.length + 1 : Math.floor(Math.random() * 900) + 100);
     return `SP${String(nextNumber).padStart(3, "0")}`;
 }
 
@@ -581,7 +582,7 @@ export function useProductManageLogic() {
             }
 
             setForm({
-                id: getNextProductIdFromList(allProducts, totalElements),
+                id: getNextProductIdFromList(allProducts),
                 name: "",
                 price: 0,
                 stock: 0,
@@ -1054,6 +1055,7 @@ setAllProducts([]);
 
     return {
         products,
+        allProducts,
         loading,
         totalElements,
 
