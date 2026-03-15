@@ -57,21 +57,10 @@ export default function ProductManage() {
         setSelectedIds((prev) => prev.filter((id) => visibleIds.has(id)));
     }, [pm.products]);
 
-    const getProductIdNum = (id) => {
-        const match = String(id || "").match(/(\d+)$/);
-        return match ? Number(match[1]) : 0;
-    };
-
-    const toProductCode = (num) => `SP${String(num).padStart(3, "0")}`;
-
     const downloadTemplateFile = async () => {
         const XLSX = await import("xlsx");
-        const loadedMaxId = (pm.allProducts || pm.products || []).reduce((max, p) => {
-            const value = getProductIdNum(p?.sp_id || p?.id);
-            return Math.max(max, Number.isNaN(value) ? 0 : value);
-        }, 0);
-
-        const nextIdNum = loadedMaxId > 0 ? loadedMaxId + 1 : (pm.allProducts?.length > 0 ? pm.allProducts.length + 1 : Math.floor(Math.random() * 900) + 100);
+        // ID trong file mẫu luôn lấy theo cùng logic form: trang cuối, id lớn nhất + 1
+        const nextIds = await pm.fetchNextProductIds(2);
 
         const firstBrandName = pm.brands?.[0]?.hang_name || pm.brands?.[0]?.name || "Ten thuong hieu";
         const secondBrandName = pm.brands?.[1]?.hang_name || pm.brands?.[1]?.name || firstBrandName;
@@ -80,8 +69,8 @@ export default function ProductManage() {
 
         const aoa = [
             ["ID", "Tên sản phẩm", "Giá", "Số lượng", "Mô tả", "Hình ảnh", "Thương hiệu", "Danh mục"],
-            [toProductCode(nextIdNum), "Tai nghe Bluetooth XYZ", 990000, 25, "Tai nghe chong on chu dong", "http://example.com/headphone.jpg", firstBrandName, firstCategoryName],
-            [toProductCode(nextIdNum + 1), "Loa mini ABC", 450000, 50, "Loa mini ket noi bluetooth", "http://example.com/speaker.jpg", secondBrandName, secondCategoryName],
+            [nextIds[0], "Tai nghe Bluetooth XYZ", 990000, 0, "Tai nghe chong on chu dong", "http://example.com/headphone.jpg", firstBrandName, firstCategoryName],
+            [nextIds[1], "Loa mini ABC", 450000, 0, "Loa mini ket noi bluetooth", "http://example.com/speaker.jpg", secondBrandName, secondCategoryName],
         ];
 
         const worksheet = XLSX.utils.aoa_to_sheet(aoa);
@@ -480,7 +469,7 @@ export default function ProductManage() {
                                                     <Pencil size={16} />
                                                 </button>
                                                 <button
-                                                    onClick={() => pm.handleDelete(p.sp_id)}
+                                                    onClick={() => pm.handleDelete(p)}
                                                     disabled={pm.deletingId !== null}
                                                     className="p-2 hover:bg-red-50 rounded text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
                                                     title="Xóa"
@@ -580,11 +569,14 @@ export default function ProductManage() {
                             <p>
                                 Tải file mẫu để có sẵn cột chuẩn, mã sản phẩm kế tiếp và tên thương hiệu/danh mục dạng chữ.
                             </p>
+                            <p className="text-amber-700 text-sm mt-1">
+                                Tồn kho khi import luôn = 0; chỉ cập nhật tồn kho qua <strong>Quản lí nhập kho</strong>.
+                            </p>
                             <div className="import-field-tags">
                                 <span>ID</span>
                                 <span>Tên sản phẩm</span>
                                 <span>Giá</span>
-                                <span>Số lượng</span>
+                                <span>Số lượng (bỏ qua)</span>
                                 <span>Mô tả</span>
                                 <span>Hình ảnh</span>
                                 <span>Thương hiệu</span>

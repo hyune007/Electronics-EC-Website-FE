@@ -139,6 +139,34 @@ export async function getProductsByPage(pageNum = 0, pageSize = 8, inStockOnly =
     };
 }
 
+/** Kiểm tra có sản phẩm nào đang dùng hãng này không (dùng trước khi xóa hãng). */
+export async function getProductsCountByBrand(brandId) {
+    if (!brandId) return 0;
+    const data = await cachedGetJson(
+        `${API_URL}/all?p=0&size=1&inStockOnly=false&brand=${encodeURIComponent(brandId)}`,
+        { headers: getAuthHeaders(), cacheKey: `cache:product:by-brand:${brandId}`, ttlMs: CACHE_TTL.SHORT }
+    );
+    return Number(data?.totalElements ?? 0);
+}
+
+/** Lấy danh sách sản phẩm đang gắn voucher/promotion (dùng trước khi xóa voucher). */
+export async function getProductsUsingPromotion(promotionId, maxPages = 50) {
+    if (!promotionId) return [];
+    const list = [];
+    let page = 0;
+    const pageSize = 100;
+    while (page < maxPages) {
+        const res = await getProductsByPage(page, pageSize, false);
+        const batch = res?.products ?? [];
+        const withPromo = batch.filter((p) => (p.promotion?.id ?? "") === promotionId);
+        list.push(...withPromo);
+        const totalPages = Math.max(1, Number(res?.totalPages ?? 1));
+        if (page + 1 >= totalPages || batch.length < pageSize) break;
+        page++;
+    }
+    return list;
+}
+
 /* ================= GET ALL (AUTO LOOP PAGE) - DEPRECATED ================= */
 export async function getAllProducts(inStockOnly = true) {
     let page = 0;
