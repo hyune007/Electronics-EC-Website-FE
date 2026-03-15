@@ -26,9 +26,9 @@ export default function CheckoutLayout() {
   };
 
   return (
-    <div>
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <div className="flex-1 mx-auto scale-90 origin-top">
+    <div className="bg-transparent">
+      <main className="mx-auto w-full max-w-[1200px] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full">
           <Stepper
             view={view}
             // khách chưa đăng nhập không được bấm đổi step

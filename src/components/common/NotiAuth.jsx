@@ -12,27 +12,29 @@ export default function NotiAuth({ open, onClose }) {
       className="fixed inset-0 z-[9999] flex items-center justify-center"
     >
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/45 backdrop-blur-[1.5px]"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-xl p-6 max-w-sm w-[90%] mx-auto text-center space-y-4 z-10">
-        <h3 className="text-lg font-bold">Cần đăng nhập để tiếp tục</h3>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
+      <div className="relative z-10 mx-auto w-[92%] max-w-sm rounded-2xl border border-border bg-surface p-6 text-center shadow-xl">
+        <h3 className="text-lg font-bold text-foreground">
+          Cần đăng nhập để tiếp tục
+        </h3>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Để tiến hành đặt hàng, bạn vui lòng đăng nhập hoặc đăng ký tại đây.
         </p>
-        <div className="flex justify-center gap-3 mt-2">
+        <div className="mt-5 flex justify-center gap-3">
           <Link
             to="/login"
-            className="px-4 py-2 rounded-md bg-primary text-white text-sm font-semibold hover:bg-primary/90"
+            className="btn btn-primary px-4 py-2 text-sm"
             onClick={onClose}
           >
             Đăng nhập
           </Link>
           <Link
             to="/register"
-            className="px-4 py-2 rounded-md border border-slate-300 text-sm font-semibold hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-800"
+            className="btn btn-ghost px-4 py-2 text-sm"
             onClick={onClose}
           >
             Đăng ký
@@ -41,7 +43,7 @@ export default function NotiAuth({ open, onClose }) {
         <button
           type="button"
           onClick={onClose}
-          className="mt-2 text-xs text-slate-400 hover:text-slate-600"
+          className="mt-4 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           Đóng
         </button>

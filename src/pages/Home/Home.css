@@ -1,9 +1,9 @@
 .reveal-on-scroll {
-  opacity: 0;
-  transform: translateY(20px) scale(0.995);
+  opacity: 0.78;
+  transform: translate3d(0, 16px, 0);
   transition:
-    opacity 600ms cubic-bezier(0.2, 0.9, 0.2, 1),
-    transform 600ms cubic-bezier(0.2, 0.9, 0.2, 1);
+    opacity var(--motion-base) var(--ease-standard),
+    transform var(--motion-base) var(--ease-standard);
   transition-delay: 0ms;
 }
 
@@ -13,52 +13,363 @@
   transition-delay: var(--reveal-delay, 0ms);
 }
 
+.home-horizontal-scroller {
+  cursor: grab;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-horizontal-scroller.dragging {
+  cursor: grabbing;
+  opacity: 0.96;
+}
+
 .home-promo-card {
   width: 100%;
-  border-radius: 1.25rem;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: rgba(255, 255, 255, 0.7);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in oklab, var(--color-border) 78%, transparent);
+  background: var(--color-surface);
   padding: 1rem 1.1rem;
   transition:
-    transform 280ms ease,
-    box-shadow 280ms ease,
-    border-color 280ms ease;
+    transform var(--motion-base) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    border-color var(--motion-base) var(--ease-standard);
 }
 
 .dark .home-promo-card {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(15, 23, 42, 0.65);
+  border-color: var(--color-border);
+  background: var(--color-surface);
 }
 
 .home-promo-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(59, 130, 246, 0.45);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+  border-color: color-mix(
+    in oklab,
+    var(--color-primary) 16%,
+    var(--color-border)
+  );
+  box-shadow: var(--shadow-md);
 }
 
 .home-image-promo {
   position: relative;
   min-height: 220px;
-  border-radius: 1.6rem;
+  border-radius: 0.72rem;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+  border: 1px solid color-mix(in oklab, var(--color-border) 78%, transparent);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--motion-base) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    border-color var(--motion-base) var(--ease-standard);
 }
 
 .dark .home-image-promo {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-border);
+}
+
+.home-image-promo:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: color-mix(
+    in oklab,
+    var(--color-primary) 16%,
+    var(--color-border)
+  );
 }
 
 .home-image-promo-overlay {
   position: absolute;
   inset: 0;
+  background-color: rgba(2, 21, 38, 0.5);
+}
+
+.home-side-banner {
+  min-height: 380px;
+  border-radius: 0.72rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--color-border) 78%, transparent);
+  box-shadow: var(--shadow-sm);
+  transition:
+    transform var(--motion-base) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    border-color var(--motion-base) var(--ease-standard);
+}
+
+.home-side-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: color-mix(
+    in oklab,
+    var(--color-primary) 16%,
+    var(--color-border)
+  );
+}
+
+.home-side-banner-right {
+  min-height: 380px;
+}
+
+.home-main-banner-shell {
+  min-height: 360px;
+}
+
+.home-side-menu {
+  min-height: 380px;
+  border-radius: 0.72rem;
+  border: 1px solid color-mix(in oklab, var(--color-border) 78%, transparent);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  padding: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  .home-main-banner-shell,
+  .home-side-menu,
+  .home-side-banner,
+  .home-side-banner-right {
+    min-height: 390px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-main-banner-shell,
+  .home-side-menu,
+  .home-side-banner,
+  .home-side-banner-right {
+    min-height: 420px;
+  }
+}
+
+.home-side-menu-title {
+  border-radius: 0.5rem;
+  background: var(--color-muted);
+  color: var(--color-text);
+  padding: 0.6rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.home-side-menu-list {
+  margin-top: 0.4rem;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.home-side-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  border-radius: 0.45rem;
+  padding: 0.44rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--color-text);
+  transition:
+    color var(--motion-base) var(--ease-standard),
+    background-color var(--motion-base) var(--ease-standard),
+    transform var(--motion-base) var(--ease-standard);
+}
+
+.home-side-menu-item:hover {
+  color: var(--color-primary);
+  background: color-mix(
+    in oklab,
+    var(--color-primary) 8%,
+    var(--color-surface)
+  );
+  transform: translateX(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll,
+  .home-promo-card,
+  .home-image-promo,
+  .home-image-promo-overlay,
+  .home-side-banner,
+  .home-side-menu-item {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+.dealhot-shell {
+  border-color: color-mix(in oklab, #f77f00 28%, var(--color-border));
+}
+
+.dealhot-overlay {
+  /* Make overlay lighter and non-interactive so scroller remains usable */
+  pointer-events: none;
   background:
-    linear-gradient(180deg, rgba(2, 6, 23, 0.05) 0%, rgba(2, 6, 23, 0.78) 90%),
-    linear-gradient(
-      130deg,
-      rgba(2, 132, 199, 0.15) 0%,
-      rgba(14, 165, 233, 0) 60%
-    );
+    radial-gradient(
+      circle at 18% 18%,
+      rgba(247, 127, 0, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(118deg, rgba(3, 21, 38, 0.42), rgba(6, 43, 76, 0.28));
+}
+
+.dealhot-head {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 0.9rem;
+}
+
+.dealhot-eyebrow {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 0.2rem 0.62rem;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(100deg, #d62839, #f77f00);
+}
+
+/* DealHot title — prominent, gradient-highlighted */
+.dealhot-title {
+  font-weight: 800;
+  font-size: 1.18rem;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  background: linear-gradient(90deg, #ffffff, #d5e8fb 68%, #b8dcf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 12px rgba(2, 21, 38, 0.24);
+}
+
+.dealhot-subtitle {
+  max-width: 560px;
+  font-size: 0.84rem;
+  color: rgba(223, 235, 247, 0.92);
+}
+
+.dealhot-cta {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  padding: 0.42rem 0.82rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dealhot-cta:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+@media (min-width: 640px) {
+  .dealhot-title {
+    font-size: 1.6rem;
+  }
+
+  .dealhot-subtitle {
+    font-size: 0.92rem;
+  }
+}
+
+/* New two-column DealHot layout styles */
+.dealhot-inner {
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+}
+
+.dealhot-info {
+  padding: 0.25rem 0.5rem;
+}
+
+.dealhot-badge {
+  display: inline-block;
+  background: linear-gradient(90deg, #ffb302, #ff7a00);
+  color: #071124;
+  font-weight: 800;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dealhot-scroller-wrapper {
+  width: 100%;
+  overflow: hidden;
+  padding-inline: 2.25rem;
+}
+
+.dealhot-horizontal-scroller {
+  gap: 1.25rem;
+  scroll-snap-type: x mandatory;
+}
+
+.dealhot-item {
+  flex: 0 0 84%;
+  scroll-snap-align: start;
+}
+
+.scroller-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(2, 21, 38, 0.62);
+  color: #fff;
+  z-index: 40;
+  transition:
+    background-color var(--motion-base) var(--ease-standard),
+    transform var(--motion-base) var(--ease-standard);
+}
+
+.scroller-nav-button:hover {
+  background: rgba(2, 21, 38, 0.68);
+}
+
+.scroller-prev {
+  left: 0.25rem;
+}
+
+.scroller-next {
+  right: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .dealhot-item {
+    flex-basis: 47%;
+  }
+
+  .dealhot-scroller-wrapper {
+    padding-inline: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dealhot-inner {
+    grid-template-columns: 320px 1fr;
+    gap: 1.5rem;
+  }
+
+  .dealhot-info {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .dealhot-horizontal-scroller {
+    gap: 1.75rem;
+  }
+
+  .dealhot-item {
+    flex-basis: calc((100% - (2 * 1.75rem)) / 3);
+  }
+
+  .dealhot-scroller-wrapper {
+    padding-inline: 2.75rem;
+  }
 }

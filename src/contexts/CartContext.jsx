@@ -49,7 +49,7 @@ export function CartProvider({ children }) {
                 cartItemId: saved.id,
                 id: item.id,
                 name: item.name,
-                price: item.discountedPrice? Number(item.discountedPrice) : Number(item.price),
+                price: item.discountedPrice ? Number(item.discountedPrice) : Number(item.price),
                 quantity: item.quantity,
                 image: item.image,
               });
@@ -67,7 +67,7 @@ export function CartProvider({ children }) {
           cartItemId: row.id,
           id: row.product.id,
           name: row.product.name,
-          price: row.product.discountedPrice? Number(row.product.discountedPrice) : Number(row.product.price),
+          price: row.product.discountedPrice ? Number(row.product.discountedPrice) : Number(row.product.price),
           quantity: row.quantity,
           stock: row.product.stock,
           // image: `http://localhost:8080${row.product.image}`,
@@ -88,6 +88,11 @@ export function CartProvider({ children }) {
     const existingItem = cart.find((item) => item.id === product.id);
     const newQty = existingItem ? existingItem.quantity + quantity : quantity;
 
+    if (product.stock < newQty) {
+      alert("Số lượng sản phẩm trong giỏ vượt quá số lượng tồn kho");
+      return;
+    }
+
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
 
@@ -104,7 +109,7 @@ export function CartProvider({ children }) {
         {
           id: product.id,
           name: product.name,
-          price: product.discountedPrice? Number(product.discountedPrice) : Number(product.price),
+          price: product.discountedPrice ? Number(product.discountedPrice) : Number(product.price),
           quantity,
           stock: product.stock,
           // image: `http://localhost:8080${product.image}`,
@@ -164,6 +169,13 @@ export function CartProvider({ children }) {
   const updateQuantity = async (id, newQty) => {
     if (newQty < 1) return;
 
+    const item = cart.find((x) => x.id === id);
+
+    if (item && newQty > item.stock) {
+      alert("Số lượng sản phẩm trong giỏ vượt quá số lượng tồn kho");
+      return;
+    }
+
     setCart((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, quantity: newQty } : item,
@@ -171,7 +183,6 @@ export function CartProvider({ children }) {
     );
 
     if (isAuthenticated && isCustomer && user?.id) {
-      const item = cart.find((x) => x.id === id);
       if (item?.cartItemId) {
         try {
           await updateCartItem(item.cartItemId, {

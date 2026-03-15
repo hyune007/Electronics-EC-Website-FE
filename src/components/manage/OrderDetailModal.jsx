@@ -31,12 +31,13 @@ export default function OrderDetailModal({
   });
 
   const buildInvoiceHtml = () => {
-    const safeText = (value) => String(value ?? "--")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#39;");
+    const safeText = (value) =>
+      String(value ?? "--")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
 
     const rowsHtml =
       normalizedItems.length > 0
@@ -52,7 +53,7 @@ export default function OrderDetailModal({
                 </tr>`,
             )
             .join("")
-        : '<tr><td colspan="5" style="text-align:center">Khong co san pham trong don hang</td></tr>';
+        : '<tr><td colspan="5" style="text-align:center">Không có sản phẩm trong đơn hàng</td></tr>';
 
     const totalNumber = Number(order?.total_amount || 0);
     const total = totalNumber.toLocaleString("vi-VN");
@@ -71,7 +72,8 @@ export default function OrderDetailModal({
       authUser = null;
     }
     const issuerName = safeText(authUser?.name || "Nhan vien");
-    const signatureImage = localStorage.getItem("invoiceSignatureDataUrl") || "";
+    const signatureImage =
+      localStorage.getItem("invoiceSignatureDataUrl") || "";
     const signatureBlock = signatureImage
       ? `<img src="${signatureImage}" alt="chu-ky" class="signature-image" />`
       : `<div class="signature-text">${issuerName}</div>`;
@@ -81,7 +83,7 @@ export default function OrderDetailModal({
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>Hoa don ${orderId}</title>
+          <title>Hóa đơn ${orderId}</title>
           <style>
             @page { size: A4; margin: 16mm; }
             * { box-sizing: border-box; }
@@ -299,50 +301,49 @@ export default function OrderDetailModal({
                   <div class="brand-mark">UT</div>
                   <div>
                     <div class="brand-name">UbrainTech</div>
-                    <div class="brand-sub">Retail Invoice</div>
+                    <div class="brand-sub">Hóa đơn bán lẻ</div>
                   </div>
                 </div>
                 <div class="invoice-title">
-                  <h1>HOA DON BAN HANG</h1>
-                  <p>Ngay in: ${new Date().toLocaleDateString("vi-VN")}</p>
-                </div>
+                    <h1>HÓA ĐƠN BÁN HÀNG</h1>
+                    <p>Ngày in: ${new Date().toLocaleDateString("vi-VN")}</p>
+                  </div>
               </div>
 
               <div class="meta-grid">
                 <div class="meta-item">
-                  <div class="label">Ma hoa don</div>
+                  <div class="label">Mã hóa đơn</div>
                   <div class="value">${orderId}</div>
                 </div>
                 <div class="meta-item">
-                  <div class="label">Ngay dat</div>
+                  <div class="label">Ngày đặt</div>
                   <div class="value">${createdDate}</div>
                 </div>
                 <div class="meta-item">
-                  <div class="label">Trang thai</div>
+                  <div class="label">Trạng thái</div>
                   <div class="value">${statusText}</div>
                 </div>
                 <div class="meta-item">
-                  <div class="label">Thanh toan</div>
+                  <div class="label">Thanh toán</div>
                   <div class="value">${paymentMethod}</div>
                 </div>
               </div>
 
-              <div class="section-title">Thong tin khach hang</div>
+              <div class="section-title">Thông tin khách hàng</div>
               <div class="card customer-grid">
-                <div><strong>Ten khach:</strong> ${customerName}</div>
-                <div><strong>So dien thoai:</strong> ${customerPhone}</div>
-                <div class="full"><strong>Dia chi nhan hang:</strong> ${customerAddress}</div>
+                <div><strong>Tên khách:</strong> ${customerName}</div>
+                <div><strong>Số điện thoại:</strong> ${customerPhone}</div>
+                <div class="full"><strong>Địa chỉ nhận hàng:</strong> ${customerAddress}</div>
               </div>
-
-              <div class="section-title">Chi tiet san pham</div>
+              <div class="section-title">Chi tiết sản phẩm</div>
               <table>
                 <thead>
                   <tr>
                     <th style="width: 60px">STT</th>
-                    <th>San pham</th>
-                    <th style="width: 90px" class="text-right">So luong</th>
-                    <th style="width: 140px" class="text-right">Don gia</th>
-                    <th style="width: 150px" class="text-right">Tam tinh</th>
+                    <th>Sản phẩm</th>
+                    <th style="width: 90px" class="text-right">Số lượng</th>
+                    <th style="width: 140px" class="text-right">Đơn giá</th>
+                    <th style="width: 150px" class="text-right">Tạm tính</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -352,23 +353,23 @@ export default function OrderDetailModal({
 
               <div class="summary">
                 <div class="summary-row">
-                  <span>Tong tien hang</span>
+                  <span>Tổng tiền hàng</span>
                   <span>${total} VND</span>
                 </div>
                 <div class="summary-row">
-                  <span>Phi van chuyen</span>
+                  <span>Phí vận chuyển</span>
                   <span>0 VND</span>
                 </div>
                 <div class="summary-row">
-                  <span>Can thanh toan</span>
+                  <span>Cần thanh toán</span>
                   <span>${total} VND</span>
                 </div>
               </div>
 
               <div class="footer">
                 <div>
-                  Cam on quy khach da mua sam tai UbrainTech.<br />
-                  Hoa don duoc in tu he thong quan ly don hang.
+                  Cảm ơn quý khách đã mua sắm tại UbrainTech.<br />
+                  Hóa đơn được in từ hệ thống quản lý đơn hàng.
                 </div>
                 <div class="sign">
                   Nguoi lap hoa don
@@ -399,7 +400,10 @@ export default function OrderDetailModal({
 
   const handleDownloadInvoice = async () => {
     const html = buildInvoiceHtml();
-    const orderCode = String(order?.order_id || "hoa-don").replace(/[^a-zA-Z0-9-_]/g, "-");
+    const orderCode = String(order?.order_id || "hoa-don").replace(
+      /[^a-zA-Z0-9-_]/g,
+      "-",
+    );
     const styleMatch = html.match(/<style>([\s\S]*?)<\/style>/i);
     const bodyMatch = html.match(/<body>([\s\S]*?)<\/body>/i);
 

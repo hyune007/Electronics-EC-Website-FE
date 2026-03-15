@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import vi from "../../i18n/vi";
+import OrderDetailModal from "../customer/product/OrderDetailModalCustomer.jsx";
 import { useAuth } from "../../hooks/useAuth";
 import { getBillsByCustomer } from "../../services/customer/billServiceCustomer";
 
@@ -42,6 +43,7 @@ export default function MyOrder() {
             date: formattedDate,
             total: Number(bill?.totalAmount) || 0,
             status: String(bill?.status || "pending"),
+            raw: bill,
           };
         });
 
@@ -69,24 +71,17 @@ export default function MyOrder() {
   };
 
   const badgeClassFor = (status) => {
+    const resolved = statusLabel[status] || status;
     const map = {
-      "Chờ xác nhận": "bg-yellow-100 text-yellow-700 border border-yellow-200",
-      "Đơn đang chờ giao":
-        "bg-yellow-100 text-yellow-700 border border-yellow-200",
-      "Đang giao": "bg-blue-100 text-blue-700 border border-blue-200",
-      "Đã giao": "bg-green-100 text-green-700 border border-green-200",
-      "Đã hủy": "bg-red-100 text-red-700 border border-red-200",
+      "Chờ xác nhận": "badge-pending",
+      "Đơn đang chờ giao": "badge-warning",
+      "Đang giao": "badge-info",
+      "Đã giao": "badge-success",
+      "Đã hủy": "badge-danger",
+      "Trả hàng": "badge-return",
     };
 
-    const base =
-      map[status] || "bg-slate-100 text-slate-700 border border-slate-200";
-
-    return (
-      base
-        .split(" ")
-        .map((c) => `${c} dark:${c}`)
-        .join(" ") + " rounded-md px-3 py-1 text-xs font-medium"
-    );
+    return map[resolved] || "badge-default";
   };
 
   const filters = [
@@ -96,6 +91,7 @@ export default function MyOrder() {
     ["Đang giao", vi.profile.myOrder.filters.shipping],
     ["Đã giao", vi.profile.myOrder.filters.delivered],
     ["Đã hủy", vi.profile.myOrder.filters.cancelled],
+    ["Trả hàng", "Trả hàng"],
   ];
 
   const statusLabel = {
@@ -104,9 +100,23 @@ export default function MyOrder() {
     shipping: "Đang giao",
     delivered: "Đã giao",
     cancelled: "Đã hủy",
+    returned: "Trả hàng",
   };
 
   const showingText = `Hiển thị ${filtered.length} trên ${orders.length} đơn hàng`;
+
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailOrder, setDetailOrder] = useState(null);
+
+  const openDetail = (o) => {
+    setDetailOrder(o || null);
+    setDetailModalOpen(true);
+  };
+
+  const closeDetail = () => {
+    setDetailModalOpen(false);
+    setDetailOrder(null);
+  };
 
   const renderBody = () => {
     if (isLoading) {
@@ -175,7 +185,10 @@ export default function MyOrder() {
             </td>
 
             <td className="px-6 py-5 text-right">
-              <button className="text-sm font-medium dark:text-[var(--accent-light)] flex items-center gap-1 ml-auto nav-link">
+              <button
+                onClick={() => openDetail(o)}
+                className="text-sm font-medium dark:text-[var(--accent-light)] flex items-center gap-1 ml-auto nav-link"
+              >
                 {vi.profile.myOrder.viewDetail}
                 <span className="material-symbols-outlined text-[18px]">
                   chevron_right
@@ -189,33 +202,33 @@ export default function MyOrder() {
   };
 
   return (
-    <div className="rounded-2xl shadow-sm border overflow-hidden bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
+    <div className="card-default overflow-hidden rounded-2xl border">
       <div className="p-6">
         <div className="flex items-start gap-4 mb-4">
-          <div className="p-3 rounded-lg bg-[var(--accent-light)] dark:bg-slate-700 dark:text-slate-100">
+          <div className="rounded-lg bg-[var(--accent-light)] p-3 text-[var(--color-primary)]">
             <span className="material-symbols-outlined">receipt_long</span>
           </div>
           <div>
             <h1 className="text-2xl font-semibold">
               {vi.profile.myOrder.title}
             </h1>
-            <p className="text-sm mt-1 dark:text-slate-300">
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
               {vi.profile.myOrder.desc}
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 mb-6 py-2 bg-slate-50 p-2 rounded-md dark:bg-slate-900/40">
+        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md bg-[var(--color-muted)] p-2 py-2">
           {filters.map(([key, label]) => (
             <button
               key={key}
               onClick={() => setFilter(key)}
               aria-pressed={filter === key}
-              className={`px-4 py-1.5 rounded-md text-sm transition ease-in-out duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent-light)]
+              className={`rounded-md px-4 py-1.5 text-sm transition ease-in-out duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent-light)]
               ${
                 filter === key
-                  ? "bg-[var(--accent-light)] font-semibold shadow-sm border border-[var(--accent-light)] dark:bg-[var(--primary-navy)] dark:text-white"
-                  : "bg-white border border-slate-200 dark:bg-transparent dark:text-slate-300"
+                  ? "border border-[var(--color-primary)] bg-[var(--accent-light)] font-semibold text-[var(--color-primary)]"
+                  : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)]"
               }`}
             >
               {label}
@@ -225,7 +238,7 @@ export default function MyOrder() {
 
         <table className="w-full text-left border-collapse no-row-hover">
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
+            <tr className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
               {vi.profile.myOrder.headers.map((h, i) => (
                 <th
                   key={h}
@@ -239,26 +252,28 @@ export default function MyOrder() {
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-200/40 dark:divide-slate-700/10">
+          <tbody className="divide-y divide-[var(--color-border)]">
             {renderBody()}
           </tbody>
         </table>
 
-        <div className="px-6 py-4 bg-white border-t border-slate-100 dark:bg-slate-900 dark:border-t dark:border-slate-700 flex items-center justify-between">
-          <p className="text-sm dark:text-slate-300">{showingText}</p>
+        <div className="flex items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-4">
+          <p className="text-sm text-[var(--color-text-muted)]">
+            {showingText}
+          </p>
           <div className="flex items-center gap-2">
             <button
-              className="p-2 rounded-md border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+              className="h-8 w-8 rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] motion-default hover:text-[var(--color-primary)] disabled:opacity-50"
               disabled
             >
               <span className="material-symbols-outlined text-[20px]">
                 chevron_left
               </span>
             </button>
-            <button className="w-8 h-8 rounded-md bg-[var(--primary-navy)] text-sm font-medium">
+            <button className="h-8 w-8 rounded-md bg-[var(--primary-navy)] text-sm font-medium text-white">
               1
             </button>
-            <button className="p-2 rounded-md border border-slate-200 hover:bg-slate-50">
+            <button className="h-8 w-8 rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] motion-default hover:text-[var(--color-primary)]">
               <span className="material-symbols-outlined text-[20px]">
                 chevron_right
               </span>
@@ -266,6 +281,13 @@ export default function MyOrder() {
           </div>
         </div>
       </div>
+      <OrderDetailModal
+        open={detailModalOpen}
+        onClose={closeDetail}
+        orderId={detailOrder?.id}
+        order={detailOrder?.raw}
+        user={user}
+      />
     </div>
   );
 }

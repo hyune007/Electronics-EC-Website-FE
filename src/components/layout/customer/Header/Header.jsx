@@ -202,8 +202,8 @@ export default function Header() {
   };
   return (
     <>
-      <div className="h-[32px] bg-background-dark dark:bg-navy-light text-white flex items-center px-4 md:px-10 lg:px-20 overflow-hidden relative z-9999999">
-        <div className="marquee flex-1 text-[11px] font-medium tracking-wide uppercase">
+      <div className="relative z-40 flex h-9 items-center overflow-hidden border-b border-[var(--color-border)] bg-[var(--color-secondary)] px-4 text-white md:px-8 lg:px-14">
+        <div className="marquee flex-1 text-[11px] font-semibold tracking-[0.08em] uppercase">
           <div className="marquee-content">
             <p>
               {vi.layout.header.marqueeText}
@@ -212,7 +212,7 @@ export default function Header() {
           </div>
         </div>
 
-        <div className="hidden md:flex items-center gap-6 text-[11px] ml-4 shrink-0">
+        <div className="ml-4 hidden shrink-0 items-center gap-6 text-[11px] md:flex">
           <div className="flex items-center gap-1.5">
             <span className="material-symbols-outlined text-[14px]">mail</span>
             <span>{vi.layout.header.infoEmail}</span>
@@ -224,21 +224,13 @@ export default function Header() {
         </div>
       </div>
 
-      <header
-        className="
-          sticky top-0 z-50
-          bg-white/80 dark:bg-background-dark/80
-          backdrop-blur-xl
-          border-b border-gray-200/60 dark:border-gray-800/60
-          shadow-[0_4px_20px_rgba(0,0,0,0.04)]
-        "
-      >
-        <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/">
-            <BrandLogo />
+      <header className="site-main-header border-b border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm">
+        <div className="mx-auto flex h-[4.5rem] w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link to="/" className="shrink-0">
+            <BrandLogo size="header" />
           </Link>
 
-          <nav className="hidden lg:flex items-center gap-10">
+          <nav className="hidden items-center gap-8 lg:flex">
             <NavLink to="/home" className="nav-link">
               {vi.layout.header.home}
             </NavLink>
@@ -254,7 +246,7 @@ export default function Header() {
               {showSubmenu && (
                 <>
                   <div className="absolute left-1/2 top-full -translate-x-1/2 w-12 h-3 bg-transparent rounded-b-md z-40 pointer-events-auto" />
-                  <SubMenuHeader />
+                  <SubMenuHeader onSelect={() => setShowSubmenu(false)} />
                 </>
               )}
             </div>
@@ -268,17 +260,18 @@ export default function Header() {
             </NavLink>
           </nav>
 
-          <div className="flex items-center gap-2 relative">
+          <div className="relative flex items-center gap-1.5 sm:gap-2">
             <div ref={searchWrapRef} className="relative">
               <button
                 onClick={() => setSearchOpen((prev) => !prev)}
-                className="icon-btn hidden lg:flex items-center gap-10"
+                className="icon-btn hidden items-center lg:flex"
+                aria-label="Mở tìm kiếm"
               >
                 <span className="material-symbols-outlined">search</span>
               </button>
 
               {searchOpen && (
-                <div className="absolute right-0 top-full mt-2 w-[320px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-background-dark shadow-lg p-3 z-50">
+                <div className="modal-shell absolute right-0 top-full z-50 mt-2 w-[320px] p-3 sm:w-[360px]">
                   <input
                     ref={searchInputRef}
                     type="text"
@@ -288,17 +281,17 @@ export default function Header() {
                       if (e.key === "Enter") handleSeeMore();
                     }}
                     placeholder="Nhập tên hoặc loại sản phẩm..."
-                    className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    className="input-default"
                   />
 
                   {normalizedKeyword && (
-                    <div className="mt-2 rounded-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    <div className="mt-2 overflow-hidden rounded-lg border border-[var(--color-border)]">
                       {renderSuggestionContent()}
 
                       <button
                         type="button"
                         onClick={handleSeeMore}
-                        className="w-full text-left px-3 py-2 text-sm font-semibold text-primary hover:bg-gray-50 dark:hover:bg-slate-800"
+                        className="w-full px-3 py-2 text-left text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-muted)] motion-default"
                       >
                         Xem thêm
                       </button>
@@ -312,6 +305,7 @@ export default function Header() {
               to="/checkout?tab=cart"
               className="icon-btn relative"
               id="cart-icon"
+              aria-label="Giỏ hàng"
             >
               <span className="material-symbols-outlined">shopping_cart</span>
 
@@ -331,6 +325,7 @@ export default function Header() {
                 <button
                   onClick={() => setShowDropdown((s) => !s)}
                   className="icon-btn flex items-center gap-2"
+                  aria-label="Mở menu người dùng"
                 >
                   <span className="material-symbols-outlined">
                     account_circle
@@ -350,21 +345,22 @@ export default function Header() {
             ) : (
               <Link
                 to="/login"
-                className="icon-btn flex items-center gap-1 text-sm"
+                className="icon-btn flex items-center gap-1 text-sm font-medium"
               >
                 <span className="material-symbols-outlined">login</span>
                 <span className="hidden lg:inline">Đăng nhập</span>
               </Link>
             )}
 
-            <div className="hidden lg:flex items-center gap-10">
+            <div className="hidden items-center lg:flex">
               {" "}
               <ThemeToggleButton onToggle={toggleTheme} />
             </div>
 
             <button
               onClick={() => setMobileOpen((s) => !s)}
-              className="lg:hidden icon-btn"
+              className="header-mobile-menu-btn lg:hidden icon-btn"
+              aria-label="Mở menu di động"
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
@@ -372,8 +368,8 @@ export default function Header() {
         </div>
 
         {mobileOpen && (
-          <div className="lg:hidden border-t border-gray-200/60 dark:border-gray-800/60 bg-white dark:bg-background-dark">
-            <div className="px-6 py-4 space-y-4">
+          <div className="border-t border-[var(--color-border)] bg-[var(--color-surface)] lg:hidden">
+            <div className="space-y-4 px-4 py-4 sm:px-6">
               <nav className="flex flex-col gap-2">
                 <button
                   className="icon-btn justify-start flex"
@@ -417,7 +413,7 @@ export default function Header() {
                       handleLogout();
                       setMobileOpen(false);
                     }}
-                    className="nav-link text-left text-red-500"
+                    className="nav-link text-left text-[var(--color-danger)]"
                   >
                     Đăng xuất
                   </button>

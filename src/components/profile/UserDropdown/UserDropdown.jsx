@@ -7,20 +7,21 @@ export default function UserDropdown({ open, onClose, onLogout, user }) {
 
   return (
     <div className="absolute right-0 top-full mt-3 w-52 z-50 origin-top-right">
-      <div className="rounded-xl shadow-lg border border-slate-200 bg-white dark:bg-slate-800 dark:border-slate-700 text-slate-900 dark:text-slate-100 overflow-hidden">
-
-        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
+      <div className="card-default overflow-hidden rounded-xl border bg-[var(--color-surface)] text-[var(--color-text)] shadow-md">
+        <div className="border-b border-[var(--color-border)] px-4 py-3">
           <p className="text-sm font-semibold">Tài khoản</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-[var(--color-text-muted)]">
             Quản lý thông tin cá nhân
           </p>
         </div>
 
         <div className="py-1">
           {!isAdmin && (
-            <NavLink to="/profile?tab=information" onClick={onClose}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors" >
-
+            <NavLink
+              to="/profile?tab=information"
+              onClick={onClose}
+              className="flex w-full items-center gap-3 px-4 py-2 text-sm motion-default hover:bg-[var(--color-muted)]"
+            >
               <span className="material-symbols-outlined text-[18px]">
                 person
               </span>
@@ -32,7 +33,7 @@ export default function UserDropdown({ open, onClose, onLogout, user }) {
             <NavLink
               to="/admin/dashboard"
               onClick={onClose}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+              className="flex w-full items-center gap-3 px-4 py-2 text-sm motion-default hover:bg-[var(--color-muted)]"
             >
               <span className="material-symbols-outlined text-[18px]">
                 dashboard
@@ -43,7 +44,7 @@ export default function UserDropdown({ open, onClose, onLogout, user }) {
 
           <button
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+            className="flex w-full items-center gap-3 px-4 py-2 text-sm text-[var(--color-danger)] motion-default hover:bg-[color-mix(in_oklab,var(--color-danger)_10%,white)]"
           >
             <span className="material-symbols-outlined text-[18px]">
               logout

@@ -19,8 +19,7 @@ export default function InforStep({ onSubmit }) {
 
   const [addresses, setAddresses] = useState([]);
 
-  const inputStyle =
-    "w-full h-12 px-4 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0f172a] focus:outline-none focus:ring-2 focus:ring-primary transition";
+  const inputStyle = "input-default h-12 px-4";
 
   const formatCurrency = (v) => v.toLocaleString("vi-VN") + "₫";
 
@@ -38,7 +37,7 @@ export default function InforStep({ onSubmit }) {
     const token = localStorage.getItem("authToken");
     const id = token ? decodeJwtPayload(token)?.sub : null;
     if (!id) return;
-    
+
     setCustomerId(id);
 
     const cacheKey = `customerInfo_${id}`;
@@ -142,11 +141,11 @@ export default function InforStep({ onSubmit }) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-      <div className="lg:col-span-7 bg-white dark:bg-[#0f172a] p-8 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800">
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
+      <div className="card-default rounded-2xl p-6 sm:p-8 lg:col-span-7">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">Thông tin giao hàng</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="mt-1 text-sm text-[var(--color-text-muted)]">
             Vui lòng nhập chính xác để đảm bảo giao hàng thành công.
           </p>
         </div>
@@ -190,7 +189,7 @@ export default function InforStep({ onSubmit }) {
               name="addressId"
               value={formData.addressId}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="select-default mt-1 block w-full p-3"
             >
               {addresses.length === 0 ? (
                 <option>Chưa có địa chỉ - vui lòng thêm ở trang hồ sơ</option>
@@ -215,25 +214,22 @@ export default function InforStep({ onSubmit }) {
               onChange={handleChange}
               rows={3}
               placeholder="Yêu cầu đặc biệt nếu có"
-              className={`${inputStyle} h-auto py-3 resize-none`}
+              className={`${inputStyle} h-auto resize-none py-3`}
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full h-12 rounded-xl bg-primary text-white font-semibold hover:scale-[1.02] active:scale-[0.98] transition"
-          >
+          <button type="submit" className="btn-primary h-12 w-full rounded-xl">
             Tiếp tục thanh toán
           </button>
         </form>
       </div>
       <aside className="lg:col-span-5 lg:sticky lg:top-24">
-        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b">
+        <div className="card-default rounded-xl">
+          <div className="border-b border-[var(--color-border)] px-6 py-4">
             <h2 className="text-lg font-bold">Chi tiết đơn hàng</h2>
           </div>
 
-          <div className="p-6 space-y-4 border-b max-h-[400px] overflow-y-auto">
+          <div className="max-h-[400px] space-y-4 overflow-y-auto border-b border-[var(--color-border)] p-6">
             {cart.map((item) => (
               <div key={item.id} className="flex gap-4">
                 <img
@@ -245,10 +241,10 @@ export default function InforStep({ onSubmit }) {
                   <h3 className="text-sm font-semibold truncate">
                     {item.name}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--color-text-muted)]">
                     Số lượng: {item.quantity}
                   </p>
-                  <p className="text-sm font-bold text-primary">
+                  <p className="text-sm font-bold text-[var(--color-primary)]">
                     {formatCurrency(item.price)}
                   </p>
                 </div>
@@ -264,17 +260,23 @@ export default function InforStep({ onSubmit }) {
 
             <div className="flex justify-between text-sm">
               <span>Mã giảm giá</span>
-              <span className="text-red-500">-{formatCurrency(discount)}</span>
+              <span className="text-[var(--color-danger)]">
+                -{formatCurrency(discount)}
+              </span>
             </div>
 
             <div className="flex justify-between text-sm">
               <span>Phí vận chuyển</span>
-              <span className="text-red-500">+{formatCurrency(shippingFee)}</span>
+              <span className="text-[var(--color-danger)]">
+                +{formatCurrency(shippingFee)}
+              </span>
             </div>
 
-            <div className="flex justify-between font-bold text-lg border-t pt-3">
+            <div className="flex justify-between border-t border-[var(--color-border)] pt-3 text-lg font-bold">
               <span>Tổng cộng</span>
-              <span className="text-primary">{formatCurrency(total)}</span>
+              <span className="text-[var(--color-primary)]">
+                {formatCurrency(total)}
+              </span>
             </div>
           </div>
         </div>

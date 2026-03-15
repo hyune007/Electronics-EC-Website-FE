@@ -34,15 +34,21 @@ export default function BreadcrumbNav({
     };
   }, [id, propProduct, suppressFetch]);
   return (
-    <nav aria-label="Breadcrumb" className="flex mb-8 text-xs text-slate-500">
+    <nav
+      aria-label="Breadcrumb"
+      className="mb-6 flex text-xs text-[var(--color-text-muted)] sm:mb-8"
+    >
       <ol className="inline-flex items-center space-x-1 md:space-x-3">
         <li>
-          <a className="hover:text-primary" href="#">
+          <a
+            className="motion-default hover:text-[var(--color-primary)]"
+            href="#"
+          >
             Sản phẩm
           </a>
         </li>
         <li>
-          <span className="material-symbols-outlined text-xs">
+          <span className="material-symbols-outlined text-xs text-[var(--color-border)]">
             chevron_right
           </span>
         </li>
@@ -50,29 +56,32 @@ export default function BreadcrumbNav({
           {product?.category ? (
             <Link
               to={`/products?p=0&category=${product.category.id}`}
-              className="hover:text-primary"
+              className="motion-default hover:text-[var(--color-primary)]"
             >
               {product.category.name}
             </Link>
           ) : category ? (
             <Link
               to={`/products?p=0&category=${category.id}`}
-              className="hover:text-primary"
+              className="motion-default hover:text-[var(--color-primary)]"
             >
               {category.name}
             </Link>
           ) : (
-            <Link to="/home" className="hover:text-primary">
+            <Link
+              to="/home"
+              className="motion-default hover:text-[var(--color-primary)]"
+            >
               Danh mục nổi bật
             </Link>
           )}
         </li>
         <li>
-          <span className="material-symbols-outlined text-xs">
+          <span className="material-symbols-outlined text-xs text-[var(--color-border)]">
             chevron_right
           </span>
         </li>
-        <li className="text-slate-900 dark:text-slate-100 font-semibold">
+        <li className="max-w-[250px] truncate font-semibold text-[var(--color-text)] sm:max-w-[420px]">
           {product?.name || ""}
         </li>
       </ol>

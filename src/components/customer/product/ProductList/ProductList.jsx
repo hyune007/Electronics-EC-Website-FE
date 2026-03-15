@@ -288,15 +288,15 @@ export default function ProductList({
 
   const currentCategory = CATEGORIES.find((c) => c.id === category) || null;
   return (
-    <div>
+    <div className="min-w-0 flex-1">
       <BreadcrumbNav category={currentCategory} />
-      <main className="container mx-auto px-4 py-5">
+      <main className="card-default px-4 py-5 sm:px-6">
         <div className="mb-6">
-          <div className="mb-2 text-sm font-semibold text-gray-700 dark:text-slate-300">
+          <div className="mb-2 text-sm font-semibold text-[var(--color-text-muted)]">
             {vi.product.form.productTypeLabel}
           </div>
 
-          <div className="flex flex-wrap gap-3 py-2">
+          <div className="flex flex-wrap gap-2.5 py-2">
             {CATEGORIES.map((c) => (
               <button
                 key={c.id}
@@ -304,10 +304,10 @@ export default function ProductList({
                   setCategory(c.id);
                   setPage(0);
                 }}
-                className={`px-3 py-2 rounded-lg border ${
+                className={`rounded-lg border px-3 py-2 text-sm font-medium motion-default ${
                   category === c.id
-                    ? "bg-primary text-white"
-                    : "border-gray-200 dark:border-gray-700 hover:bg-primary hover:text-white"
+                    ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
                 }`}
               >
                 {c.name}
@@ -319,10 +319,10 @@ export default function ProductList({
                 setCategory(null);
                 setPage(0);
               }}
-              className={`px-3 py-2 rounded-lg border ${
+              className={`rounded-lg border px-3 py-2 text-sm font-medium motion-default ${
                 category === null
-                  ? "bg-primary text-white border-primary"
-                  : "border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:bg-primary hover:text-white dark:text-slate-100"
+                  ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                  : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
               }`}
             >
               Tất cả
@@ -330,8 +330,8 @@ export default function ProductList({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
-          <h1 className="text-2xl font-bold tracking-tight dark:text-slate-100">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text)]">
             {vi.product.form.allProductsTitle}
           </h1>
 
@@ -341,7 +341,8 @@ export default function ProductList({
               setPriceSort(e.target.value);
               setPage(0);
             }}
-            className="border border-gray-200 dark:bg-primary rounded-lg px-3 py-1.5 text-sm dark:text-slate-100"
+            className="select-default w-full sm:w-[260px]"
+            aria-label="Sắp xếp theo giá"
           >
             <option value="">{vi.product.form.sortOptions.all}</option>
             <option value="asc">{vi.product.form.sortOptions.priceAsc}</option>
@@ -351,28 +352,33 @@ export default function ProductList({
           </select>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10">
+        <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {loading && (
-            <div className="col-span-full text-center">Đang tải...</div>
+            <div className="col-span-full rounded-lg border border-dashed border-[var(--color-border)] py-14 text-center text-sm text-[var(--color-text-muted)]">
+              Đang tải...
+            </div>
           )}
           {error && (
-            <div className="col-span-full text-center text-red-500">
+            <div className="col-span-full rounded-lg border border-dashed border-[var(--color-danger)] py-14 text-center text-sm text-[var(--color-danger)]">
               Lỗi tải dữ liệu
             </div>
           )}
           {!loading && !error && products.length === 0 && (
-            <div className="col-span-full text-center">Không có sản phẩm</div>
+            <div className="col-span-full rounded-lg border border-dashed border-[var(--color-border)] py-14 text-center text-sm text-[var(--color-text-muted)]">
+              Không có sản phẩm
+            </div>
           )}
           {!loading &&
             !error &&
             products.map((p) => <ProductCard key={p.id} product={p} />)}
         </div>
 
-        <div className="mt-16 flex justify-center items-center gap-2">
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-2.5">
           <button
             disabled={page === 0}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
-            className="w-10 h-10 rounded-lg border hover:bg-primary hover:text-white disabled:opacity-40"
+            className="motion-default h-10 w-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Trang trước"
           >
             ‹
           </button>
@@ -381,11 +387,12 @@ export default function ProductList({
             <button
               key={i}
               onClick={() => setPage(i)}
-              className={`w-10 h-10 rounded-lg ${
+              className={`h-10 w-10 rounded-lg border text-sm font-semibold motion-default ${
                 page === i
-                  ? "bg-primary text-white"
-                  : "border hover:bg-primary hover:text-white"
+                  ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                  : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
               }`}
+              aria-label={`Trang ${i + 1}`}
             >
               {i + 1}
             </button>
@@ -394,7 +401,8 @@ export default function ProductList({
           <button
             disabled={page === totalPages - 1}
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            className="w-10 h-10 rounded-lg border hover:bg-primary hover:text-white disabled:opacity-40"
+            className="motion-default h-10 w-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Trang sau"
           >
             ›
           </button>

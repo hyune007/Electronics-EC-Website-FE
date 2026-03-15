@@ -1,0 +1,64 @@
+@reference "../../../../index.css";
+
+.customer-layout-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  /* padding-top removed — header is sticky, not fixed */
+}
+
+.customer-layout-rain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.customer-layout-particle {
+  position: absolute;
+  top: -12%;
+  display: inline-flex;
+  color: color-mix(in oklab, var(--color-primary) 48%, var(--color-surface));
+  opacity: 0.22;
+  text-shadow: 0 0 12px
+    color-mix(in oklab, var(--color-primary) 18%, transparent);
+  font-variation-settings:
+    "FILL" 1,
+    "wght" 700,
+    "GRAD" 0,
+    "opsz" 48;
+  animation: customer-layout-fall linear infinite;
+}
+
+.dark .customer-layout-particle {
+  color: color-mix(in oklab, #9cc7ea 82%, transparent);
+  opacity: 0.18;
+  text-shadow: 0 0 12px rgba(105, 172, 228, 0.16);
+}
+
+@keyframes customer-layout-fall {
+  0% {
+    transform: translate3d(0, -10vh, 0) rotate(0deg) scale(0.92);
+    opacity: 0;
+  }
+
+  12% {
+    opacity: 0.22;
+  }
+
+  82% {
+    opacity: 0.16;
+  }
+
+  100% {
+    transform: translate3d(22px, 110vh, 0) rotate(22deg) scale(1.04);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .customer-layout-particle {
+    animation: none !important;
+  }
+}

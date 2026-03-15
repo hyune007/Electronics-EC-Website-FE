@@ -10,8 +10,10 @@ export default function useDragScroll() {
     let scrollLeft = 0;
 
     const onDown = (e) => {
+      if (e.button != null && e.button !== 0) return;
       isDown = true;
       el.classList.add("dragging");
+      document.body.style.userSelect = "none";
       startX = e.pageX ?? (e.touches && e.touches[0].pageX) ?? 0;
       scrollLeft = el.scrollLeft;
       e.preventDefault();
@@ -25,6 +27,7 @@ export default function useDragScroll() {
     const onUp = () => {
       isDown = false;
       el.classList.remove("dragging");
+      document.body.style.userSelect = "";
     };
 
     el.addEventListener("mousedown", onDown);

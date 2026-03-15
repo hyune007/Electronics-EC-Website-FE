@@ -39,14 +39,13 @@ export default function Banner({ variant = "home" }) {
     <motion.section
       layoutId="main-banner"
       transition={{
-        type: "spring",
-        stiffness: 80,
-        damping: 20,
+        duration: 0.22,
+        ease: [0.2, 0.8, 0.2, 1],
       }}
       className={
         variant === "home"
-          ? "overflow-hidden rounded-2xl h-[48vh]"
-          : "overflow-hidden h-[60vh]"
+          ? "h-full min-h-[360px] overflow-hidden rounded-[0.72rem] md:min-h-[390px] lg:min-h-[420px]"
+          : "h-[48vh] overflow-hidden lg:h-[60vh]"
       }
     >
       <div ref={emblaRef} className="h-full">
@@ -62,7 +61,7 @@ export default function Banner({ variant = "home" }) {
                 <img
                   src={img}
                   alt={`banner-${index}`}
-                  className="w-full h-full object-cover object-center bg-white dark:bg-[#181b22]"
+                  className="h-full w-full object-cover object-center bg-[var(--color-surface)]"
                 />
               </a>
             </div>

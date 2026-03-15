@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useCart } from "../../../../contexts/CartContext";
 import { decodeJwtPayload } from "../../../../utils/jwt";
-import { createBill, updateBill, getShippingFee } from "../../../../services/billService";
+import {
+  createBill,
+  updateBill,
+  getShippingFee,
+} from "../../../../services/billService";
 import {
   createSePaySession,
   getSePayStatus,
@@ -162,12 +166,12 @@ export default function PaymentStep({
   }, [billId, paymentMethod, clearCart, onComplete]);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      <div className="lg:col-span-8 space-y-6">
-        <section className="bg-white dark:bg-slate-900 rounded-lg shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b flex justify-between items-center">
+    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+      <div className="space-y-6 lg:col-span-8">
+        <section className="card-default overflow-hidden rounded-xl">
+          <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">
+              <span className="material-symbols-outlined text-[var(--color-primary)]">
                 person_outline
               </span>
               Thông tin giao hàng
@@ -175,7 +179,7 @@ export default function PaymentStep({
             <button
               type="button"
               onClick={() => onEditShipping && onEditShipping()}
-              className="text-primary text-sm font-medium flex items-center gap-1"
+              className="flex items-center gap-1 text-sm font-medium text-[var(--color-primary)] motion-default hover:opacity-80"
             >
               Thay đổi
               <span className="material-symbols-outlined text-sm">edit</span>
@@ -183,19 +187,23 @@ export default function PaymentStep({
           </div>
           <div className="p-6 space-y-4 text-sm">
             <div className="space-y-1">
-              <p className="text-xs text-slate-500 font-semibold">Họ và tên</p>
+              <p className="text-xs font-semibold text-[var(--color-text-muted)]">
+                Họ và tên
+              </p>
               <p className="font-medium">{info.fullName || ""}</p>
             </div>
 
             <div className="space-y-1">
-              <p className="text-xs text-slate-500 font-semibold">
+              <p className="text-xs font-semibold text-[var(--color-text-muted)]">
                 Số điện thoại
               </p>
               <p className="font-medium">{info.phone || ""}</p>
             </div>
 
             <div className="space-y-1">
-              <p className="text-xs text-slate-500 font-semibold">Địa chỉ</p>
+              <p className="text-xs font-semibold text-[var(--color-text-muted)]">
+                Địa chỉ
+              </p>
               <p className="font-medium leading-relaxed">
                 {info.address
                   ? `${info.address.detailAddress}, ${info.address.ward}, ${info.address.district}, ${info.address.city}`
@@ -204,7 +212,9 @@ export default function PaymentStep({
             </div>
 
             <div className="space-y-1">
-              <p className="text-xs text-slate-500 font-semibold">Ghi chú</p>
+              <p className="text-xs font-semibold text-[var(--color-text-muted)]">
+                Ghi chú
+              </p>
               <p className="font-medium whitespace-pre-line">
                 {info.note || "Không có ghi chú"}
               </p>
@@ -212,10 +222,10 @@ export default function PaymentStep({
           </div>
         </section>
 
-        <section className="bg-white dark:bg-slate-900 rounded-lg shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b">
+        <section className="card-default overflow-hidden rounded-xl">
+          <div className="border-b border-[var(--color-border)] px-6 py-4">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">
+              <span className="material-symbols-outlined text-[var(--color-primary)]">
                 payments
               </span>
               Phương thức thanh toán
@@ -230,20 +240,22 @@ export default function PaymentStep({
               <div
                 key={method.id}
                 onClick={() => setPaymentMethod(method.id)}
-                className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${paymentMethod === method.id
-                  ? "border-primary bg-primary/5"
-                  : "border-slate-200 hover:bg-slate-50"
-                  }`}
+                className={`cursor-pointer rounded-lg border-2 p-4 transition-all duration-220 ease-standard ${
+                  paymentMethod === method.id
+                    ? "border-[var(--color-primary)] bg-[color-mix(in_oklab,var(--color-primary)_8%,white)]"
+                    : "border-[var(--color-border)] hover:bg-[var(--color-muted)]"
+                }`}
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === method.id
-                      ? "border-primary"
-                      : "border-slate-300"
-                      }`}
+                    className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
+                      paymentMethod === method.id
+                        ? "border-[var(--color-primary)]"
+                        : "border-[var(--color-border)]"
+                    }`}
                   >
                     {paymentMethod === method.id && (
-                      <div className="w-2.5 h-2.5 bg-primary rounded-full"></div>
+                      <div className="h-2.5 w-2.5 rounded-full bg-[var(--color-primary)]"></div>
                     )}
                   </div>
                   <span className="font-bold">{method.label}</span>
@@ -252,17 +264,16 @@ export default function PaymentStep({
             ))}
           </div>
         </section>
-
       </div>
 
       {/* đơn hàng */}
       <aside className="lg:col-span-4 lg:sticky lg:top-24">
-        <div className="bg-white dark:bg-slate-900 rounded-lg shadow-sm">
-          <div className="px-6 py-4 border-b">
+        <div className="card-default rounded-xl">
+          <div className="border-b border-[var(--color-border)] px-6 py-4">
             <h2 className="text-lg font-bold">Chi tiết đơn hàng</h2>
           </div>
 
-          <div className="p-6 space-y-4 border-b max-h-[400px] overflow-y-auto">
+          <div className="max-h-[400px] space-y-4 overflow-y-auto border-b border-[var(--color-border)] p-6">
             {cart.map((item) => (
               <div key={item.id} className="flex gap-4">
                 <img
@@ -274,10 +285,10 @@ export default function PaymentStep({
                   <h3 className="text-sm font-semibold truncate">
                     {item.name}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-[var(--color-text-muted)]">
                     Số lượng: {item.quantity}
                   </p>
-                  <p className="text-sm font-bold text-primary">
+                  <p className="text-sm font-bold text-[var(--color-primary)]">
                     {formatCurrency(item.price)}
                   </p>
                 </div>
@@ -296,9 +307,11 @@ export default function PaymentStep({
               <span>{formatCurrency(shippingFee)}</span>
             </div>
 
-            <div className="flex justify-between font-bold text-lg border-t pt-3">
+            <div className="flex justify-between border-t border-[var(--color-border)] pt-3 text-lg font-bold">
               <span>Tổng cộng</span>
-              <span className="text-primary">{formatCurrency(total)}</span>
+              <span className="text-[var(--color-primary)]">
+                {formatCurrency(total)}
+              </span>
             </div>
 
             <button
@@ -308,26 +321,28 @@ export default function PaymentStep({
                 isSubmitting ||
                 (paymentMethod === "bank" && sepaySession && !paid)
               }
-              className="w-full bg-primary hover:bg-primary/90 text-white py-4 rounded-md font-bold text-lg mt-4 flex items-center justify-center gap-2"
+              className="btn-primary mt-4 flex w-full items-center justify-center gap-2 rounded-md py-4 text-lg"
             >
               {isSubmitting ? "ĐANG XỬ LÝ..." : "THANH TOÁN"}
               <span className="material-symbols-outlined">shield</span>
             </button>
 
-            {error && <p className="text-red-500 text-sm mt-3">{error}</p>}
+            {error && (
+              <p className="mt-3 text-sm text-[var(--color-danger)]">{error}</p>
+            )}
           </div>
         </div>
       </aside>
 
       {showPaymentPopup && paymentMethod === "bank" && sepaySession && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-          <div className="w-full max-w-3xl bg-white dark:bg-slate-900 rounded-lg shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-            <div className="px-6 py-4 border-b flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay)] px-4">
+          <div className="w-full max-w-3xl overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4">
               <h3 className="text-lg font-bold">Thanh toán chuyển khoản</h3>
               <button
                 type="button"
                 onClick={handleCancelPayment}
-                className="text-red-600 hover:text-red-700 font-semibold"
+                className="font-semibold text-[var(--color-danger)] motion-default hover:opacity-80"
               >
                 Hủy
               </button>
@@ -340,8 +355,9 @@ export default function PaymentStep({
                   className="w-64 h-64 object-contain"
                 />
                 <div
-                  className={`mt-3 text-sm font-semibold ${paid ? "text-green-600" : "text-amber-600"
-                    }`}
+                  className={`mt-3 text-sm font-semibold ${
+                    paid ? "text-green-600" : "text-amber-600"
+                  }`}
                 >
                   {paid ? "Đã thanh toán" : "Chờ thanh toán..."}
                 </div>
@@ -351,10 +367,12 @@ export default function PaymentStep({
                   <span className="font-semibold">Tên ngân hàng:</span> MB Bank
                 </div>
                 <div>
-                  <span className="font-semibold">Tên người nhận:</span> Nguyễn Trường Huy
+                  <span className="font-semibold">Tên người nhận:</span> Nguyễn
+                  Trường Huy
                 </div>
                 <div>
-                  <span className="font-semibold">Số tài khoản:</span> 0349044264
+                  <span className="font-semibold">Số tài khoản:</span>{" "}
+                  0349044264
                 </div>
                 <div>
                   <span className="font-semibold">Số tiền:</span>{" "}
@@ -364,7 +382,7 @@ export default function PaymentStep({
                   <span className="font-semibold">Nội dung CK:</span>{" "}
                   {sepaySession.description}
                 </div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-[var(--color-text-muted)]">
                   Giữ nguyên nội dung để hệ thống tự xác nhận.
                 </div>
               </div>

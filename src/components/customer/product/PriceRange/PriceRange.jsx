@@ -55,8 +55,8 @@ export default function PriceRange({
           max={maxPrice - MIN_GAP}
           step={STEP}
           onChange={(e) => updateMin(+e.target.value)}
-          className="w-1/2 rounded-lg border px-2 py-1 text-sm
-                     dark:text-slate-100 dark:bg-slate-900 dark:border-slate-700"
+          className="input-default w-1/2 px-2.5 py-1.5 text-sm"
+          aria-label="Giá tối thiểu"
         />
         <input
           type="number"
@@ -65,16 +65,16 @@ export default function PriceRange({
           max={MAX}
           step={STEP}
           onChange={(e) => updateMax(+e.target.value)}
-          className="w-1/2 rounded-lg border px-2 py-1 text-sm
-                     dark:text-slate-100 dark:bg-slate-900 dark:border-slate-700"
+          className="input-default w-1/2 px-2.5 py-1.5 text-sm"
+          aria-label="Giá tối đa"
         />
       </div>
 
       <div className="relative h-3">
-        <div className="absolute inset-0 rounded-full bg-slate-200 dark:bg-slate-700" />
+        <div className="absolute inset-0 rounded-full bg-[var(--color-muted)]" />
 
         <div
-          className="absolute h-3 rounded-full bg-primary"
+          className="absolute h-3 rounded-full bg-[var(--color-primary)]"
           style={{
             left: `${(minPrice / MAX) * 100}%`,
             right: `${100 - (maxPrice / MAX) * 100}%`,
@@ -95,10 +95,11 @@ export default function PriceRange({
             [&::-webkit-slider-thumb]:h-5
             [&::-webkit-slider-thumb]:w-5
             [&::-webkit-slider-thumb]:rounded-full
-            [&::-webkit-slider-thumb]:bg-primary
+            [&::-webkit-slider-thumb]:bg-[var(--color-primary)]
             [&::-webkit-slider-thumb]:border-2
-            [&::-webkit-slider-thumb]:border-white
-            [&::-webkit-slider-thumb]:shadow-md"
+            [&::-webkit-slider-thumb]:border-[var(--color-surface)]
+            [&::-webkit-slider-thumb]:shadow-sm"
+          aria-label="Thanh kéo giá tối thiểu"
         />
 
         <input
@@ -115,10 +116,11 @@ export default function PriceRange({
             [&::-webkit-slider-thumb]:h-5
             [&::-webkit-slider-thumb]:w-5
             [&::-webkit-slider-thumb]:rounded-full
-            [&::-webkit-slider-thumb]:bg-primary
+            [&::-webkit-slider-thumb]:bg-[var(--color-primary)]
             [&::-webkit-slider-thumb]:border-2
-            [&::-webkit-slider-thumb]:border-white
-            [&::-webkit-slider-thumb]:shadow-md"
+            [&::-webkit-slider-thumb]:border-[var(--color-surface)]
+            [&::-webkit-slider-thumb]:shadow-sm"
+          aria-label="Thanh kéo giá tối đa"
         />
       </div>
     </div>

@@ -1,0 +1,65 @@
+.product-card-shine {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.product-card-shine::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(2, 21, 38, 0);
+  transition: background 260ms ease;
+  z-index: 2;
+}
+
+.product-card-shine::after {
+  content: "";
+  position: absolute;
+  inset: -140% -62%;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    128deg,
+    rgba(255, 255, 255, 0) 46%,
+    rgba(255, 255, 255, 0.92) 50%,
+    rgba(255, 255, 255, 0) 54%
+  );
+  transform: translate3d(-125%, -125%, 0) rotate(16deg);
+  will-change: transform, opacity;
+  transition: opacity 200ms ease 50ms;
+  z-index: 3;
+}
+
+.product-card-shine > * {
+  position: relative;
+  z-index: 1;
+}
+
+.product-card-shine:hover::after {
+  opacity: 0.98;
+  animation: product-card-metal-shine 6.8s linear infinite;
+  animation-delay: 50ms;
+}
+
+.product-card-shine:hover::before {
+  background: rgba(2, 21, 38, 0.08);
+}
+
+@keyframes product-card-metal-shine {
+  0% {
+    transform: translate3d(-125%, -125%, 0) rotate(16deg);
+  }
+
+  100% {
+    transform: translate3d(125%, 125%, 0) rotate(16deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card-shine:hover::after {
+    animation: none;
+    opacity: 0.25;
+  }
+}

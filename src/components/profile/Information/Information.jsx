@@ -122,16 +122,16 @@ export default function Information() {
   return (
     <>
       <LoadingCircle show={loading} />
-      <div className="rounded-2xl shadow-lg border p-6 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
+      <div className="card-default rounded-2xl border p-6 sm:p-7">
         <div className="flex items-start gap-4 mb-6">
-          <div className="p-3 rounded-lg bg-[var(--accent-light)] dark:bg-slate-700 dark:text-slate-100">
+          <div className="rounded-lg bg-[var(--accent-light)] p-3 text-[var(--color-primary)]">
             <span className="material-symbols-outlined">person</span>
           </div>
           <div>
             <h1 className="text-2xl font-semibold">
               {vi.profile.information.title}
             </h1>
-            <p className="text-sm mt-1 dark:text-slate-300">
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
               {vi.profile.information.desc}
             </p>
           </div>
@@ -150,7 +150,7 @@ export default function Information() {
               placeholder={vi.profile.information.placeholders.fullName}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] "
+              className="input-default mt-1 block w-full p-3"
               disabled={!editMode}
             />
           </div>
@@ -164,7 +164,7 @@ export default function Information() {
               placeholder={vi.profile.information.placeholders.phone}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="input-default mt-1 block w-full p-3"
               disabled={!editMode}
             />
           </div>
@@ -178,7 +178,7 @@ export default function Information() {
               placeholder={vi.profile.information.placeholders.email}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="input-default mt-1 block w-full p-3"
               disabled={!editMode}
             />
           </div>
@@ -191,7 +191,7 @@ export default function Information() {
               name="defaultAddress"
               value={defaultAddress}
               onChange={(e) => setDefaultAddress(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-200 p-3 shadow-sm bg-transparent focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="select-default mt-1 block w-full p-3"
               disabled={!editMode}
             >
               {addresses.length === 0 ? (
@@ -212,10 +212,7 @@ export default function Information() {
           </div>
 
           <div className="md:col-span-2 flex justify-end">
-            <button
-              type="submit"
-              className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-md font-semibold shadow hover:opacity-95"
-            >
+            <button type="submit" className="btn-primary px-5 py-2">
               {editMode ? "Lưu" : vi.profile.information.updateInfor}
             </button>
           </div>

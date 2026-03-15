@@ -16,11 +16,11 @@ export default function Stepper({ currentStep = 0, view, onSelectView }) {
   const progress = (activeIndex / (steps.length - 1)) * 100;
 
   return (
-    <div className="mb-10">
-      <div className="relative flex justify-between max-w-4xl mx-auto items-center">
-        <div className="absolute top-5 w-full h-[2px] bg-slate-200" />
+    <div className="mb-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-5 shadow-sm sm:mb-10 sm:px-6">
+      <div className="relative mx-auto flex max-w-4xl items-center justify-between">
+        <div className="absolute top-5 h-[2px] w-full bg-[var(--color-border)]" />
         <div
-          className="absolute top-5 h-[2px] bg-primary transition-all duration-300"
+          className="absolute top-5 h-[2px] bg-[var(--color-primary)] transition-all duration-220 ease-standard"
           style={{ width: `${progress}%` }}
         />
 
@@ -35,14 +35,15 @@ export default function Stepper({ currentStep = 0, view, onSelectView }) {
                   onSelectView(step.id);
                 }
               }}
-              className="flex flex-col items-center gap-2 px-4 cursor-pointer"
+              className="flex cursor-pointer flex-col items-center gap-2 px-2 text-center sm:px-4"
             >
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all z-0
-                ${isActive
-                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "bg-white border-2 border-slate-200 text-slate-400"
-                  }`}
+                className={`z-0 flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-220 ease-standard
+                ${
+                  isActive
+                    ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-sm"
+                    : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)]"
+                }`}
               >
                 <span className="material-symbols-outlined text-xl z-0">
                   {step.icon}
@@ -50,10 +51,11 @@ export default function Stepper({ currentStep = 0, view, onSelectView }) {
               </div>
 
               <span
-                className={`text-sm ${isActive
-                    ? "font-bold text-primary"
-                    : "font-medium text-slate-500"
-                  }`}
+                className={`text-xs sm:text-sm ${
+                  isActive
+                    ? "font-bold text-[var(--color-primary)]"
+                    : "font-medium text-[var(--color-text-muted)]"
+                }`}
               >
                 {step.label}
               </span>

@@ -322,13 +322,6 @@ export function useProductManageLogic() {
         }
     }, []);
 
-    useEffect(() => {
-        const cachedStats = getCache(PRODUCT_STATS_CACHE_KEY, PRODUCT_STATS_CACHE_TTL);
-        if (cachedStats) {
-            setGlobalStats(cachedStats);
-        }
-    }, []);
-
     /* ================= LOAD BRANDS ================= */
     useEffect(() => {
         const loadBrands = async () => {

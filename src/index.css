@@ -1,14 +1,215 @@
 @import "./styles/theme/themeColor.css";
 
 @layer base {
+  :root {
+    color: var(--color-text);
+    background-color: var(--color-background);
+    font-family: var(--font-sans);
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
   body {
     @apply antialiased;
-    color: #050552; /* default light theme text color */
-    border:none;
+    color: var(--color-text);
+    background-color: var(--color-background);
+    border: none;
+    font-family: var(--font-sans);
+    transition:
+      background-color var(--motion-base) var(--ease-standard),
+      color var(--motion-base) var(--ease-standard);
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 }
-/* Hiệu ứng underline */
+
 @layer components {
+  .motion-default {
+    transition-property:
+      color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: var(--motion-base);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white;
+    background-color: var(--color-primary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition:
+      background-color var(--motion-fast) var(--ease-standard),
+      transform var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-primary-hover);
+    transform: scale(1.02);
+    box-shadow: var(--shadow-md);
+  }
+
+  .btn-primary:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold;
+    color: var(--color-primary);
+    background-color: var(--color-surface);
+    border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+    border-radius: var(--radius-md);
+    transition:
+      border-color var(--motion-fast) var(--ease-standard),
+      color var(--motion-fast) var(--ease-standard),
+      transform var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard);
+  }
+
+  .btn-secondary:hover {
+    color: var(--color-secondary);
+    border-color: var(--color-secondary);
+    transform: scale(1.02);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .input-default,
+  .select-default {
+    @apply w-full px-3 py-2.5 text-sm;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    border: 1px solid color-mix(in oklab, var(--color-border) 82%, transparent);
+    border-radius: var(--radius-md);
+    transition:
+      border-color var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard),
+      background-color var(--motion-fast) var(--ease-standard);
+  }
+
+  .input-default::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  .input-default:focus,
+  .select-default:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px
+      color-mix(in oklab, var(--color-primary) 22%, transparent);
+    outline: none;
+  }
+
+  .card-default {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid color-mix(in oklab, var(--color-border) 78%, transparent);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition:
+      border-color var(--motion-fast) var(--ease-standard),
+      box-shadow var(--motion-fast) var(--ease-standard),
+      transform var(--motion-fast) var(--ease-standard);
+  }
+
+  .card-default:hover {
+    border-color: color-mix(
+      in oklab,
+      var(--color-primary) 18%,
+      var(--color-border)
+    );
+    box-shadow: var(--shadow-md);
+  }
+
+  .badge-default {
+    @apply inline-flex items-center px-2.5 py-1 text-xs font-semibold;
+    border-radius: 999px;
+    background-color: var(--color-muted);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+  }
+
+  .badge-pending {
+    background-color: color-mix(in oklab, #7d8b99 22%, white);
+    color: #5a6775;
+    border-color: color-mix(in oklab, #7d8b99 42%, white);
+  }
+
+  .badge-success {
+    background-color: color-mix(in oklab, var(--color-success) 18%, white);
+    color: var(--color-success);
+    border-color: color-mix(in oklab, var(--color-success) 42%, white);
+  }
+
+  .badge-warning {
+    background-color: color-mix(in oklab, var(--color-warning) 18%, white);
+    color: var(--color-warning);
+    border-color: color-mix(in oklab, var(--color-warning) 42%, white);
+  }
+
+  .badge-danger {
+    background-color: color-mix(in oklab, var(--color-danger) 18%, white);
+    color: var(--color-danger);
+    border-color: color-mix(in oklab, var(--color-danger) 42%, white);
+  }
+
+  .badge-info {
+    background-color: color-mix(in oklab, var(--color-info) 18%, white);
+    color: var(--color-info);
+    border-color: color-mix(in oklab, var(--color-info) 42%, white);
+  }
+
+  .badge-return {
+    background-color: color-mix(in oklab, #5f768d 20%, white);
+    color: #506579;
+    border-color: color-mix(in oklab, #5f768d 42%, white);
+  }
+
+  .modal-shell {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border-radius: var(--radius-lg);
+    border: 1px solid color-mix(in oklab, var(--color-border) 80%, transparent);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .skeleton-base {
+    position: relative;
+    overflow: hidden;
+    background-color: color-mix(in oklab, var(--color-muted) 84%, white);
+  }
+
+  .skeleton-base::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: color-mix(
+      in oklab,
+      var(--color-surface) 38%,
+      transparent
+    );
+    animation: skeleton-pulse 1.25s infinite;
+  }
+
+  @keyframes skeleton-pulse {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+
+    50% {
+      opacity: 0.7;
+    }
+  }
+
   .nav-link {
     @apply relative inline-block text-sm font-medium
            text-gray-600 dark:text-gray-300
@@ -28,33 +229,53 @@
   }
 
   .nav-link-active {
-    @apply text-primary dark:text-white font-semibold;
+    @apply font-semibold;
+    color: var(--color-primary);
+  }
+
+  .dark .nav-link-active {
+    color: #ffffff;
   }
 }
 
-button{
+button {
   cursor: pointer;
 }
 
 .no-scrollbar {
-  -ms-overflow-style: none; 
+  -ms-overflow-style: none;
   scrollbar-width: none;
 }
 .no-scrollbar::-webkit-scrollbar {
-  display: none; 
+  display: none;
 }
 
 .no-row-hover tbody tr:hover {
-
   background-color: rgba(15, 23, 42, 0.02) !important;
 }
 .no-row-hover tbody tr:hover td {
-
   background: transparent !important;
 }
 .dark .no-row-hover tbody tr:hover {
-
   background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  .motion-default,
+  .btn-primary,
+  .btn-secondary,
+  .card-default,
+  .nav-link,
+  .nav-link::after,
+  .skeleton-base::after {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
 }
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -124,5 +345,3 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 } */
-
-

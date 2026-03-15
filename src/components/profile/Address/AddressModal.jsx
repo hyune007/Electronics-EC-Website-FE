@@ -40,12 +40,11 @@ export default function AddressModal({ open, onClose, onSave }) {
     return Object.keys(e).length === 0;
   };
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay)] p-4">
       <div
-        className={`p-6 rounded-lg w-full max-w-md border ${theme === "dark"
-          ? "bg-slate-800 text-slate-100 border-slate-700"
-          : "bg-white"
-          }`}
+        className={`modal-shell w-full max-w-md border p-6 ${
+          theme === "dark" ? "text-slate-100" : "bg-[var(--color-surface)]"
+        }`}
       >
         <h3 className="text-lg font-bold mb-4">
           {vi.profile.address.modal.title}
@@ -59,11 +58,12 @@ export default function AddressModal({ open, onClose, onSave }) {
             <select
               value={addr.city}
               onChange={(e) => {
-                setAddr({ ...addr, city: e.target.value});
+                setAddr({ ...addr, city: e.target.value });
                 setErrors({ ...errors, city: null });
               }}
-              className={`w-full border rounded-md p-2 ${errors.city ? "border-red-500" : ""
-                }`}
+              className={`select-default w-full p-2 ${
+                errors.city ? "border-[var(--color-danger)]" : ""
+              }`}
             >
               <option value="">{vi.profile.address.modal.selectCity}</option>
               {addressData.map((c) => (
@@ -87,8 +87,9 @@ export default function AddressModal({ open, onClose, onSave }) {
                 setAddr({ ...addr, district: e.target.value });
                 setErrors({ ...errors, district: null });
               }}
-              className={`w-full border rounded-md p-2 ${errors.district ? "border-red-500" : ""
-                }`}
+              className={`input-default w-full p-2 ${
+                errors.district ? "border-[var(--color-danger)]" : ""
+              }`}
             />
             {errors.district && (
               <p className="text-xs text-red-500 mt-1">{errors.district}</p>
@@ -105,8 +106,9 @@ export default function AddressModal({ open, onClose, onSave }) {
                 setAddr({ ...addr, ward: e.target.value });
                 setErrors({ ...errors, ward: null });
               }}
-              className={`w-full border rounded-md p-2 ${errors.ward ? "border-red-500" : ""
-                }`}
+              className={`input-default w-full p-2 ${
+                errors.ward ? "border-[var(--color-danger)]" : ""
+              }`}
             />
             {errors.ward && (
               <p className="text-xs text-red-500 mt-1">{errors.ward}</p>
@@ -123,8 +125,9 @@ export default function AddressModal({ open, onClose, onSave }) {
                 setAddr({ ...addr, detail: e.target.value });
                 setErrors({ ...errors, detail: null });
               }}
-              className={`w-full border rounded-md p-2 h-24 ${errors.detail ? "border-red-500" : ""
-                }`}
+              className={`input-default h-24 w-full p-2 ${
+                errors.detail ? "border-[var(--color-danger)]" : ""
+              }`}
             />
             {errors.detail && (
               <p className="text-xs text-red-500 mt-1">{errors.detail}</p>
@@ -133,7 +136,7 @@ export default function AddressModal({ open, onClose, onSave }) {
         </div>
 
         <div className="mt-4 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 border rounded-md">
+          <button onClick={onClose} className="btn-secondary px-4 py-2">
             {vi.profile.address.modal.cancel}
           </button>
           <button
@@ -142,7 +145,7 @@ export default function AddressModal({ open, onClose, onSave }) {
               onSave(addr);
               onClose();
             }}
-            className="px-4 py-2 rounded-md bg-[var(--color-primary)]"
+            className="btn-primary px-4 py-2"
           >
             {vi.profile.address.modal.save}
           </button>

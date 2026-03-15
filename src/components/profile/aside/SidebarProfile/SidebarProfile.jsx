@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import useTheme from "../../../../hooks/useTheme";
 import { decodeJwtPayload } from "../../../../utils/jwt";
 import { getCustomerById } from "../../../../services/customer/customerService";
@@ -10,59 +10,6 @@ export default function Sidebar({
   const [fullName, setFullName] = useState("");
   const { theme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [dragging, setDragging] = useState(false);
-  const [pos, setPos] = useState({ x: null, y: null });
-  const dragRef = useRef(null);
-  const startRef = useRef({ x: 0, y: 0, origX: 0, origY: 0 });
-  const dragMoved = useRef(false);
-  const rafRef = useRef(null);
-  const nextPosRef = useRef({ x: 0, y: 0 });
-  useEffect(() => {
-    function onMove(e) {
-      if (!dragging) return;
-      // prevent page scrolling during touch drag
-      if (e.touches && e.cancelable) e.preventDefault();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const dx = clientX - startRef.current.x;
-      const dy = clientY - startRef.current.y;
-      // if user moved enough, mark as drag to avoid click
-      if (Math.abs(dx) > 6 || Math.abs(dy) > 6) dragMoved.current = true;
-      const newX = startRef.current.origX + dx;
-      const newY = startRef.current.origY + dy;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      // clamp within viewport (keep 12px margin)
-      const clampedX = clamp(newX, 12, vw - 12 - 48);
-      const clampedY = clamp(newY, 12, vh - 12 - 48);
-      // use rAF to batch updates for smoother dragging
-      nextPosRef.current = { x: clampedX, y: clampedY };
-      if (!rafRef.current) {
-        rafRef.current = requestAnimationFrame(() => {
-          setPos(nextPosRef.current);
-          rafRef.current = null;
-        });
-      }
-    }
-
-    function onUp() {
-      if (!dragging) return;
-      setDragging(false);
-      setTimeout(() => (dragMoved.current = false), 50);
-    }
-
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseup", onUp);
-    window.addEventListener("touchmove", onMove, { passive: false });
-    window.addEventListener("touchend", onUp);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseup", onUp);
-      window.removeEventListener("touchmove", onMove);
-      window.removeEventListener("touchend", onUp);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, [dragging]);
 
   useEffect(() => {
     const fetchCustomerName = async () => {
@@ -92,39 +39,37 @@ export default function Sidebar({
     fetchCustomerName();
   }, []);
 
-  function handleDragStart(e) {
-    // open on click still works; dragging starts on mousedown/touchstart
-    if (e.type === "mousedown") {
-      e.preventDefault();
-      startRef.current.x = e.clientX;
-      startRef.current.y = e.clientY;
-    } else if (e.type === "touchstart") {
-      startRef.current.x = e.touches[0].clientX;
-      startRef.current.y = e.touches[0].clientY;
-    }
-    const rect = dragRef.current?.getBoundingClientRect();
-    const origX = rect ? rect.left : window.innerWidth - 64;
-    const origY = rect ? rect.top : 16;
-    startRef.current.origX = origX;
-    startRef.current.origY = origY;
-    setDragging(true);
-  }
-
   const handleSelect = (view) => (e) => {
     e.preventDefault();
     if (onSelectView) onSelectView(view);
     setMobileOpen(false);
   };
 
+  const navItemClass = (key, extra = "") => {
+    const active = view === key;
+    const activeClass =
+      theme === "dark"
+        ? "bg-[var(--color-secondary)] text-white"
+        : "bg-[var(--accent-light)] text-[var(--color-primary)]";
+    const idleClass =
+      theme === "dark"
+        ? "text-slate-200 hover:bg-slate-800"
+        : "text-[var(--color-text)] hover:bg-[var(--color-muted)]";
+
+    return `flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-220 ease-standard ${
+      active ? `${activeClass} font-semibold` : idleClass
+    } ${extra}`;
+  };
+
   const AsideContent = (
     <div
-      className={`${theme === "dark" ? "bg-slate-900 border-slate-700 text-slate-100" : "bg-white border-slate-200"} rounded-2xl shadow-sm border overflow-hidden`}
+      className={`${theme === "dark" ? "bg-slate-900 border-slate-700 text-slate-100" : "bg-[var(--color-surface)] border-[var(--color-border)]"} card-default overflow-hidden rounded-2xl border`}
     >
       <div
-        className={`p-6 border-b ${theme === "dark" ? "border-slate-700" : "border-slate-100"} flex items-center gap-3`}
+        className={`flex items-center gap-3 border-b p-6 ${theme === "dark" ? "border-slate-700" : "border-[var(--color-border)]"}`}
       >
-        <div className="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center">
-          <span className="material-symbols-outlined text-black">
+        <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[var(--color-muted)]">
+          <span className="material-symbols-outlined text-[var(--color-primary)]">
             account_circle
           </span>
         </div>
@@ -136,7 +81,7 @@ export default function Sidebar({
       <nav className="p-4 space-y-1">
         <a
           onClick={handleSelect("information")}
-          className={`flex items-center gap-3 px-3 py-2 ${view === "information" ? (theme === "dark" ? "bg-[var(--accent-dark)] text-white font-semibold" : "bg-[var(--accent-light)] font-semibold") : theme === "dark" ? "text-slate-200 hover:bg-slate-800 hover:rounded-lg" : "hover:bg-slate-50 hover:rounded-lg"} rounded-lg transition-colors`}
+          className={navItemClass("information")}
           href="#"
         >
           <span className="material-symbols-outlined text-[20px]">info</span>
@@ -148,7 +93,7 @@ export default function Sidebar({
         </a>
         <a
           onClick={handleSelect("myorder")}
-          className={`flex items-center gap-3 px-3 py-2 ${view === "myorder" ? (theme === "dark" ? "bg-[var(--accent-dark)] text-white font-semibold" : "bg-[var(--accent-light)] font-semibold") : theme === "dark" ? "text-slate-200 hover:bg-slate-800 hover:rounded-lg" : "hover:bg-slate-50 hover:rounded-lg"} rounded-lg transition-colors`}
+          className={navItemClass("myorder")}
           href="#"
         >
           <span className="material-symbols-outlined text-[20px]">
@@ -162,7 +107,7 @@ export default function Sidebar({
         </a>
         <a
           onClick={handleSelect("address")}
-          className={`flex items-center gap-3 px-3 py-2 ${view === "address" ? (theme === "dark" ? "bg-[var(--accent-dark)] text-white font-semibold" : "bg-[var(--accent-light)] font-semibold") : theme === "dark" ? "text-slate-200 hover:bg-slate-800 hover:rounded-lg" : "hover:bg-slate-50 hover:rounded-lg"} rounded-lg transition-colors`}
+          className={navItemClass("address")}
           href="#"
         >
           <span className="material-symbols-outlined text-[20px]">
@@ -176,7 +121,10 @@ export default function Sidebar({
         </a>
         <a
           onClick={handleSelect("setting")}
-          className={`flex items-center gap-3 px-3 py-2 ${view === "setting" ? (theme === "dark" ? "bg-[var(--accent-dark)] text-white font-semibold" : "bg-[var(--accent-light)] font-semibold") : theme === "dark" ? "text-slate-200 hover:bg-slate-800 hover:rounded-lg" : "hover:bg-slate-50 hover:rounded-lg"} rounded-lg transition-colors border-t ${theme === "dark" ? "border-slate-700" : "border-slate-100"} pt-3`}
+          className={navItemClass(
+            "setting",
+            `border-t pt-3 ${theme === "dark" ? "border-slate-700" : "border-[var(--color-border)]"}`,
+          )}
           href="#"
         >
           <span className="material-symbols-outlined text-[20px]">
@@ -189,7 +137,7 @@ export default function Sidebar({
           </span>
         </a>
         <a
-          className="flex items-center gap-3 px-3 py-2 text-red-600 hover:bg-red-50 hover:rounded-lg rounded-lg transition-colors"
+          className="flex items-center gap-3 rounded-lg px-3 py-2 text-[var(--color-danger)] transition-colors duration-220 ease-standard hover:bg-[color-mix(in_oklab,var(--color-danger)_10%,white)]"
           href="#"
         >
           <span className="material-symbols-outlined text-[20px]">logout</span>
@@ -201,45 +149,38 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="hidden lg:block lg:w-64 shrink-0">{AsideContent}</aside>
+      <aside className="hidden shrink-0 lg:block lg:w-64">{AsideContent}</aside>
 
-      {/* Mobile: compact icon at top-right (draggable) */}
+      {/* Mobile: profile tab picker trigger */}
       <button
         aria-label="Open profile menu"
-        ref={dragRef}
-        onMouseDown={(e) => handleDragStart(e)}
-        onTouchStart={(e) => handleDragStart(e)}
-        className="md:hidden fixed z-50 w-12 h-12 rounded-full bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-primary shadow-sm flex items-center justify-center ring-1 ring-transparent hover:ring-primary/20 transition"
-        onClick={(e) => {
-          if (dragMoved.current) {
-            // user just dragged; ignore this click
-            e.preventDefault();
-            dragMoved.current = false;
-            return;
-          }
-          setMobileOpen(true);
-        }}
-        style={
-          pos.x != null
-            ? { left: pos.x, top: pos.y, right: "auto" }
-            : { top: 16, right: 16 }
-        }
-        title="Kéo để di chuyển"
+        className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-primary)] shadow-md md:hidden"
+        onClick={() => setMobileOpen(true)}
+        title="Mở các mục profile"
       >
-        <span className="material-symbols-outlined text-xl">
-          account_circle
+        <span className="material-symbols-outlined text-[20px]">menu</span>
+        <span className="text-xs font-semibold uppercase tracking-[0.08em]">
+          Tab
         </span>
       </button>
 
       {mobileOpen && (
         <div className="fixed inset-0 z-50">
           <div
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-[var(--color-overlay)]"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="absolute right-0 top-0 h-full w-[86vw] max-w-xs bg-white dark:bg-slate-900 p-4 overflow-auto shadow-xl transform transition">
-            <div className="flex items-center justify-between mb-4">
-              <button onClick={() => setMobileOpen(false)} className="p-2">
+          <div className="absolute inset-x-0 bottom-0 max-h-[82vh] overflow-auto rounded-t-2xl border-t border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-lg">
+            <div className="mx-auto mb-4 h-1.5 w-14 rounded-full bg-[var(--color-border)]" />
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm font-semibold text-[var(--color-text)]">
+                Chọn mục tài khoản
+              </p>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="icon-btn p-2"
+                aria-label="Đóng menu profile"
+              >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
@@ -249,8 +190,4 @@ export default function Sidebar({
       )}
     </>
   );
-}
-
-function clamp(n, min, max) {
-  return Math.max(min, Math.min(max, n));
 }
