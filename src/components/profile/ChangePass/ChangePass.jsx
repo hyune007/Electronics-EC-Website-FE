@@ -49,9 +49,9 @@ export default function ChangePass() {
     <>
       {" "}
       <LoadingCircle show={loading} />
-      <div className="rounded-2xl shadow-sm border p-6 bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
+      <div className="card-default rounded-2xl border p-6 sm:p-7">
         <div className="flex items-start gap-4 mb-6">
-          <div className="p-3 rounded-lg bg-[var(--accent-light)] dark:bg-slate-700 dark:text-slate-100">
+          <div className="rounded-lg bg-[var(--accent-light)] p-3 text-[var(--color-primary)]">
             <span className="material-symbols-outlined">lock</span>
           </div>
 
@@ -59,14 +59,14 @@ export default function ChangePass() {
             <h1 className="text-2xl font-semibold">
               {vi.profile.changePass.title}
             </h1>
-            <p className="text-sm mt-1 dark:text-slate-300">
+            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
               {vi.profile.changePass.desc}
             </p>
           </div>
 
           <button
             onClick={() => setOpen(true)}
-            className="bg-[var(--color-primary)] text-white px-5 py-2 rounded-md font-semibold shadow hover:opacity-95"
+            className="btn-primary px-5 py-2"
           >
             {vi.profile.changePass.button}
           </button>

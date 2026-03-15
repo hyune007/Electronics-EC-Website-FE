@@ -2,8 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import demoImg from "../../../../assets/demo/demo.jpg";
 import { useNavigate } from "react-router-dom";
 import { formatVND } from "../../../../utils/priceFormatter";
+import "./ProductCard.css";
 
-export default function ProductCard({ product }) {
+export default function ProductCard({ product, className = "" }) {
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0 });
   const timerRef = useRef(null);
   const pendingPos = useRef({ x: 0, y: 0 });
@@ -44,13 +45,13 @@ export default function ProductCard({ product }) {
 
   if (!product) {
     return (
-      <div className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden border border-primary/40 dark:border-primary/30">
-        <div className="h-44 bg-gray-50 dark:bg-gray-800 animate-pulse" />
+      <div className="card-default overflow-hidden rounded-xl">
+        <div className="skeleton-base h-44" />
         <div className="p-4">
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-2 animate-pulse" />
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2 animate-pulse" />
-          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-3 animate-pulse" />
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse" />
+          <div className="skeleton-base mb-2 h-3 w-1/3 rounded" />
+          <div className="skeleton-base mb-2 h-4 w-3/4 rounded" />
+          <div className="skeleton-base mb-3 h-3 w-1/2 rounded" />
+          <div className="skeleton-base h-8 w-full rounded" />
         </div>
       </div>
     );
@@ -58,7 +59,7 @@ export default function ProductCard({ product }) {
 
   return (
     <div
-      className="cursor-pointer relative"
+      className={`relative h-full cursor-pointer ${className}`}
       onPointerEnter={handlePointerEnter}
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
@@ -69,10 +70,12 @@ export default function ProductCard({ product }) {
             position: "fixed",
             left: tooltip.x,
             top: tooltip.y,
-            background: "rgba(0,0,0,0.85)",
-            color: "#fff",
-            padding: "6px 8px",
-            borderRadius: 6,
+            background: "var(--color-surface)",
+            color: "var(--color-text)",
+            border: "1px solid var(--color-border)",
+            boxShadow: "var(--shadow-sm)",
+            padding: "7px 10px",
+            borderRadius: 8,
             fontSize: 12,
             pointerEvents: "none",
             whiteSpace: "nowrap",
@@ -88,16 +91,12 @@ export default function ProductCard({ product }) {
 
       <div
         onClick={() => navigate(`/product-detail/${product.id}`)}
-        className="bg-white dark:bg-gray-900 rounded-xl overflow-hidden
-          border border-primary/80 dark:border-primary/60 hover:border-primary hover:border-2
-          group flex flex-col
-          transition-transform duration-300 hover:scale-105 hover:shadow-lg"
+        className="product-card-shine card-default group flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border"
       >
-        <div className="h-44 bg-white relative overflow-hidden">
+        <div className="relative h-44 overflow-hidden bg-[var(--color-surface)]">
           <img
             alt={product?.name || "product"}
-            className="w-full h-full py-2 object-contain
-                 group-hover:scale-105 transition-transform duration-300"
+            className="h-full w-full object-contain py-2 transition-transform duration-220 ease-standard group-hover:scale-[1.02]"
             src={
               // product?.image ? `http://localhost:8080${product.image}` : demoImg
               product?.image
@@ -107,39 +106,34 @@ export default function ProductCard({ product }) {
           />
         </div>
 
-        <div className="p-4 flex flex-col flex-1">
-          <p className="text-xs text-gray-400 dark:text-slate-300 uppercase font-semibold mb-1 min-h-[1rem]">
+        <div className="product-card-body p-4 flex flex-col flex-1">
+          <p className="mb-1 min-h-[1rem] text-xs font-semibold uppercase text-[var(--color-text-muted)] dark:text-[var(--color-text)]">
             {product.brand?.name || ""}
           </p>
 
-          <h4 className="font-bold text-sm mb-1 line-clamp-2 min-h-[2.5rem] dark:text-text-light">
+          <h4 className="mb-1 min-h-[2.5rem] line-clamp-2 text-sm font-semibold text-[var(--color-text)]">
             {product?.name}
           </h4>
 
-          <div className="flex items-center gap-2 mb-3">
+          <div className="mb-3 flex items-center gap-2">
             {product?.discountedPrice < product?.price ? (
               <>
-                <span className="text-text-light font-black text-sm">
+                <span className="text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-text)]">
                   {formatVND(product.discountedPrice)}
                 </span>
 
-                <span className="text-xs text-gray-400 line-through">
+                <span className="text-xs text-[var(--color-text-muted)] line-through dark:text-[var(--color-text)] dark:opacity-70">
                   {formatVND(product.price)}
                 </span>
               </>
             ) : (
-              <span className="text-text-light font-black text-sm">
+              <span className="text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-text)]">
                 {formatVND(product?.price)}
               </span>
             )}
           </div>
 
-          <button
-            className="mt-auto w-full py-2 bg-gray-100 dark:bg-slate-800
-             group-hover:bg-primary group-hover:text-white
-             text-gray-700 dark:text-slate-100
-             text-xs font-semibold rounded transition-colors"
-          >
+          <button className="btn-secondary mt-auto w-full py-2 text-xs group-hover:bg-[var(--color-primary)] group-hover:text-white dark:text-[var(--color-text)]">
             Xem chi tiết
           </button>
         </div>

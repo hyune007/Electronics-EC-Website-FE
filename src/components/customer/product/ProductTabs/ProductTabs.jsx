@@ -21,10 +21,10 @@ export default function ProductTabs({ product, onRequireAuth, onStatsChange }) {
   const { user, isAuthenticated, isCustomer } = useAuth();
 
   const tabClass = (tab) =>
-    `px-4 py-1 border-b-2 ${
+    `rounded-t-lg border-b-2 px-4 py-2 text-sm font-semibold motion-default ${
       activeTab === tab
-        ? "border-primary font-bold text-primary dark:text-white"
-        : "border-transparent text-slate-500 font-medium hover:text-slate-800 dark:hover:text-slate-200"
+        ? "border-[var(--color-primary)] text-[var(--color-primary)]"
+        : "border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
     }`;
 
   const fetchReviews = useCallback(async () => {
@@ -110,7 +110,7 @@ export default function ProductTabs({ product, onRequireAuth, onStatsChange }) {
 
   return (
     <>
-      <div className="flex border-b border-slate-200 dark:border-slate-800 mb-8">
+      <div className="mb-8 flex border-b border-[var(--color-border)]">
         <button
           className={tabClass("desc")}
           onClick={() => setActiveTab("desc")}
@@ -126,12 +126,12 @@ export default function ProductTabs({ product, onRequireAuth, onStatsChange }) {
       </div>
 
       {error && (
-        <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+        <div className="mb-4 rounded-xl border border-[var(--color-danger)] bg-[color-mix(in_oklab,var(--color-danger)_10%,white)] px-3 py-2 text-sm text-[var(--color-danger)]">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {activeTab === "review" ? (
           <div className="lg:col-span-3">
             <ReviewTab

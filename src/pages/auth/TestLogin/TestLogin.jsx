@@ -24,7 +24,7 @@ export default function TestLogin() {
               id
             </p>
             <p className="text-sm font-semibold break-all">
-              {userId || "(khong co)"}
+              {userId || "(không có)"}
             </p>
           </div>
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
@@ -32,7 +32,7 @@ export default function TestLogin() {
               roleId
             </p>
             <p className="text-sm font-semibold break-all">
-              {roleId || "(khong co)"}
+              {roleId || "(không có)"}
             </p>
           </div>
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
@@ -40,7 +40,7 @@ export default function TestLogin() {
               Ngày tạo
             </p>
             <p className="text-sm font-semibold break-all">
-              {issuedAt ? issuedAt.toLocaleString() : "(khong co)"}
+              {issuedAt ? issuedAt.toLocaleString() : "(không có)"}
             </p>
           </div>
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
@@ -48,7 +48,7 @@ export default function TestLogin() {
               Ngày hết hạn
             </p>
             <p className="text-sm font-semibold break-all">
-              {expiresAt ? expiresAt.toLocaleString() : "(khong co)"}
+              {expiresAt ? expiresAt.toLocaleString() : "(không có)"}
             </p>
           </div>
         </div>

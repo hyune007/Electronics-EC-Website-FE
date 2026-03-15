@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-const MESSENGER_URL =
-  import.meta.env.VITE_MESSENGER_URL || "https://m.me/";
+const MESSENGER_URL = import.meta.env.VITE_MESSENGER_URL || "https://m.me/";
 const ZALO_URL = import.meta.env.VITE_ZALO_URL || "https://zalo.me/";
 const HINT_VISIBLE_MS = 5000;
 const HINT_HIDDEN_MS = 20000;
@@ -70,7 +69,7 @@ export default function SocialChatPopup() {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 14, scale: 0.96 }}
               transition={{ duration: 0.2, delay: 0.02 }}
-              className="group flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#1D9BF0] to-[#0066FF] text-white shadow-[0_10px_24px_rgba(0,132,255,0.4)] ring-2 ring-white/70 transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(0,132,255,0.45)]"
+              className="group flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card text-primary shadow-lg transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-surface"
               aria-label="Open Messenger"
               title="Messenger"
             >
@@ -82,12 +81,12 @@ export default function SocialChatPopup() {
               >
                 <path
                   d="M12 2C6.48 2 2 6.15 2 11.27c0 2.92 1.46 5.52 3.74 7.21V22l3.26-1.8c.95.26 1.96.4 3 .4 5.52 0 10-4.15 10-9.27S17.52 2 12 2Z"
-                  fill="white"
+                  fill="currentColor"
                   fillOpacity="0.98"
                 />
                 <path
                   d="m8.62 13.48 2.86-3.03 2.02 1.62 2.85-3.02-2.86 4.62-2.01-1.62-2.86 1.43Z"
-                  fill="#0084FF"
+                  fill="var(--color-primary)"
                 />
               </svg>
             </motion.a>
@@ -100,11 +99,11 @@ export default function SocialChatPopup() {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 14, scale: 0.96 }}
               transition={{ duration: 0.2, delay: 0.07 }}
-              className="group flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#2A8DFF] to-[#005CFF] text-white shadow-[0_10px_24px_rgba(0,104,255,0.42)] ring-2 ring-white/70 transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(0,104,255,0.46)]"
+              className="group flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card text-primary shadow-lg transition hover:-translate-y-0.5 hover:border-primary/40 hover:bg-surface"
               aria-label="Open Zalo"
               title="Zalo"
             >
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-[10px] font-extrabold italic tracking-tight text-[#0068FF]">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-primary/30 bg-surface text-[10px] font-extrabold italic tracking-tight text-primary">
                 Zalo
               </span>
             </motion.a>
@@ -127,12 +126,18 @@ export default function SocialChatPopup() {
                   type="button"
                   onClick={() => setIsOpen(true)}
                   animate={{ y: [0, -2, 0] }}
-                  transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 1.1 }}
-                  className="relative flex min-h-[36px] items-center gap-2 rounded-[999px] bg-white/95 px-3.5 py-1.5 pr-4 text-[11px] font-semibold tracking-[0.01em] text-slate-700 shadow-[0_10px_20px_rgba(15,23,42,0.16)] ring-1 ring-slate-200/80 backdrop-blur-sm dark:bg-slate-900/95 dark:text-slate-100 dark:ring-slate-700"
+                  transition={{
+                    duration: 2.2,
+                    repeat: Infinity,
+                    repeatDelay: 1.1,
+                  }}
+                  className="relative flex min-h-[36px] items-center gap-2 rounded-[999px] border border-border bg-card px-3.5 py-1.5 pr-4 text-[11px] font-semibold tracking-[0.01em] text-foreground shadow-lg"
                   aria-label="Open chat support"
                 >
                   <span className="inline-flex h-[18px] w-[18px] items-center justify-center rounded-full bg-primary/15 text-primary">
-                    <span className="material-symbols-outlined text-[11px]">forum</span>
+                    <span className="material-symbols-outlined text-[11px]">
+                      forum
+                    </span>
                   </span>
                   <span>Bạn cần hỗ trợ gì ạ?</span>
                   <span className="ml-0.5 inline-flex items-center gap-1 align-middle">
@@ -150,7 +155,7 @@ export default function SocialChatPopup() {
                       />
                     ))}
                   </span>
-                  <span className="absolute -right-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 bg-white/95 ring-1 ring-slate-200/80 dark:bg-slate-900/95 dark:ring-slate-700" />
+                  <span className="absolute -right-1 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rotate-45 border-r border-b border-border bg-card" />
                 </motion.button>
               </div>
             </motion.div>
@@ -160,7 +165,11 @@ export default function SocialChatPopup() {
         <motion.button
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
-          animate={isOpen ? { rotate: 0, scale: 1 } : { rotate: 0, scale: [1, 1.06, 1] }}
+          animate={
+            isOpen
+              ? { rotate: 0, scale: 1 }
+              : { rotate: 0, scale: [1, 1.06, 1] }
+          }
           transition={
             isOpen
               ? { duration: 0.15 }
@@ -168,7 +177,7 @@ export default function SocialChatPopup() {
           }
           whileHover={{ y: -2, scale: 1.04 }}
           whileTap={{ scale: 0.95 }}
-          className="relative flex h-16 w-16 items-center justify-center rounded-full bg-background-dark text-white shadow-[0_14px_30px_rgba(0,0,0,0.32)] ring-2 ring-white/70 hover:bg-black dark:bg-primary dark:hover:bg-primary"
+          className="relative flex h-16 w-16 items-center justify-center rounded-full border border-primary/30 bg-primary text-white shadow-xl transition-colors hover:bg-primary/90"
           aria-expanded={isOpen}
           aria-label="Toggle chat menu"
         >

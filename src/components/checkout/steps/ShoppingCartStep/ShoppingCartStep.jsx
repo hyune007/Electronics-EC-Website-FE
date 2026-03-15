@@ -8,10 +8,7 @@ export default function ShoppingCartStep({ onProceed }) {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const total = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   // const vat = Math.round(subtotal * 0.1);
   // const total = subtotal + vat;
   const handleChangeQty = (id, newQty) => {
@@ -31,12 +28,12 @@ export default function ShoppingCartStep({ onProceed }) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-      <div className="lg:col-span-8 space-y-4">
+    <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+      <div className="space-y-4 lg:col-span-8">
         <div className="flex items-center justify-between px-2">
           <h2 className="text-2xl font-bold tracking-tight">
             Giỏ hàng của bạn
-            <span className="text-slate-400 text-lg font-normal ml-2">
+            <span className="ml-2 text-lg font-normal text-[var(--color-text-muted)]">
               ({cart.length} sản phẩm)
             </span>
           </h2>
@@ -45,9 +42,9 @@ export default function ShoppingCartStep({ onProceed }) {
         {cart.map((item) => (
           <div
             key={item.id}
-            className="bg-white rounded-md p-4 flex gap-4 shadow-sm border border-slate-100 hover:shadow-md transition-shadow"
+            className="card-default flex gap-4 rounded-xl border p-4"
           >
-            <div className="w-24 h-24 md:w-32 md:h-32 bg-slate-50 rounded-md overflow-hidden flex-shrink-0">
+            <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-[var(--color-muted)] md:h-32 md:w-32">
               <img
                 src={item.image}
                 alt={item.name}
@@ -58,14 +55,15 @@ export default function ShoppingCartStep({ onProceed }) {
             <div className="flex flex-col flex-1 justify-between py-1">
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-base font-bold hover:text-primary cursor-pointer">
+                  <h3 className="cursor-pointer text-base font-bold motion-default hover:text-[var(--color-primary)]">
                     {item.name}
                   </h3>
                 </div>
 
                 <button
                   onClick={() => handleDelete(item.id)}
-                  className="text-slate-300 hover:text-red-500"
+                  className="icon-btn text-[var(--color-text-muted)] hover:text-[var(--color-danger)]"
+                  aria-label="Xóa sản phẩm khỏi giỏ hàng"
                 >
                   <span className="material-symbols-outlined text-xl">
                     delete
@@ -74,10 +72,11 @@ export default function ShoppingCartStep({ onProceed }) {
               </div>
 
               <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center border border-slate-200 rounded-md overflow-hidden bg-slate-50">
+                <div className="flex items-center overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-muted)]">
                   <button
                     onClick={() => handleChangeQty(item.id, item.quantity - 1)}
-                    className="w-8 h-8 hover:bg-slate-200 font-bold"
+                    className="h-8 w-8 font-bold motion-default hover:bg-[var(--color-border)]"
+                    aria-label="Giảm số lượng"
                   >
                     -
                   </button>
@@ -91,13 +90,14 @@ export default function ShoppingCartStep({ onProceed }) {
 
                   <button
                     onClick={() => handleChangeQty(item.id, item.quantity + 1)}
-                    className="w-8 h-8 hover:bg-slate-200 font-bold"
+                    className="h-8 w-8 font-bold motion-default hover:bg-[var(--color-border)]"
+                    aria-label="Tăng số lượng"
                   >
                     +
                   </button>
                 </div>
 
-                <p className="text-lg font-bold text-primary">
+                <p className="text-lg font-bold text-[var(--color-primary)]">
                   {(item.price * item.quantity).toLocaleString()}₫
                 </p>
               </div>
@@ -119,21 +119,21 @@ export default function ShoppingCartStep({ onProceed }) {
       </div>
 
       <aside className="lg:col-span-4 sticky top-24">
-        <div className="bg-white rounded-md p-6 shadow-lg border border-slate-100 space-y-6">
-          <h2 className="text-lg font-bold border-b pb-4">Tóm tắt đơn hàng</h2>
+        <div className="card-default space-y-6 rounded-xl p-6">
+          <h2 className="border-b border-[var(--color-border)] pb-4 text-lg font-bold">
+            Tóm tắt đơn hàng
+          </h2>
 
           <div className="space-y-3 pt-2">
             <div className="flex justify-between font-bold">
               <span>Tạm tính</span>
-              <p className="text-xl font-black">
-                {total.toLocaleString()}₫
-              </p>
+              <p className="text-xl font-black">{total.toLocaleString()}₫</p>
             </div>
           </div>
 
           <button
             type="button"
-            className="w-full py-4 rounded-md font-bold flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white"
+            className="btn-primary w-full justify-center gap-2 rounded-md py-4"
             onClick={handleProceed}
           >
             Tiến hành đặt hàng

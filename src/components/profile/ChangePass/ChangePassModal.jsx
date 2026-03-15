@@ -24,8 +24,8 @@ export default function ChangePassModal({ open, onClose, onSubmit }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="rounded-lg w-full max-w-md p-6 border bg-white dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay)] p-4">
+      <div className="modal-shell w-full max-w-md border p-6">
         <h3 className="text-lg font-semibold mb-4">
           {vi.profile.changePass.modalTitle}
         </h3>
@@ -41,7 +41,7 @@ export default function ChangePassModal({ open, onClose, onSubmit }) {
               placeholder={vi.profile.changePass.current}
               value={form.current}
               onChange={handleChange}
-              className="w-full border rounded-md p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="input-default w-full p-2"
             />
           </div>
 
@@ -55,7 +55,7 @@ export default function ChangePassModal({ open, onClose, onSubmit }) {
               placeholder={vi.profile.changePass.new}
               value={form.password}
               onChange={handleChange}
-              className="w-full border rounded-md p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="input-default w-full p-2"
             />
           </div>
 
@@ -69,7 +69,7 @@ export default function ChangePassModal({ open, onClose, onSubmit }) {
               placeholder={vi.profile.changePass.confirm}
               value={form.confirm}
               onChange={handleChange}
-              className="w-full border rounded-md p-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              className="input-default w-full p-2"
             />
           </div>
 
@@ -77,14 +77,11 @@ export default function ChangePassModal({ open, onClose, onSubmit }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-md border border-slate-200 dark:border-slate-700 dark:text-slate-300"
+              className="btn-secondary px-4 py-2"
             >
               {vi.profile.changePass.cancel}
             </button>
-            <button
-              type="submit"
-              className="bg-[var(--color-primary)] px-4 py-2 rounded-md hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-            >
+            <button type="submit" className="btn-primary px-4 py-2">
               {vi.profile.changePass.submit}
             </button>
           </div>

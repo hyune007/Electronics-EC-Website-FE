@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import ProductTabs from "../../../components/customer/product/ProductTabs/ProductTabs.jsx";
 import BreadcrumbNav from "../../../components/customer/product/ProductNav/BreadcrumbNav/BreadcrumbNav.jsx";
@@ -13,6 +13,7 @@ import { useProductCache } from "../../../contexts/ProductCacheContext.jsx";
 export default function ProductDetail() {
   const { addToCart } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
+  const navigate = useNavigate();
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -65,7 +66,7 @@ export default function ProductDetail() {
 
   useEffect(() => {
     const warmUp = window.setTimeout(() => {
-      prefetchAllProducts().catch(() => { });
+      prefetchAllProducts().catch(() => {});
     }, 600);
 
     return () => {
@@ -117,10 +118,12 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <main className="mx-auto w-full max-w-[1200px] px-4 py-5 sm:px-6 lg:px-8">
         <BreadcrumbNav suppressFetch />
-        <div className="flex justify-center items-center min-h-[300px]">
-          <span>Đang tải thông tin sản phẩm...</span>
+        <div className="card-default flex min-h-[280px] items-center justify-center rounded-2xl">
+          <span className="text-sm text-[var(--color-text-muted)]">
+            Đang tải thông tin sản phẩm...
+          </span>
         </div>
       </main>
     );
@@ -128,98 +131,100 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <main className="mx-auto w-full max-w-[1200px] px-4 py-5 sm:px-6 lg:px-8">
         <BreadcrumbNav suppressFetch />
-        <div className="flex justify-center items-center min-h-[300px]">
-          <span>Không tìm thấy sản phẩm.</span>
+        <div className="card-default flex min-h-[280px] items-center justify-center rounded-2xl">
+          <span className="text-sm text-[var(--color-text-muted)]">
+            Không tìm thấy sản phẩm.
+          </span>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-20">
+    <main className="mx-auto w-full max-w-[1200px] px-4 py-5 pb-16 sm:px-6 lg:px-8 lg:pb-20">
       <BreadcrumbNav product={product} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+      <div className="mb-10 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
         <div className="space-y-4">
-          <div className="w-full max-w-sm mx-auto aspect-square bg-white dark:bg-slate-800 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-700 flex items-center justify-center p-4">
+          <div className="card-default mx-auto flex aspect-square w-full max-w-md items-center justify-center overflow-hidden rounded-[1.6rem] p-5">
             <img
               ref={imgRef}
               src={
                 product?.image?.startsWith("http")
                   ? product.image
-                  // : `http://localhost:8080${product.image || ""}`
-                  : `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image || ""}`
+                  : // : `http://localhost:8080${product.image || ""}`
+                    `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image || ""}`
               }
               alt={product.name}
-              className="w-full h-full object-contain"
+              className="h-full w-full object-contain"
             />
           </div>
         </div>
-        <div className="flex flex-col">
+        <div className="card-default flex flex-col rounded-2xl p-5 sm:p-6">
           <div className="mb-6">
-            <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 text-[10px] font-bold rounded-full mb-4">
+            <span className="badge-default badge-info mb-4 inline-flex">
               Mới nhất
             </span>
-            <h1 className="text-lg font-bold mb-2">
+            <h1 className="mb-2 text-xl font-bold leading-tight">
               {product?.name || "Android is the best"}
             </h1>
-            <div className="flex items-center gap-4 mb-4">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
               <div className="flex items-center text-yellow-500">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <span
                     key={star}
-                    className={`material-symbols-outlined ${star <= Math.round(reviewStats.average) ? "filled" : ""
-                      }`}
+                    className={`material-symbols-outlined ${
+                      star <= Math.round(reviewStats.average) ? "filled" : ""
+                    }`}
                   >
                     star
                   </span>
                 ))}
               </div>
-              <span className="text-slate-500 text-xs">
+              <span className="text-xs text-[var(--color-text-muted)]">
                 {reviewStats.average.toFixed(1)} ({reviewStats.total} Đánh giá)
               </span>
-              <span className="h-4 w-[1px] bg-slate-300 dark:bg-slate-700"></span>
+              <span className="h-4 w-px bg-[var(--color-border)]"></span>
               {product?.stock > 0 ? (
-                <span className="text-green-600 dark:text-green-400 text-xs font-semibold">
+                <span className="text-xs font-semibold text-[var(--color-success)]">
                   Còn hàng
                 </span>
               ) : (
-                <span className="text-red-600 dark:text-red-400 text-xs font-semibold">
+                <span className="text-xs font-semibold text-[var(--color-danger)]">
                   Hết hàng
                 </span>
               )}
             </div>
-            <div className="text-base font-bold text-primary dark:text-white mb-2">
-              <div className="text-base font-bold text-primary dark:text-white mb-2">
-                {product?.discountedPrice && product.discountedPrice < product.price ? (
-                  <>
-                    {product.discountedPrice.toLocaleString("vi-VN")} VNĐ
-                    <span className="text-[10px] text-slate-400 line-through ml-3 font-normal">
-                      {product.price.toLocaleString("vi-VN")} VNĐ
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    {product?.price?.toLocaleString("vi-VN") || "0"} VNĐ
-                  </>
-                )}
-              </div>
+            <div className="mb-2 text-xl font-bold text-[var(--color-primary)]">
+              {product?.discountedPrice &&
+              product.discountedPrice < product.price ? (
+                <>
+                  {product.discountedPrice.toLocaleString("vi-VN")} VNĐ
+                  <span className="ml-3 text-xs font-normal text-[var(--color-text-muted)] line-through">
+                    {product.price.toLocaleString("vi-VN")} VNĐ
+                  </span>
+                </>
+              ) : (
+                <>{product?.price?.toLocaleString("vi-VN") || "0"} VNĐ</>
+              )}
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3.5">
             <div className="flex gap-2">
-              <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-xl px-2">
+              <div className="flex items-center rounded-xl border border-[var(--color-border)] px-2">
                 <button
                   onClick={() => handleQuantityChange("decrease")}
-                  className="p-0.5 text-slate-500 hover:text-primary"
+                  className="icon-btn p-0.5"
+                  aria-label="Giảm số lượng"
                 >
                   -
                 </button>
                 <span className="w-8 text-center font-bold">{quantity}</span>
                 <button
                   onClick={() => handleQuantityChange("increase")}
-                  className="p-0.5 text-slate-500 hover:text-primary"
+                  className="icon-btn p-0.5"
+                  aria-label="Tăng số lượng"
                 >
                   +
                 </button>
@@ -229,7 +234,7 @@ export default function ProductDetail() {
                   flyToCart();
                   addToCart(product, quantity);
                 }}
-                className="flex-1 bg-primary text-white py-1 rounded-xl font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-1"
+                className="btn-primary flex flex-1 items-center justify-center gap-1 rounded-xl py-2"
               >
                 <span className="material-symbols-outlined">shopping_cart</span>
                 {vi.product.addToCart}
@@ -237,7 +242,7 @@ export default function ProductDetail() {
             </div>
             <button
               type="button"
-              className="w-full py-1 border-2 border-primary text-primary dark:text-white dark:border-white rounded-xl font-bold hover:bg-primary hover:text-white dark:hover:bg-white dark:hover:text-primary transition-all"
+              className="btn-secondary w-full rounded-xl border-2 py-2 font-bold"
               onClick={() => {
                 if (!isAuthenticated || !isCustomer) {
                   setShowLoginPrompt(true);
@@ -246,34 +251,39 @@ export default function ProductDetail() {
 
                 flyToCart();
                 addToCart(product, quantity);
+                navigate("/checkout?tab=infor");
               }}
             >
               {vi.product.buyNow}
             </button>
           </div>
-          <div className="mt-6 grid grid-cols-2 gap-3 border-t border-slate-200 dark:border-slate-800 pt-4">
+          <div className="mt-6 grid grid-cols-1 gap-3 border-t border-[var(--color-border)] pt-4 sm:grid-cols-2">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-base">
+              <span className="material-symbols-outlined text-base text-[var(--color-primary)]">
                 local_shipping
               </span>
               <div className="text-xs">
                 <p className="font-bold">{vi.product.shipping.title}</p>
-                <p className="text-slate-500">{vi.product.shipping.subtitle}</p>
+                <p className="text-[var(--color-text-muted)]">
+                  {vi.product.shipping.subtitle}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-base">
+              <span className="material-symbols-outlined text-base text-[var(--color-primary)]">
                 verified_user
               </span>
               <div className="text-xs">
                 <p className="font-bold">{vi.product.warranty.title}</p>
-                <p className="text-slate-500">{vi.product.warranty.subtitle}</p>
+                <p className="text-[var(--color-text-muted)]">
+                  {vi.product.warranty.subtitle}
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="border-t border-slate-200 dark:border-slate-800 pt-16">
+      <div className="border-t border-[var(--color-border)] pt-10 sm:pt-12">
         <ProductTabs
           product={product}
           onStatsChange={(stats) =>

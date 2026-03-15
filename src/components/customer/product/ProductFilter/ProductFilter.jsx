@@ -5,7 +5,7 @@ const PRICE_LABELS = new Map([
   ["0-5000", "0 – 5.000₫"],
   ["5000-10000", "5.000 – 10.000 ₫"],
   ["10000-20000", "10.000 – 20.000 ₫"],
-  ["20000-100000", "Trên 20.000 ₫"]
+  ["20000-100000", "Trên 20.000 ₫"],
 ]);
 
 const BRANDS = [
@@ -36,7 +36,7 @@ const BRANDS = [
 
 export default function ProductFilter({
   open = false,
-  onClose = () => { },
+  onClose = () => {},
 
   keyword = "",
   selectedBrands = [],
@@ -44,39 +44,35 @@ export default function ProductFilter({
   minPrice = 0,
   maxPrice = 0,
 
-  onKeywordChange = () => { },
-  onToggleBrand = () => { },
-  onTogglePriceRange = () => { },
-  onPriceRangeChange = () => { },
+  onKeywordChange = () => {},
+  onToggleBrand = () => {},
+  onTogglePriceRange = () => {},
+  onPriceRangeChange = () => {},
 }) {
+  const sectionTitleClass =
+    "mb-4 border-b border-[var(--color-border)] pb-2 text-base font-semibold text-[var(--color-text)]";
+
+  const checkboxClass =
+    "rounded border-[var(--color-border)] text-[var(--color-primary)] focus:ring-[var(--color-primary)]";
+
   return (
     <>
-      <aside className="hidden lg:block lg:w-1/4 space-y-8">
-        <div>
-          <h3 className="text-lg font-bold mb-4 border-b pb-2 dark:border-slate-800 dark:text-slate-100">
-            {vi.product.form.search}
-          </h3>
+      <aside className="hidden w-[290px] shrink-0 space-y-7 lg:block">
+        <div className="card-default p-5">
+          <h3 className={sectionTitleClass}>{vi.product.form.search}</h3>
           <div>
             <input
               type="text"
               placeholder={vi.product.form.searchPlaceholder}
               value={keyword}
               onChange={(e) => onKeywordChange(e.target.value)}
-              className="
-              w-full rounded-lg
-              border border-slate-200 dark:border-slate-700
-              bg-white dark:bg-slate-900
-              px-3 py-2 text-sm dark:text-slate-100 dark:placeholder-slate-400
-              focus:outline-none focus:ring-2 focus:ring-primary/30
-            "
+              className="input-default"
             />
           </div>
         </div>
 
-        <div>
-          <h3 className="text-lg font-bold mb-4 border-b pb-2 dark:border-slate-800 dark:text-slate-100">
-            {vi.product.form.priceRange}
-          </h3>
+        <div className="card-default p-5">
+          <h3 className={sectionTitleClass}>{vi.product.form.priceRange}</h3>
 
           <div className="space-y-2">
             {[...PRICE_LABELS.entries()].map(([key, label]) => (
@@ -88,19 +84,19 @@ export default function ProductFilter({
                   type="checkbox"
                   checked={selectedPriceRanges.includes(key)}
                   onChange={() => onTogglePriceRange(key)}
-                  className="rounded border-slate-300 text-primary focus:ring-primary"
+                  className={checkboxClass}
                 />
-                <span className="text-sm group-hover:text-accent transition-colors dark:text-slate-300">
+                <span className="text-sm text-[var(--color-text)] transition-colors duration-220 ease-standard group-hover:text-[var(--color-primary)]">
                   {label}
                 </span>
               </label>
             ))}
           </div>
 
-          <div className="flex items-center gap-2 my-4 text-xs text-slate-400 dark:text-slate-400">
-            <span className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+          <div className="my-4 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+            <span className="h-px flex-1 bg-[var(--color-border)]" />
             {vi.product.form.or}
-            <span className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+            <span className="h-px flex-1 bg-[var(--color-border)]" />
           </div>
 
           <PriceRange
@@ -110,12 +106,10 @@ export default function ProductFilter({
           />
         </div>
 
-        <div>
-          <h3 className="text-lg font-bold mb-4 border-b pb-2 dark:border-slate-800 dark:text-slate-100">
-            {vi.product.form.brand}
-          </h3>
+        <div className="card-default p-5">
+          <h3 className={sectionTitleClass}>{vi.product.form.brand}</h3>
 
-          <div className="max-h-64 overflow-y-auto pr-2 space-y-2">
+          <div className="max-h-64 space-y-2 overflow-y-auto pr-2">
             {BRANDS.map((brand) => (
               <label
                 key={brand}
@@ -125,9 +119,9 @@ export default function ProductFilter({
                   type="checkbox"
                   checked={selectedBrands.includes(brand)}
                   onChange={() => onToggleBrand(brand)}
-                  className="rounded text-primary focus:ring-primary"
+                  className={checkboxClass}
                 />
-                <span className="hover:text-accent transition-colors dark:text-slate-300">
+                <span className="text-[var(--color-text)] transition-colors duration-220 ease-standard hover:text-[var(--color-primary)]">
                   {brand}
                 </span>
               </label>
@@ -136,43 +130,43 @@ export default function ProductFilter({
         </div>
       </aside>
       <div
-        className={`fixed inset-0 z-40 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+        className={`fixed inset-0 z-40 transition-opacity duration-220 ease-standard ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
         onClick={onClose}
         aria-hidden={!open}
       >
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-[var(--color-overlay)]" />
       </div>
 
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-full max-w-xs bg-white dark:bg-slate-900 p-4 overflow-auto transform transition-transform duration-300 ${open ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-50 w-full max-w-xs transform overflow-auto border-r border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-transform duration-220 ease-standard ${open ? "translate-x-0" : "-translate-x-full"}`}
         aria-hidden={!open}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold dark:text-slate-100">
+          <h3 className="text-lg font-semibold text-[var(--color-text)]">
             {vi.product.form.filterTitle}
           </h3>
-          <button onClick={onClose} className="p-2 rounded-md">
+          <button
+            onClick={onClose}
+            className="icon-btn rounded-md"
+            aria-label="Đóng bộ lọc"
+          >
             <span className="material-symbols-outlined">close</span>
           </button>
         </div>
 
-        <div>
-          <h3 className="text-lg font-bold mb-4 border-b pb-2 dark:border-slate-800 dark:text-slate-100">
-            {vi.product.form.search}
-          </h3>
+        <div className="card-default p-4">
+          <h3 className={sectionTitleClass}>{vi.product.form.search}</h3>
           <input
             type="text"
             placeholder={vi.product.form.searchPlaceholder}
             value={keyword}
             onChange={(e) => onKeywordChange(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm dark:text-slate-100 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="input-default"
           />
         </div>
 
-        <div className="mt-4">
-          <h3 className="text-lg font-bold mb-4 border-b pb-2 dark:border-slate-800">
-            {vi.product.form.priceRange}
-          </h3>
+        <div className="card-default mt-4 p-4">
+          <h3 className={sectionTitleClass}>{vi.product.form.priceRange}</h3>
           <div className="space-y-2">
             {[...PRICE_LABELS.entries()].map(([key, label]) => (
               <label
@@ -183,19 +177,19 @@ export default function ProductFilter({
                   type="checkbox"
                   checked={selectedPriceRanges.includes(key)}
                   onChange={() => onTogglePriceRange(key)}
-                  className="rounded border-slate-300 text-primary focus:ring-primary"
+                  className={checkboxClass}
                 />
-                <span className="text-sm group-hover:text-accent transition-colors dark:text-slate-300">
+                <span className="text-sm text-[var(--color-text)] transition-colors duration-220 ease-standard group-hover:text-[var(--color-primary)]">
                   {label}
                 </span>
               </label>
             ))}
           </div>
 
-          <div className="flex items-center gap-2 my-4 text-xs text-slate-400 dark:text-slate-400">
-            <span className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+          <div className="my-4 flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+            <span className="h-px flex-1 bg-[var(--color-border)]" />
             {vi.product.form.or}
-            <span className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+            <span className="h-px flex-1 bg-[var(--color-border)]" />
           </div>
 
           <PriceRange
@@ -205,11 +199,9 @@ export default function ProductFilter({
           />
         </div>
 
-        <div className="mt-6">
-          <h3 className="text-lg font-bold mb-4 border-b pb-2 dark:border-slate-800 dark:text-slate-100">
-            {vi.product.form.brand}
-          </h3>
-          <div className="max-h-64 overflow-y-auto pr-2 space-y-2">
+        <div className="card-default mt-4 p-4">
+          <h3 className={sectionTitleClass}>{vi.product.form.brand}</h3>
+          <div className="max-h-64 space-y-2 overflow-y-auto pr-2">
             {BRANDS.map((brand) => (
               <label
                 key={brand}
@@ -219,9 +211,9 @@ export default function ProductFilter({
                   type="checkbox"
                   checked={selectedBrands.includes(brand)}
                   onChange={() => onToggleBrand(brand)}
-                  className="rounded text-primary focus:ring-primary"
+                  className={checkboxClass}
                 />
-                <span className="hover:text-accent transition-colors dark:text-slate-300">
+                <span className="text-[var(--color-text)] transition-colors duration-220 ease-standard hover:text-[var(--color-primary)]">
                   {brand}
                 </span>
               </label>

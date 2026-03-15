@@ -2,13 +2,7 @@ import React, { useEffect, useState } from "react";
 import { getBillDetails } from "../../../services/customer/billDetailServiceCustomer";
 import { formatVND } from "../../../utils/priceFormatter";
 
-export default function OrderDetailModal({
-  open,
-  onClose,
-  orderId,
-  order,
-  user,
-}) {
+export default function OrderDetailModal({ open, onClose, orderId, order }) {
   const [loading, setLoading] = useState(false);
   const [payload, setPayload] = useState(null);
 
@@ -49,23 +43,30 @@ export default function OrderDetailModal({
     const key = String(s || "").toLowerCase();
     const base =
       "px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-tight";
+    if (key.includes("trả") || key.includes("return")) {
+      return <span className={base + " bg-slate-200 text-slate-700"}>{s}</span>;
+    }
+    if (
+      key.includes("chờ") ||
+      key.includes("pending") ||
+      key.includes("waiting_shipping")
+    ) {
+      return (
+        <span className={base + " bg-yellow-100 text-yellow-800"}>{s}</span>
+      );
+    }
+    if (key.includes("đang giao") || key.includes("shipping")) {
+      return <span className={base + " bg-blue-100 text-blue-800"}>{s}</span>;
+    }
+    if (key.includes("đã giao") || key.includes("delivered")) {
+      return <span className={base + " bg-green-100 text-green-800"}>{s}</span>;
+    }
     if (
       key.includes("hủy") ||
       key.includes("cancel") ||
       key.includes("canceled")
     )
       return <span className={base + " bg-red-100 text-red-800"}>{s}</span>;
-    if (key.includes("giao") || key.includes("delivered"))
-      return <span className={base + " bg-green-100 text-green-800"}>{s}</span>;
-    if (
-      key.includes("vận") ||
-      key.includes("đang") ||
-      key.includes("pending") ||
-      key.includes("processing")
-    )
-      return (
-        <span className={base + " bg-yellow-100 text-yellow-800"}>{s}</span>
-      );
     return (
       <span
         className={
@@ -119,13 +120,13 @@ export default function OrderDetailModal({
   return (
     <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 font-sans">
       <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-[1px]"
+        className="fixed inset-0 bg-[var(--color-overlay)]"
         onClick={onClose}
       />
-      <div className="relative z-[9999] w-full max-w-4xl bg-white dark:bg-slate-800 rounded-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col border border-slate-100 dark:border-slate-700">
+      <div className="relative z-[9999] flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">
         <div
           style={{ backgroundColor: navyDark }}
-          className="flex items-center justify-between p-5 border-b border-white/10"
+          className="flex items-center justify-between border-b border-white/10 p-5"
         >
           <div>
             <h3 className="text-xl font-semibold text-white">
@@ -140,13 +141,13 @@ export default function OrderDetailModal({
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 flex items-center justify-center rounded-md bg-white/10 text-white hover:bg-white/20 transition-all"
+            className="flex h-9 w-9 items-center justify-center rounded-md bg-white/10 text-white transition-all duration-220 ease-standard hover:bg-white/20"
           >
             <span className="material-symbols-outlined text-lg">close</span>
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-8 bg-white dark:bg-slate-800">
+        <div className="space-y-8 overflow-y-auto bg-[var(--color-surface)] p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-4">
               <div className="flex items-center gap-2 border-l-4 border-slate-900 dark:border-slate-400 pl-3">
@@ -154,12 +155,12 @@ export default function OrderDetailModal({
                   Thông tin giao hàng
                 </h4>
               </div>
-              <div className="grid grid-cols-2 gap-y-4 gap-x-6 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-md border border-slate-100 dark:border-slate-700">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-md border border-[var(--color-border)] bg-[var(--color-muted)] p-5">
                 <div>
                   <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
                     Người nhận
                   </div>
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">
+                  <div className="font-semibold text-[var(--color-text)]">
                     {order?.customer?.name || "-"}
                   </div>
                 </div>
@@ -167,7 +168,7 @@ export default function OrderDetailModal({
                   <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
                     Điện thoại
                   </div>
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">
+                  <div className="font-semibold text-[var(--color-text)]">
                     {order?.customer?.phone || order?.phone || "-"}
                   </div>
                 </div>
@@ -175,7 +176,7 @@ export default function OrderDetailModal({
                   <div className="text-[10px] uppercase font-bold text-slate-400 mb-1">
                     Địa chỉ
                   </div>
-                  <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  <div className="text-sm leading-relaxed text-[var(--color-text-muted)]">
                     {formatAddress(order?.address)}
                   </div>
                 </div>
@@ -200,8 +201,8 @@ export default function OrderDetailModal({
                   </span>
                 </div>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-md flex items-center justify-between border border-slate-100 dark:border-slate-700">
-                <span className="text-xs font-bold text-slate-400 uppercase">
+              <div className="flex items-center justify-between rounded-md border border-[var(--color-border)] bg-[var(--color-muted)] p-4">
+                <span className="text-xs font-bold uppercase text-[var(--color-text-muted)]">
                   Trạng thái
                 </span>
                 {getStatusBadge(status)}
@@ -218,14 +219,14 @@ export default function OrderDetailModal({
             <div className="bg-white dark:bg-slate-800 overflow-hidden">
               <table className="w-full text-left border-none">
                 <thead>
-                  <tr className="text-[10px] uppercase font-bold text-slate-400 border-b border-slate-100 dark:border-slate-700">
+                  <tr className="border-b border-[var(--color-border)] text-[10px] font-bold uppercase text-[var(--color-text-muted)]">
                     <th className="pb-3 pl-1 font-bold">Sản phẩm</th>
                     <th className="pb-3 text-center">SL</th>
                     <th className="pb-3 text-right">Đơn giá</th>
                     <th className="pb-3 text-right pr-1">Thành tiền</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                <tbody className="divide-y divide-[var(--color-border)]">
                   {loading ? (
                     <tr>
                       <td
@@ -259,16 +260,16 @@ export default function OrderDetailModal({
                       return (
                         <tr
                           key={idx}
-                          className="group hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors"
+                          className="group transition-colors duration-220 ease-standard hover:bg-[var(--color-muted)]"
                         >
                           <td className="py-4 pl-1">
                             <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded bg-slate-100 dark:bg-slate-700 overflow-hidden flex-shrink-0 border border-slate-200 dark:border-slate-600">
+                              <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded border border-[var(--color-border)] bg-[var(--color-muted)]">
                                 {imageUrl ? (
                                   <img
                                     src={imageUrl}
                                     alt="product"
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    className="h-full w-full object-cover transition-transform duration-220 ease-standard group-hover:scale-[1.03]"
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center text-[9px] text-slate-400 font-bold uppercase">
@@ -291,11 +292,11 @@ export default function OrderDetailModal({
                               {qty}
                             </span>
                           </td>
-                          <td className="py-4 text-right text-xs font-medium text-slate-500">
+                          <td className="py-4 text-right text-xs font-medium text-[var(--color-text-muted)]">
                             {formatVND(price)}
                           </td>
                           <td className="py-4 text-right pr-1">
-                            <span className="font-semibold text-slate-900 dark:text-slate-100">
+                            <span className="font-semibold text-[var(--color-text)]">
                               {formatVND(subtotal)}
                             </span>
                           </td>
@@ -308,10 +309,10 @@ export default function OrderDetailModal({
             </div>
           </div>
         </div>
-        <div className="p-4 bg-slate-50 dark:bg-slate-900/80 flex justify-end items-center border-t border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-end border-t border-[var(--color-border)] bg-[var(--color-muted)] p-4">
           <button
             onClick={onClose}
-            className="px-6 py-2 rounded-md text-sm font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-all"
+            className="btn-secondary px-6 py-2 text-sm font-semibold"
           >
             Đóng
           </button>

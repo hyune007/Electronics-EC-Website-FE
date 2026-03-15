@@ -9,7 +9,7 @@ export default function TestRegister() {
       <div className="w-full max-w-lg rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 shadow-lg">
         <h1 className="text-2xl font-bold mb-4">Test Register</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-          Thong tin lay tu database sau khi dang ky.
+          Thông tin lấy từ database sau khi đăng ký.
         </p>
         <div className="space-y-4">
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
@@ -17,7 +17,7 @@ export default function TestRegister() {
               id
             </p>
             <p className="text-sm font-semibold break-all">
-              {customer?.id || "(khong co)"}
+              {customer?.id || "(không có)"}
             </p>
           </div>
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
@@ -25,7 +25,7 @@ export default function TestRegister() {
               email
             </p>
             <p className="text-sm font-semibold break-all">
-              {customer?.email || "(khong co)"}
+              {customer?.email || "(không có)"}
             </p>
           </div>
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
@@ -33,7 +33,7 @@ export default function TestRegister() {
               ten
             </p>
             <p className="text-sm font-semibold break-all">
-              {customer?.name || "(khong co)"}
+              {customer?.name || "(không có)"}
             </p>
           </div>
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
@@ -41,7 +41,7 @@ export default function TestRegister() {
               role id
             </p>
             <p className="text-sm font-semibold break-all">
-              {customer?.role?.id || "(khong co)"}
+              {customer?.role?.id || "(không có)"}
             </p>
           </div>
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
@@ -49,7 +49,7 @@ export default function TestRegister() {
               mat khau (hash)
             </p>
             <p className="text-sm font-semibold break-all">
-              {customer?.password || "(khong co)"}
+              {customer?.password || "(không có)"}
             </p>
           </div>
           <div className="rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
@@ -57,7 +57,7 @@ export default function TestRegister() {
               phone
             </p>
             <p className="text-sm font-semibold break-all">
-              {customer?.phone || "(khong co)"}
+              {customer?.phone || "(không có)"}
             </p>
           </div>
         </div>

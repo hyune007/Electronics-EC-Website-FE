@@ -35,19 +35,18 @@ export default function DescribeProductTab({ product: propProduct }) {
   }, [id, propProduct]);
 
   return (
-    <div className="lg:col-span-2 prose prose-slate dark:prose-invert max-w-none">
-      <h3 className="text-base font-bold mb-3">
+    <div className="max-w-none rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 lg:col-span-2 sm:p-6">
+      <h3 className="mb-3 text-lg font-semibold tracking-tight text-[var(--color-text)]">
         Trải nghiệm đỉnh cao với {product?.name || "Android is the best"}
       </h3>
-      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+      <p className="leading-relaxed text-[var(--color-text-muted)]">
         {`Sở hữu công nghệ dẫn đầu xu thế, với công nghệ tuyệt vời,
 thiết kế đột phá và hiệu năng mạnh mẽ, ${
           product?.name || "Android is the best"
         } mang đến trải nghiệm đỉnh cao cho người dùng trong mọi tác vụ từ giải trí đến công việc.
 `}
       </p>
-      <br />
-      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+      <p className="mt-4 leading-relaxed text-[var(--color-text-muted)]">
         {`Hiệu năng mạnh mẽ với chip xử lý tiên tiến ${
           product?.name || "Android is the best"
         } đã được nghiên cứu và phát triển để đáp ứng mọi nhu cầu của người dùng. Với khả năng xử lý nhanh chóng và mượt mà,
