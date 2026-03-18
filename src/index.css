@@ -233,8 +233,33 @@
     color: var(--color-primary);
   }
 
+  .nav-link-active::after {
+    @apply scale-x-100;
+    transform: scaleX(1);
+  }
+
   .dark .nav-link-active {
     color: #ffffff;
+  }
+
+  /* AdsOverlay animations */
+  @keyframes ads-zoom-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.96) translateY(-6px);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.02) translateY(0);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .ads-zoom-in {
+    animation: ads-zoom-in 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
 }
 

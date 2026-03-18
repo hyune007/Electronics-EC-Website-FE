@@ -1,0 +1,53 @@
+.category-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 30;
+  transition:
+    opacity 0.24s ease,
+    background-color 0.24s ease;
+}
+
+.category-drawer-overlay.is-open {
+  background-color: rgba(2, 8, 22, 0.56);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.category-drawer-shell {
+  position: fixed;
+  padding: 0.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, 8px, 0) scale(0.985);
+  transition:
+    opacity 0.2s var(--ease-standard),
+    transform 0.22s var(--ease-standard);
+  z-index: 90;
+  border: 1px solid color-mix(in oklab, var(--color-border) 78%, transparent);
+  border-radius: 0.72rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+  overflow: visible;
+}
+
+.category-drawer-shell.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .category-drawer-shell {
+    left: 0.75rem;
+    width: min(92vw, 320px);
+    height: calc(100vh - 5.2rem);
+    max-height: 540px;
+  }
+
+  .cmenu-hover-panel {
+    display: none;
+  }
+}

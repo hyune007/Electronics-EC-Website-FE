@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { getBillDetails } from "../../../services/customer/billDetailServiceCustomer";
 import { formatVND } from "../../../utils/priceFormatter";
 
@@ -6,8 +7,7 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
   const [loading, setLoading] = useState(false);
   const [payload, setPayload] = useState(null);
 
-  // Navy Dark color variable
-  const navyDark = "#021526";
+  const navyDark = "var(--color-navy-light)";
 
   useEffect(() => {
     if (!open) return;
@@ -36,6 +36,15 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
       mounted = false;
     };
   }, [open, orderId, order]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -117,24 +126,33 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
 
   const status = payload?.status || order?.status || "Đang xử lý";
 
-  return (
-    <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4 font-sans">
-      <div
-        className="fixed inset-0 bg-[var(--color-overlay)]"
+  return createPortal(
+    <div
+      style={{ zIndex: 2147483650 }}
+      className="fixed inset-0 flex items-center justify-center p-4 font-sans"
+    >
+      <button
+        type="button"
         onClick={onClose}
+        aria-label="Đóng chi tiết đơn hàng"
+        className="fixed inset-0 bg-[var(--color-overlay)]"
+        style={{ zIndex: 2147483649, border: "none", padding: 0, margin: 0 }}
       />
-      <div className="relative z-[9999] flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg">
+      <div
+        style={{ zIndex: 2147483650 }}
+        className="relative flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-lg"
+      >
         <div
           style={{ backgroundColor: navyDark }}
-          className="flex items-center justify-between border-b border-white/10 p-5"
+          className="flex items-center justify-between p-5"
         >
           <div>
-            <h3 className="text-xl font-semibold text-white">
+            <h3 className="text-xl font-semibold text-slate-100">
               Chi tiết đơn hàng
             </h3>
             <p className="text-xs font-medium text-slate-300 mt-1 uppercase tracking-wider">
               Mã:{" "}
-              <span className="font-bold text-white">
+              <span className="font-bold text-slate-100">
                 {orderId || order?.id}
               </span>
             </p>
@@ -186,7 +204,7 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
             <div className="space-y-4">
               <div
                 style={{ backgroundColor: navyDark }}
-                className="rounded-md p-5 text-white shadow-lg border border-white/5"
+                className="rounded-md p-5 text-white shadow-lg border border-transparent"
               >
                 <div className="text-[10px] uppercase font-bold opacity-70">
                   Tổng thanh toán
@@ -309,15 +327,8 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-end border-t border-[var(--color-border)] bg-[var(--color-muted)] p-4">
-          <button
-            onClick={onClose}
-            className="btn-secondary px-6 py-2 text-sm font-semibold"
-          >
-            Đóng
-          </button>
-        </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

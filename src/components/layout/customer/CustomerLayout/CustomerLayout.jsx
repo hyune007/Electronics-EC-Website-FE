@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import ScrollToTop from "../../../common/ScrollToTop.jsx";
 import { ROUTE_TITLE_MAP } from "../../../../routes/routesConfig/customer/routeTitle.js";
 import SocialChatPopup from "../../../common/SocialChatPopup.jsx";
+import CategoryDrawer from "../../../customer/home/CategoryDrawer/CategoryDrawer.jsx";
 
 const LAYOUT_ELECTRONICS_ICONS = [
   "smartphone",
@@ -20,14 +21,21 @@ const LAYOUT_ELECTRONICS_ICONS = [
   "devices_other",
 ];
 
-const LAYOUT_FALLING_ICONS = Array.from({ length: 18 }, (_, index) => ({
-  id: index,
-  left: `${(index * 6) % 100}%`,
-  delay: `${(index % 6) * 0.85}s`,
-  duration: `${13 + (index % 5) * 2}s`,
-  icon: LAYOUT_ELECTRONICS_ICONS[index % LAYOUT_ELECTRONICS_ICONS.length],
-  size: `${28 + (index % 4) * 6}px`,
-}));
+const LAYOUT_FALLING_ICONS = Array.from({ length: 34 }, (_, index) => {
+  const left = ((index * 17 + 9) % 94) + 1;
+  const delay = ((index * 13) % 12) * 0.62;
+  const duration = 10.4 + ((index * 7 + 5) % 10) * 1.3;
+  const size = 20 + ((index * 11 + 3) % 6) * 4;
+
+  return {
+    id: index,
+    left: `${left}%`,
+    delay: `${delay.toFixed(2)}s`,
+    duration: `${duration.toFixed(1)}s`,
+    icon: LAYOUT_ELECTRONICS_ICONS[index % LAYOUT_ELECTRONICS_ICONS.length],
+    size: `${size}px`,
+  };
+});
 
 export default function CustomerLayout() {
   const location = useLocation();
@@ -66,6 +74,7 @@ export default function CustomerLayout() {
         </main>
 
         <SocialChatPopup />
+        <CategoryDrawer />
         <div className="relative z-10">
           <Footer />
         </div>

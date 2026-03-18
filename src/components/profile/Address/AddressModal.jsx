@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import useTheme from "../../../hooks/useTheme";
 import vi from "../../../i18n/vi";
 import addressData from "../../../utils/addressData";
@@ -39,8 +40,13 @@ export default function AddressModal({ open, onClose, onSave }) {
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay)] p-4">
+  const modalContent = (
+    <div
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--color-overlay)] p-4 overflow-auto"
+    >
       <div
         className={`modal-shell w-full max-w-md border p-6 ${
           theme === "dark" ? "text-slate-100" : "bg-[var(--color-surface)]"
@@ -153,4 +159,6 @@ export default function AddressModal({ open, onClose, onSave }) {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

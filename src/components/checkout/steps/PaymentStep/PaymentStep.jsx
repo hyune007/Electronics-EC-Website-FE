@@ -107,6 +107,11 @@ export default function PaymentStep({
 
       const bill = billRes.data;
       setBillId(bill.id);
+      // Lưu orderId và full bill vào sessionStorage để CompleteStep lấy
+      sessionStorage.setItem("lastOrderId", bill.id);
+      try {
+        sessionStorage.setItem("lastOrder", JSON.stringify(bill));
+      } catch {}
 
       if (paymentMethod === "cod") {
         clearCart();

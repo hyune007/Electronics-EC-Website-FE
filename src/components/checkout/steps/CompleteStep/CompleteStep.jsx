@@ -1,7 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavLink } from "react-router-dom";
+import OrderDetailModal from "../../../customer/product/OrderDetailModalCustomer";
 
 export default function CompleteStep() {
+  const [showModal, setShowModal] = useState(false);
+  const orderId = sessionStorage.getItem("lastOrderId");
+  let orderRaw = null;
+  try {
+    orderRaw = JSON.parse(sessionStorage.getItem("lastOrder") || "null");
+  } catch {
+    orderRaw = null;
+  }
+
   return (
     <div className="card-default overflow-hidden rounded-xl">
       <div className="px-8 pb-8 pt-12 text-center">
@@ -31,14 +41,24 @@ export default function CompleteStep() {
           Tiếp tục mua sắm
         </NavLink>
 
-        <a
-          href="#"
+        <button
+          type="button"
           className="btn-primary flex w-full items-center justify-center gap-2 px-8 py-3 text-sm font-bold sm:w-auto"
+          onClick={() => setShowModal(true)}
+          disabled={!orderId}
         >
           <span className="material-symbols-outlined text-sm">visibility</span>
           Xem chi tiết đơn hàng
-        </a>
+        </button>
       </div>
+      {showModal && (
+        <OrderDetailModal
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          orderId={orderId}
+          order={orderRaw}
+        />
+      )}
     </div>
   );
 }
