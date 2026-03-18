@@ -39,7 +39,7 @@ export default function Banner({ variant = "home" }) {
     <motion.section
       layoutId="main-banner"
       transition={{
-        duration: 0.22,
+        duration: 0.44,
         ease: [0.2, 0.8, 0.2, 1],
       }}
       className={

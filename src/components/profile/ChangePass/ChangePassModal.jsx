@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import vi from "../../../i18n/vi";
 
 export default function ChangePassModal({ open, onClose, onSubmit }) {
@@ -23,8 +24,13 @@ export default function ChangePassModal({ open, onClose, onSubmit }) {
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--color-overlay)] p-4">
+  const modal = (
+    <div
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-[var(--color-overlay)] p-4 overflow-auto"
+    >
       <div className="modal-shell w-full max-w-md border p-6">
         <h3 className="text-lg font-semibold mb-4">
           {vi.profile.changePass.modalTitle}
@@ -89,4 +95,6 @@ export default function ChangePassModal({ open, onClose, onSubmit }) {
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 }

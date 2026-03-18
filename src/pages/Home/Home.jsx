@@ -4,6 +4,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import Banner from "../../components/customer/home/Banner/Banner.jsx";
+import CategoryMenuPanel from "../../components/customer/home/CategoryMenuPanel/CategoryMenuPanel.jsx";
 import Carousel1 from "../../assets/banner/carousel_ads.jpg";
 import Carousel2 from "../../assets/banner/carousel2_ads.jpg";
 import Carousel3 from "../../assets/banner/carousel3_ads.jpg";
@@ -19,7 +20,7 @@ import "./Home.css";
 import vi from "../../i18n/vi";
 import ProductCard from "../../components/customer/product/ProductCard/ProductCard.jsx";
 import LoadScreen from "../../components/common/LoadScreen.jsx";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProductCache } from "../../contexts/ProductCacheContext.jsx";
 
@@ -55,19 +56,6 @@ const CATEGORIES = [
   { id: "tablet", icon: "tablet_mac", cat: "LSP03", label: "Máy tính bảng" },
   { id: "watch", icon: "watch", cat: "LSP04", label: "Đồng hồ thông minh" },
   { id: "headphones", icon: "headphones", cat: "LSP05", label: "Tai nghe" },
-];
-
-const ALL_CATEGORIES = [
-  { id: "LSP01", icon: "smartphone", label: "Điện thoại" },
-  { id: "LSP02", icon: "laptop_mac", label: "Laptop" },
-  { id: "LSP03", icon: "tablet_mac", label: "Máy tính bảng" },
-  { id: "LSP04", icon: "watch", label: "Đồng hồ thông minh" },
-  { id: "LSP05", icon: "headphones", label: "Tai nghe" },
-  { id: "LSP06", icon: "keyboard", label: "Bàn phím" },
-  { id: "LSP07", icon: "mouse", label: "Chuột" },
-  { id: "LSP08", icon: "desktop_windows", label: "Màn hình" },
-  { id: "LSP09", icon: "speaker", label: "Loa" },
-  { id: "LSP10", icon: "devices_other", label: "Phụ kiện khác" },
 ];
 
 const PROMO_CARDS = [
@@ -113,18 +101,64 @@ export default function Home() {
   const scroller3 = useDragScroll();
   const navigate = useNavigate();
   useRevealOnScroll();
+  const [homeHoverPanelStyle, setHomeHoverPanelStyle] = useState(null);
 
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
 
   useEffect(() => {
-    const warmUp = window.setTimeout(() => {
+    const warmUp = globalThis.setTimeout(() => {
       prefetchAllProducts().catch(() => {});
     }, 500);
 
     return () => {
-      window.clearTimeout(warmUp);
+      globalThis.clearTimeout(warmUp);
     };
   }, [prefetchAllProducts]);
+
+  useEffect(() => {
+    const syncHomeHoverPanel = () => {
+      if (globalThis.innerWidth < 1280) {
+        setHomeHoverPanelStyle(null);
+        return;
+      }
+
+      const sideMenu = document.querySelector(".home-side-menu");
+      const banner = document.querySelector(".home-main-banner-shell");
+
+      if (!sideMenu || !banner) {
+        setHomeHoverPanelStyle(null);
+        return;
+      }
+
+      const sideMenuRect = sideMenu.getBoundingClientRect();
+      const bannerRect = banner.getBoundingClientRect();
+
+      if (
+        sideMenuRect.width < 1 ||
+        sideMenuRect.height < 1 ||
+        bannerRect.width < 1 ||
+        bannerRect.height < 1
+      ) {
+        setHomeHoverPanelStyle(null);
+        return;
+      }
+
+      setHomeHoverPanelStyle({
+        "--cmenu-hover-width": `${bannerRect.width}px`,
+        "--cmenu-hover-height": `${Math.max(
+          sideMenuRect.height,
+          bannerRect.height,
+        )}px`,
+      });
+    };
+
+    syncHomeHoverPanel();
+    globalThis.addEventListener("resize", syncHomeHoverPanel);
+
+    return () => {
+      globalThis.removeEventListener("resize", syncHomeHoverPanel);
+    };
+  }, []);
 
   const popularComputers = useMemo(
     () =>
@@ -164,16 +198,16 @@ export default function Home() {
     el.scrollBy({ left: offset, behavior: "smooth" });
   };
 
-  const getDealScrollStep = () => {
+  const getDealScrollStep = useCallback(() => {
     const el = dealHotScroller?.current;
     if (!el) return 0;
     const first = el.querySelector(":scope > .dealhot-item");
     if (!first) return 0;
     const itemWidth = first.getBoundingClientRect().width;
     const computed = getComputedStyle(el);
-    const gap = parseFloat(computed.columnGap || computed.gap) || 0;
+    const gap = Number.parseFloat(computed.columnGap || computed.gap) || 0;
     return Math.round((itemWidth + gap) * 3);
-  };
+  }, [dealHotScroller]);
 
   const scrollDealPrev = () => {
     const step = getDealScrollStep();
@@ -205,7 +239,7 @@ export default function Home() {
     const interval = setInterval(() => {
       if (!mounted) return;
       if (paused.value) return;
-      if (el.classList && el.classList.contains("dragging")) return;
+      if (el.classList?.contains("dragging")) return;
 
       const step = getDealScrollStep();
       if (!step) return;
@@ -226,7 +260,7 @@ export default function Home() {
       el.removeEventListener("touchstart", onEnter);
       el.removeEventListener("touchend", onLeave);
     };
-  }, [dealHotScroller]);
+  }, [dealHotScroller, getDealScrollStep]);
 
   const loadingHome = useMemo(
     () => loadingAll || !allProducts?.length,
@@ -281,26 +315,14 @@ export default function Home() {
 
   return (
     <div className="min-h-screen w-full overflow-hidden bg-transparent pb-10 text-[var(--color-text)] transition-colors duration-220 ease-standard">
-      <div className="mx-auto w-full max-w-[1320px] px-4 pb-20 pt-2 sm:px-5 lg:px-6">
-        <section className="reveal-on-scroll pt-3" data-reveal-delay="0">
+      <div className="mx-auto w-full max-w-[1320px] px-4 pb-12 pt-2 sm:px-5 lg:px-6">
+        <section
+          className="reveal-on-scroll pt-3 relative"
+          data-reveal-delay="0"
+        >
           <div className="grid grid-cols-1 gap-1.5 xl:grid-cols-[224px_minmax(0,1fr)_156px]">
             <aside className="home-side-menu hidden xl:block">
-              <p className="home-side-menu-title">Danh mục sản phẩm</p>
-              <div className="home-side-menu-list">
-                {ALL_CATEGORIES.map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    onClick={() => navigate(`/products?p=1&category=${cat.id}`)}
-                    className="home-side-menu-item"
-                  >
-                    <span className="material-symbols-outlined text-[18px]">
-                      {cat.icon}
-                    </span>
-                    <span className="line-clamp-1">{cat.label}</span>
-                  </button>
-                ))}
-              </div>
+              <CategoryMenuPanel hoverPanelStyle={homeHoverPanelStyle} />
             </aside>
 
             <div className="home-main-banner-shell overflow-hidden rounded-[0.72rem] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-md">
@@ -321,8 +343,8 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-10" data-reveal-delay="60">
-          <div className="mb-6 flex items-center justify-between px-1">
+        <section className="reveal-on-scroll mt-6" data-reveal-delay="60">
+          <div className="mb-5 flex items-center justify-between px-1">
             <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
               Ưu đãi nổi bật hôm nay
             </h3>
@@ -345,10 +367,10 @@ export default function Home() {
                 <img
                   src={card.image}
                   alt={card.title}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-320 ease-standard group-hover:scale-[1.03]"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-320 ease-standard group-hover:scale-[1.04]"
                 />
                 <div className="home-image-promo-overlay" />
-                <div className="relative z-10 flex h-full flex-col justify-end p-6 text-white text-left">
+                <div className="home-image-promo-content relative z-10 flex h-full flex-col justify-end p-6 text-white text-left">
                   <p className="text-[10px] uppercase tracking-[0.2em] opacity-90 mb-2">
                     {card.subtitle}
                   </p>
@@ -368,7 +390,7 @@ export default function Home() {
         </section>
 
         <section
-          className="reveal-on-scroll mt-10 grid grid-cols-2 gap-4 border-y border-[var(--color-border)] py-8 lg:grid-cols-4"
+          className="reveal-on-scroll mt-6 grid grid-cols-2 gap-4 border-y border-[var(--color-border)] py-6 lg:grid-cols-4"
           data-reveal-delay="100"
         >
           {TRUST_BADGES.map((badge) => (
@@ -389,7 +411,7 @@ export default function Home() {
           ))}
         </section>
 
-        <section className="reveal-on-scroll mt-10" data-reveal-delay="140">
+        <section className="reveal-on-scroll mt-6" data-reveal-delay="140">
           <div className="mb-7 flex flex-col items-center">
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
               Bộ sưu tập mới nhất
@@ -420,7 +442,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-10" data-reveal-delay="180">
+        <section className="reveal-on-scroll mt-6" data-reveal-delay="180">
           <div className="overflow-hidden rounded-[2rem] border border-[var(--color-border)] shadow-md">
             <Swiper
               modules={[Navigation, Pagination, Autoplay]}
@@ -444,7 +466,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-10" data-reveal-delay="220">
+        <section className="reveal-on-scroll mt-6" data-reveal-delay="220">
           <div
             className="dealhot-shell relative overflow-hidden rounded-[1rem] border border-[var(--color-border)] shadow-md"
             style={{
@@ -471,7 +493,7 @@ export default function Home() {
                         onClick={() => navigate("/products?p=1")}
                         className="dealhot-cta group motion-default inline-flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.2em]"
                       >
-                        Xem tất cả deal
+                        <span>Xem tất cả deal</span>
                         <span className="material-symbols-outlined !text-xl transition-transform duration-220 ease-standard group-hover:translate-x-1">
                           trending_flat
                         </span>
@@ -541,7 +563,7 @@ export default function Home() {
           <section
             key={section.id}
             id={section.id}
-            className="reveal-on-scroll mt-10"
+            className="reveal-on-scroll mt-6"
           >
             <div className="mb-5 flex items-end justify-between px-1 sm:px-2">
               <div className="space-y-3">
@@ -556,7 +578,7 @@ export default function Home() {
                 }
                 className="group motion-default flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
               >
-                Tất cả sản phẩm{" "}
+                <span>Tất cả sản phẩm</span>
                 <span className="material-symbols-outlined !text-xl transition-transform duration-220 ease-standard group-hover:translate-x-1.5">
                   trending_flat
                 </span>

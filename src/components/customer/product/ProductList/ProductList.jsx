@@ -36,16 +36,16 @@ export default function ProductList({
   }, [searchParams]);
 
   const CATEGORIES = [
-    { id: "LSP01", name: "Điện thoại" },
-    { id: "LSP02", name: "Laptop" },
-    { id: "LSP03", name: "Máy tính bảng" },
-    { id: "LSP04", name: "Đồng hồ thông minh" },
-    { id: "LSP05", name: "Tai nghe" },
-    { id: "LSP06", name: "Bàn phím" },
-    { id: "LSP07", name: "Chuột" },
-    { id: "LSP08", name: "Màn hình" },
-    { id: "LSP09", name: "Loa" },
-    { id: "LSP10", name: "Phụ kiện khác" },
+    { id: "LSP01", icon: "smartphone", name: "Điện thoại" },
+    { id: "LSP02", icon: "laptop_mac", name: "Laptop" },
+    { id: "LSP03", icon: "tablet_mac", name: "Máy tính bảng" },
+    { id: "LSP04", icon: "watch", name: "Đồng hồ thông minh" },
+    { id: "LSP05", icon: "headphones", name: "Tai nghe" },
+    { id: "LSP06", icon: "keyboard", name: "Bàn phím" },
+    { id: "LSP07", icon: "mouse", name: "Chuột" },
+    { id: "LSP08", icon: "desktop_windows", name: "Màn hình" },
+    { id: "LSP09", icon: "speaker", name: "Loa" },
+    { id: "LSP10", icon: "devices_other", name: "Phụ kiện khác" },
   ];
 
   const BRAND_NAME_TO_ID = {
@@ -304,12 +304,15 @@ export default function ProductList({
                   setCategory(c.id);
                   setPage(0);
                 }}
-                className={`rounded-lg border px-3 py-2 text-sm font-medium motion-default ${
+                className={`rounded-lg border px-3 py-2 text-sm font-medium motion-default inline-flex items-center gap-1.5 ${
                   category === c.id
                     ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
                     : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
                 }`}
               >
+                <span className="material-symbols-outlined text-[16px]">
+                  {c.icon}
+                </span>
                 {c.name}
               </button>
             ))}

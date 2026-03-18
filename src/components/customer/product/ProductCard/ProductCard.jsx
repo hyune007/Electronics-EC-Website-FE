@@ -115,17 +115,27 @@ export default function ProductCard({ product, className = "" }) {
             {product?.name}
           </h4>
 
-          <div className="mb-3 flex items-center gap-2">
+          <div className="mb-3">
             {product?.discountedPrice < product?.price ? (
-              <>
-                <span className="text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-text)]">
-                  {formatVND(product.discountedPrice)}
-                </span>
-
-                <span className="text-xs text-[var(--color-text-muted)] line-through dark:text-[var(--color-text)] dark:opacity-70">
-                  {formatVND(product.price)}
-                </span>
-              </>
+              <div className="price-box">
+                <div className="price-box-inner">
+                  <div className="price-new">
+                    {formatVND(product.discountedPrice)}
+                  </div>
+                  <div className="price-old">{formatVND(product.price)}</div>
+                </div>
+                <div className="price-percent">
+                  -
+                  {product.price
+                    ? Math.round(
+                        ((product.price - product.discountedPrice) /
+                          product.price) *
+                          100,
+                      )
+                    : 0}
+                  %
+                </div>
+              </div>
             ) : (
               <span className="text-sm font-bold text-[var(--color-primary)] dark:text-[var(--color-text)]">
                 {formatVND(product?.price)}
