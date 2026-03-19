@@ -263,6 +263,27 @@
   }
 }
 
+/* DoubleBanner marquee */
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.scroll-track {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  animation: scroll-left 20s linear infinite;
+}
+
+.scroll-reverse {
+  animation-direction: reverse;
+}
+
 button {
   cursor: pointer;
 }

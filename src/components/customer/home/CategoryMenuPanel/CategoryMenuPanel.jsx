@@ -60,6 +60,44 @@ export default function CategoryMenuPanel({
 
   const active = ALL_CATEGORIES.find((c) => c.id === hoveredId);
 
+  const CATEGORY_PANEL = {
+    LSP02: {
+      columns: [
+        {
+          title: "Thương hiệu",
+          items: BRANDS_BY_CATEGORY.LSP02 || [],
+        },
+        {
+          title: "Nhu cầu sử dụng",
+          items: [
+            "Văn phòng",
+            "Gaming",
+            "Đồ họa - kỹ thuật",
+            "Sinh viên",
+            "Mỏng nhẹ",
+          ],
+        },
+        {
+          title: "Dòng chip",
+          items: [
+            "Laptop Intel",
+            "Apple M5 Series",
+            "AMD Ryzen",
+          ],
+        },
+        {
+          title: "Kích thước màn hình",
+          items: [
+            "Laptop 13 inch",
+            "Laptop 14 inch",
+            "Laptop 15.6 inch",
+            "Laptop 16 inch",
+          ],
+        },
+      ],
+    },
+  };
+
   return (
     <>
       <p className="cmenu-title">Danh mục sản phẩm</p>
@@ -107,45 +145,75 @@ export default function CategoryMenuPanel({
               <h4>{active.label}</h4>
             </div>
 
-            <div className="cmenu-hover-block">
-              <p className="cmenu-hover-label">Thương hiệu</p>
-              <div className="cmenu-hover-chip-wrap">
-                {(BRANDS_BY_CATEGORY[hoveredId] || []).map((brand) => (
-                  <button
-                    key={brand}
-                    type="button"
-                    className="cmenu-hover-chip"
-                    onClick={() =>
-                      go(
-                        `/products?p=1&category=${hoveredId}&brand=${encodeURIComponent(brand)}`,
-                      )
-                    }
-                  >
-                    {brand}
-                  </button>
+            {CATEGORY_PANEL[hoveredId] ? (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                {CATEGORY_PANEL[hoveredId].columns.map((col) => (
+                  <div className="cmenu-hover-block" key={col.title}>
+                    <p className="cmenu-hover-label">{col.title}</p>
+                    <div className="cmenu-hover-chip-wrap">
+                      {col.items.map((it) => (
+                        <button
+                          key={it}
+                          type="button"
+                          className="cmenu-hover-chip"
+                          onClick={() =>
+                            go(
+                              `/products?p=1&category=${hoveredId}&q=${encodeURIComponent(it)}`,
+                            )
+                          }
+                        >
+                          {it}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
-            </div>
+            ) : (
+              <>
+                <div className="cmenu-hover-block">
+                  <p className="cmenu-hover-label">Thương hiệu</p>
+                  <div className="cmenu-hover-chip-wrap">
+                    {(BRANDS_BY_CATEGORY[hoveredId] || []).map((brand) => (
+                      <button
+                        key={brand}
+                        type="button"
+                        className="cmenu-hover-chip"
+                        onClick={() =>
+                          go(
+                            `/products?p=1&category=${hoveredId}&brand=${encodeURIComponent(
+                              brand,
+                            )}`,
+                          )
+                        }
+                      >
+                        {brand}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-            <div className="cmenu-hover-block">
-              <p className="cmenu-hover-label">Phân khúc giá</p>
-              <div className="cmenu-hover-chip-wrap">
-                {PRICE_SEGMENTS.map((seg) => (
-                  <button
-                    key={seg.label}
-                    type="button"
-                    className="cmenu-hover-chip"
-                    onClick={() =>
-                      go(
-                        `/products?p=1&category=${hoveredId}&minPrice=${seg.min}&maxPrice=${seg.max}`,
-                      )
-                    }
-                  >
-                    {seg.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+                <div className="cmenu-hover-block">
+                  <p className="cmenu-hover-label">Phân khúc giá</p>
+                  <div className="cmenu-hover-chip-wrap">
+                    {PRICE_SEGMENTS.map((seg) => (
+                      <button
+                        key={seg.label}
+                        type="button"
+                        className="cmenu-hover-chip"
+                        onClick={() =>
+                          go(
+                            `/products?p=1&category=${hoveredId}&minPrice=${seg.min}&maxPrice=${seg.max}`,
+                          )
+                        }
+                      >
+                        {seg.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </>
         )}
       </aside>
