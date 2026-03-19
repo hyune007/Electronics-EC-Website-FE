@@ -94,7 +94,7 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
     return p.data || p.items || p.details || p.products || [];
   })(payload);
 
-  const shippingCost = Number(payload?.shippingFee ?? payload?.ship_fee ?? 0);
+  const shippingCost = Number(order?.shippingFee ?? payload?.ship_fee ?? 0);
   const itemsTotal = items.reduce(
     (sum, it) =>
       sum +
