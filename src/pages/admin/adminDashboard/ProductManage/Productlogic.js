@@ -6,8 +6,8 @@ import { getAllPromotions } from "../../../../services/promotionService";
 import { showToast } from "../../../../utils/adminToast";
 import { getCache, setCache, removeCache, removeCacheByPrefix } from "../../../../utils/localCache";
 
-function getNextProductIdFromList(products, totalElements) {
-    const ids = (products || []).map((item) => item?.sp_id).filter(Boolean);
+function getNextProductIdFromList(products) {
+    const ids = (products || []).map((item) => item?.sp_id || item?.id).filter(Boolean);
     let maxNumber = 0;
 
     ids.forEach((id) => {
@@ -19,8 +19,8 @@ function getNextProductIdFromList(products, totalElements) {
         }
     });
 
-    const fallbackByTotal = Number(totalElements || 0) + 1;
-    const nextNumber = Math.max(maxNumber + 1, fallbackByTotal, 1);
+    // Luôn dùng max ID tìm được + 1. Khi không có sản phẩm nào → SP001 (tránh random gây ID nhảy).
+    const nextNumber = maxNumber > 0 ? maxNumber + 1 : 1;
     return `SP${String(nextNumber).padStart(3, "0")}`;
 }
 
@@ -573,8 +573,17 @@ export function useProductManageLogic() {
                 return;
             }
 
+            // Lấy trang cuối cùng từ API, tìm id lớn nhất rồi +1 để tránh trùng với sản phẩm ở trang khác.
+            let nextId = "SP001";
+            const lastPageIndex = Math.max(0, totalPages - 1);
+            const res = await getProductsByPage(lastPageIndex, pageSize, false);
+            const lastPageProducts = res?.products ?? [];
+            if (lastPageProducts.length > 0) {
+                nextId = getNextProductIdFromList(lastPageProducts.map(p => ({ sp_id: p.id, id: p.id })));
+            }
+
             setForm({
-                id: getNextProductIdFromList(allProducts, totalElements),
+                id: nextId,
                 name: "",
                 price: 0,
                 stock: 0,
@@ -590,6 +599,24 @@ export function useProductManageLogic() {
             showToast("Có lỗi khi mở form thêm sản phẩm", "error");
         }
     };
+
+    /** Lấy N ID tiếp theo theo cùng logic form (trang cuối, max+1). Dùng cho file mẫu Excel. */
+    const fetchNextProductIds = useCallback(async (count = 2) => {
+        const lastPageIndex = Math.max(0, totalPages - 1);
+        const res = await getProductsByPage(lastPageIndex, pageSize, false);
+        const lastPageProducts = res?.products ?? [];
+        let nextId = "SP001";
+        if (lastPageProducts.length > 0) {
+            nextId = getNextProductIdFromList(lastPageProducts.map(p => ({ sp_id: p.id, id: p.id })));
+        }
+        const match = String(nextId).match(/^SP(\d+)$/i);
+        const startNum = match ? Number(match[1]) : 1;
+        const ids = [];
+        for (let i = 0; i < count; i++) {
+            ids.push(`SP${String(startNum + i).padStart(3, "0")}`);
+        }
+        return ids;
+    }, [totalPages, pageSize]);
 
     const openEdit = p => {
         setEditing(p);
@@ -684,6 +711,9 @@ const normalizeImportRows = (rows) => {
     });
 };
 
+/** Khi import Excel: tồn kho luôn = 0. Tồn kho chỉ được cập nhật qua Quản lí nhập kho. */
+const IMPORT_STOCK_VALUE = 0;
+
 const handleBulkImportFile = async (file) => {
     if (!file) return;
 
@@ -716,8 +746,9 @@ const handleBulkImportFile = async (file) => {
         }
 
         const rows = normalizeImportRows(rawRows);
+        // Không validate stock từ file — tồn kho import luôn = IMPORT_STOCK_VALUE, chỉ nhập qua Quản lí nhập kho
         const invalidRows = rows.filter((row) => {
-            return !row.id || !row.name || row.price <= 0 || row.stock < 0 || !row.brandId || !row.categoryId;
+            return !row.id || !row.name || row.price <= 0 || !row.brandId || !row.categoryId;
         });
 
         if (invalidRows.length > 0) {
@@ -731,7 +762,7 @@ const handleBulkImportFile = async (file) => {
                     id: row.id,
                     name: row.name,
                     price: row.price,
-                    stock: row.stock,
+                    stock: IMPORT_STOCK_VALUE,
                     description: row.description,
                     image: row.image,
                     brandId: row.brandId,
@@ -959,7 +990,15 @@ setAllProducts([]);
         }
     };
 
-    const handleDelete = async sp_id => {
+    const handleDelete = async (productOrId) => {
+        const product = typeof productOrId === "object" ? productOrId : products.find((p) => p.sp_id === productOrId);
+        const sp_id = product?.sp_id ?? productOrId;
+        const stock = Number(product?.sp_stock ?? 0);
+
+        if (stock > 0) {
+            showToast("Còn hàng không xóa được. Vui lòng xuất/nhập kho về 0 trước khi xóa.", "warning", 4000);
+            return;
+        }
         if (!window.confirm("Bạn chắc chắn muốn xoá sản phẩm này?")) return;
 
         setDeletingId(sp_id);
@@ -998,6 +1037,20 @@ setAllProducts([]);
     const handleDeleteMany = async (ids = []) => {
         const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
         if (uniqueIds.length === 0) return;
+
+        const productMap = new Map([...products, ...allProducts].map((p) => [p.sp_id, p]));
+        const hasStock = uniqueIds.filter((id) => {
+            const p = productMap.get(id);
+            return p && Number(p.sp_stock || 0) > 0;
+        });
+        if (hasStock.length > 0) {
+            showToast(
+                `Không xóa được ${hasStock.length} sản phẩm vì còn tồn kho. Vui lòng xuất/nhập kho về 0 trước khi xóa.`,
+                "warning",
+                5000
+            );
+            return;
+        }
 
         setIsBulkDeleting(true);
         try {
@@ -1047,6 +1100,7 @@ setAllProducts([]);
 
     return {
         products,
+        allProducts,
         loading,
         totalElements,
 
@@ -1076,6 +1130,7 @@ setAllProducts([]);
 
         openAdd,
         openEdit,
+        fetchNextProductIds,
         handleBulkImportFile,
         handleSubmit,
         handleDelete,

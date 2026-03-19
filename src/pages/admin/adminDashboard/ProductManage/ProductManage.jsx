@@ -57,22 +57,10 @@ export default function ProductManage() {
         setSelectedIds((prev) => prev.filter((id) => visibleIds.has(id)));
     }, [pm.products]);
 
-    const getProductIdNum = (id) => {
-        const match = String(id || "").match(/(\d+)$/);
-        return match ? Number(match[1]) : 0;
-    };
-
-    const toProductCode = (num) => `SP${String(num).padStart(3, "0")}`;
-
     const downloadTemplateFile = async () => {
         const XLSX = await import("xlsx");
-        const loadedMaxId = (pm.products || []).reduce((max, p) => {
-            const value = getProductIdNum(p?.sp_id);
-            return Math.max(max, Number.isNaN(value) ? 0 : value);
-        }, 0);
-
-        const fallbackMax = Number(pm.totalElements || 0);
-        const nextIdNum = Math.max(loadedMaxId, fallbackMax, 0) + 1;
+        // ID trong file mẫu luôn lấy theo cùng logic form: trang cuối, id lớn nhất + 1
+        const nextIds = await pm.fetchNextProductIds(2);
 
         const firstBrandName = pm.brands?.[0]?.hang_name || pm.brands?.[0]?.name || "Ten thuong hieu";
         const secondBrandName = pm.brands?.[1]?.hang_name || pm.brands?.[1]?.name || firstBrandName;
@@ -80,9 +68,9 @@ export default function ProductManage() {
         const secondCategoryName = pm.categories?.[1]?.name || firstCategoryName;
 
         const aoa = [
-            ["Mã sản phẩm", "Tên sản phẩm", "Giá", "Số lượng", "Mô tả", "Hình ảnh", "Thương hiệu", "Danh mục"],
-            [toProductCode(nextIdNum), "Tai nghe Bluetooth XYZ", 990000, 25, "Tai nghe chong on chu dong", "http://example.com/headphone.jpg", firstBrandName, firstCategoryName],
-            [toProductCode(nextIdNum + 1), "Loa mini ABC", 450000, 50, "Loa mini ket noi bluetooth", "http://example.com/speaker.jpg", secondBrandName, secondCategoryName],
+            ["ID", "Tên sản phẩm", "Giá", "Số lượng", "Mô tả", "Hình ảnh", "Thương hiệu", "Danh mục"],
+            [nextIds[0], "Tai nghe Bluetooth XYZ", 990000, 0, "Tai nghe chong on chu dong", "http://example.com/headphone.jpg", firstBrandName, firstCategoryName],
+            [nextIds[1], "Loa mini ABC", 450000, 0, "Loa mini ket noi bluetooth", "http://example.com/speaker.jpg", secondBrandName, secondCategoryName],
         ];
 
         const worksheet = XLSX.utils.aoa_to_sheet(aoa);
@@ -318,22 +306,22 @@ export default function ProductManage() {
                                         aria-label="Chọn tất cả sản phẩm trên trang"
                                     />
                                 </th>
-                                <th>Mã</th>
-                                <th>Sản phẩm</th>
-                                <th className="text-right">Giá</th>
-                                <th className="text-center">Kho</th>
-                                <th>Danh mục</th>
-                                <th>Thương hiệu</th>
-                                <th>Khuyến mãi</th>
-                                <th className="text-center">Ảnh</th>
-                                <th className="text-center">Hành động</th>
+                                <th className="whitespace-nowrap">Mã</th>
+                                <th className="whitespace-nowrap min-w-[250px]">Sản phẩm</th>
+                                <th className="text-right whitespace-nowrap min-w-[120px]">Giá</th>
+                                <th className="text-center whitespace-nowrap">Kho</th>
+                                <th className="whitespace-nowrap">Danh mục</th>
+                                <th className="whitespace-nowrap">Thương hiệu</th>
+                                <th className="whitespace-nowrap">Khuyến mãi</th>
+                                <th className="text-center whitespace-nowrap">Ảnh</th>
+                                <th className="text-center whitespace-nowrap min-w-[100px]">Hành động</th>
                             </tr>
                         </thead>
 
                         <tbody className="divide-y page-animate">
                             {pm.loading && pm.products.length === 0 && (
                                 <tr>
-                                    <td colSpan="9" className="py-10 text-center">
+                                    <td colSpan="10" className="py-10 text-center">
                                         <div className="flex justify-center items-center">
                                             <div className="loading-spinner w-8 h-8 mr-3" />
                                             Đang tải dữ liệu...
@@ -358,13 +346,13 @@ export default function ProductManage() {
                                                 aria-label={`Chọn sản phẩm ${p.sp_id}`}
                                             />
                                         </td>
-                                        <td>
-                                            <span className="font-mono bg-neutral-100 px-2 py-1 rounded">
+                                        <td className="whitespace-nowrap">
+                                            <span className="font-mono bg-neutral-100 px-2 py-1 rounded text-sm">
                                                 {p.sp_id}
                                             </span>
                                         </td>
 
-                                        <td>
+                                        <td className="min-w-[250px]">
                                             <div className="flex gap-3">
                                                 <div className="w-10 h-10 bg-neutral-100 rounded-lg overflow-hidden flex items-center justify-center">
                                                     {p.sp_image ? (
@@ -399,53 +387,58 @@ export default function ProductManage() {
                                             </div>
                                         </td>
 
-                                        <td className="text-right font-medium">
-                                            {p?.sp_discountedPrice && p.sp_discountedPrice < p.sp_price ? (
-                                                <>
-                                                    <span className="line-through text-gray-400 mr-2">
-                                                        {p.sp_price.toLocaleString("vi-VN")} ₫
-                                                    </span>
-                                                    <span className="text-red-600 font-semibold">
-                                                        {p.sp_discountedPrice.toLocaleString("vi-VN")} ₫
-                                                    </span>
-                                                </>
-                                            ) : (
-                                                <span>{p.sp_price.toLocaleString("vi-VN")} ₫</span>
-                                            )}
+                                        <td className="text-right font-medium whitespace-nowrap">
+                                            <div className="flex flex-col items-end gap-1">
+                                                {p?.sp_discountedPrice && p.sp_discountedPrice < p.sp_price ? (
+                                                    <>
+                                                        <span className="line-through text-gray-400 text-sm">
+                                                            {p.sp_price.toLocaleString("vi-VN")} ₫
+                                                        </span>
+                                                        <span className="text-red-600 font-semibold">
+                                                            {p.sp_discountedPrice.toLocaleString("vi-VN")} ₫
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span className="text-transparent text-sm select-none" aria-hidden="true">-</span>
+                                                        <span>{p.sp_price.toLocaleString("vi-VN")} ₫</span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
 
-                                        <td className="text-center">
+                                        <td className="text-center whitespace-nowrap">
                                             <span
-                                                className={`font-semibold ${p.sp_stock < 10
-                                                    ? "text-red-600"
+                                                className={`font-semibold px-3 py-1 rounded-full text-sm ${p.sp_stock < 10
+                                                    ? "bg-red-50 text-red-600"
                                                     : p.sp_stock < 50
-                                                        ? "text-amber-600"
-                                                        : "text-emerald-600"
+                                                        ? "bg-amber-50 text-amber-600"
+                                                        : "bg-emerald-50 text-emerald-600"
                                                     }`}
                                             >
                                                 {p.sp_stock}
                                             </span>
                                         </td>
 
-                                        <td>
-                                            <span className="badge-success">
+                                        <td className="whitespace-nowrap">
+                                            <span className="badge-success whitespace-nowrap truncate block max-w-[150px]">
                                                 {p.sp_category_name}
                                             </span>
                                         </td>
 
-                                        <td>
-                                            <span className="badge-primary">
+                                        <td className="whitespace-nowrap">
+                                            <span className="badge-primary whitespace-nowrap truncate block max-w-[120px]">
                                                 {p.sp_brand_name}
                                             </span>
                                         </td>
 
-                                        <td>
-                                            <span className="badge-warning">
+                                        <td className="whitespace-nowrap">
+                                            <span className="badge-warning whitespace-nowrap truncate block max-w-[120px]">
                                                 {p.sp_promotion_name}
                                             </span>
                                         </td>
 
-                                        <td className="text-center">
+                                        <td className="text-center whitespace-nowrap">
                                             {p.sp_image ? (
                                                 <img
                                                     src={p.sp_image}
@@ -476,7 +469,7 @@ export default function ProductManage() {
                                                     <Pencil size={16} />
                                                 </button>
                                                 <button
-                                                    onClick={() => pm.handleDelete(p.sp_id)}
+                                                    onClick={() => pm.handleDelete(p)}
                                                     disabled={pm.deletingId !== null}
                                                     className="p-2 hover:bg-red-50 rounded text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative"
                                                     title="Xóa"
@@ -576,11 +569,14 @@ export default function ProductManage() {
                             <p>
                                 Tải file mẫu để có sẵn cột chuẩn, mã sản phẩm kế tiếp và tên thương hiệu/danh mục dạng chữ.
                             </p>
+                            <p className="text-amber-700 text-sm mt-1">
+                                Tồn kho khi import luôn = 0; chỉ cập nhật tồn kho qua <strong>Quản lí nhập kho</strong>.
+                            </p>
                             <div className="import-field-tags">
-                                <span>Mã sản phẩm</span>
+                                <span>ID</span>
                                 <span>Tên sản phẩm</span>
                                 <span>Giá</span>
-                                <span>Số lượng</span>
+                                <span>Số lượng (bỏ qua)</span>
                                 <span>Mô tả</span>
                                 <span>Hình ảnh</span>
                                 <span>Thương hiệu</span>

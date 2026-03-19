@@ -5,6 +5,7 @@ import {
     updateBrand,
     deleteBrand,
 } from "../../../../services/brandService";
+import { getProductsCountByBrand } from "../../../../services/productService";
 import { showToast } from "../../../../utils/adminToast";
 import { generateSmartNextId } from "../../../../utils/codeGenerator";
 
@@ -348,6 +349,11 @@ export function useBrandLogic() {
 
     // ===== DELETE =====
     const handleDelete = async (id) => {
+        const count = await getProductsCountByBrand(id);
+        if (count > 0) {
+            showToast("Không xóa được. Có sản phẩm đang dùng hãng này.", "warning", 4000);
+            return;
+        }
         if (!confirm("Xóa hãng này?")) return;
 
         setDeletingId(id);
@@ -370,6 +376,16 @@ export function useBrandLogic() {
     const handleDeleteMany = async (ids = []) => {
         const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
         if (uniqueIds.length === 0) return;
+
+        const inUse = [];
+        for (const id of uniqueIds) {
+            const count = await getProductsCountByBrand(id);
+            if (count > 0) inUse.push(id);
+        }
+        if (inUse.length > 0) {
+            showToast(`Không xóa được ${inUse.length} hãng vì có sản phẩm đang dùng.`, "warning", 5000);
+            return;
+        }
 
         setIsBulkDeleting(true);
         try {

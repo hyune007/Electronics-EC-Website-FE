@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { getAllPromotions, createPromotion, updatePromotion, deletePromotion } from "../../../../services/promotionService";
+import { getProductsUsingPromotion, updateProduct } from "../../../../services/productService";
 import { showToast } from "../../../../utils/adminToast";
 import { generateSmartNextId } from "../../../../utils/codeGenerator";
 
@@ -400,11 +401,37 @@ export function useVoucherLogic() {
 
     /* ================= DELETE ================= */
     const handleDelete = async (id) => {
-        if (!window.confirm("Xóa voucher này?")) return;
-        
+        const productsUsing = await getProductsUsingPromotion(id);
+        if (productsUsing.length > 0) {
+            const ok = window.confirm(
+                `Voucher đang được sử dụng bởi ${productsUsing.length} sản phẩm. Xóa voucher và gỡ khỏi tất cả sản phẩm?`
+            );
+            if (!ok) return;
+            try {
+                for (const p of productsUsing) {
+                    await updateProduct(p.id, {
+                        name: p.name,
+                        price: p.price,
+                        stock: p.stock,
+                        description: p.description ?? "",
+                        image: p.raw_image ?? p.image ?? "",
+                        brandId: p.brand?.id ?? "",
+                        categoryId: p.category?.id ?? "",
+                        promotionId: null,
+                    });
+                }
+            } catch (err) {
+                console.error("Unlink promotion from products failed:", err);
+                showToast("Gỡ voucher khỏi sản phẩm thất bại.", "error");
+                return;
+            }
+        } else {
+            if (!window.confirm("Xóa voucher này?")) return;
+        }
+
         try {
             await deletePromotion(id);
-            const updatedVouchers = vouchers.filter(v => v.km_id !== id);
+            const updatedVouchers = vouchers.filter((v) => v.km_id !== id);
             setVouchers(updatedVouchers);
             setCachedVouchers(updatedVouchers);
             showToast("Xóa voucher thành công", "success");
@@ -417,6 +444,38 @@ export function useVoucherLogic() {
     const handleDeleteMany = async (ids = []) => {
         const uniqueIds = Array.from(new Set((ids || []).filter(Boolean)));
         if (uniqueIds.length === 0) return;
+
+        const toUnlink = [];
+        for (const id of uniqueIds) {
+            const productsUsing = await getProductsUsingPromotion(id);
+            if (productsUsing.length > 0) toUnlink.push({ promotionId: id, products: productsUsing });
+        }
+        if (toUnlink.length > 0) {
+            const totalProducts = toUnlink.reduce((s, x) => s + x.products.length, 0);
+            const ok = window.confirm(
+                `${toUnlink.length} voucher đang được sử dụng (${totalProducts} sản phẩm). Xóa và gỡ khỏi tất cả sản phẩm?`
+            );
+            if (!ok) return;
+            for (const { promotionId, products } of toUnlink) {
+                for (const p of products) {
+                    try {
+                        await updateProduct(p.id, {
+                            name: p.name,
+                            price: p.price,
+                            stock: p.stock,
+                            description: p.description ?? "",
+                            image: p.raw_image ?? p.image ?? "",
+                            brandId: p.brand?.id ?? "",
+                            categoryId: p.category?.id ?? "",
+                            promotionId: null,
+                        });
+                    } catch (err) {
+                        console.error("Unlink promotion failed for product:", p.id, err);
+                        showToast(`Gỡ voucher khỏi sản phẩm ${p.id} thất bại.`, "error");
+                    }
+                }
+            }
+        }
 
         setIsBulkDeleting(true);
         try {
