@@ -13,6 +13,9 @@ import ManHinhBanner from "../../assets/banner/ManHinh.jpg";
 import MuaLaptopOnlineBanner from "../../assets/banner/MuaLaptopOnline.png";
 import Xiaomi17UltraHomeBanner from "../../assets/banner/Xiaomi17ultra_home.jpg";
 import WatchAdsBanner from "../../assets/banner/watch_ads.png";
+import LaptopBannerVer from "../../assets/banner/laptopBannerVer.png";
+import PhoneBannerVer from "../../assets/banner/phoneBannerVer.png";
+import MonitorBannerVer from "../../assets/banner/monitorBannerVer.png";
 import DealHotBackground from "../../assets/background/DealHot.jpg";
 import useDragScroll from "../../hooks/useDragScroll";
 import useRevealOnScroll from "../../hooks/useRevealOnScroll";
@@ -283,7 +286,7 @@ export default function Home() {
     return products.map((p) => (
       <div
         key={p.id}
-        className="w-[242px] shrink-0 transition-transform duration-500 sm:w-[258px] lg:w-[272px]"
+        className="w-[242px] shrink-0 transition-transform duration-500 sm:w-[258px] lg:w-[272px] min-h-[330px] md:min-h-[300px] lg:min-h-[390px]"
       >
         <ProductCard product={p} className="h-full" />
       </div>
@@ -312,6 +315,13 @@ export default function Home() {
       </div>
     ));
   };
+
+  const REVIEW_VIDEOS = [
+    { id: "r1", src: "https://www.youtube.com/embed/TzY6m1rOgjU" },
+    { id: "r2", src: "https://www.youtube.com/embed/MUmqNjtyE2w" },
+    { id: "r3", src: "https://www.youtube.com/embed/eHiaesghquI" },
+    { id: "r4", src: "https://www.youtube.com/embed/Yelu3NsfCNE" },
+  ];
 
   return (
     <div className="min-h-screen w-full overflow-hidden bg-transparent pb-10 text-[var(--color-text)] transition-colors duration-220 ease-standard">
@@ -585,14 +595,72 @@ export default function Home() {
               </button>
             </div>
 
-            <div
-              ref={section.scroller}
-              className="home-horizontal-scroller -mx-4 -my-7 flex items-stretch gap-6 overflow-x-auto overflow-y-visible px-4 py-7 no-scrollbar lg:gap-7"
-            >
-              {renderProductSectionContent(section.data)}
+            <div className="grid grid-cols-1 lg:grid-cols-[155px_minmax(0,1fr)] gap-8 items-start">
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(`/products?p=1&category=${section.cat}`)
+                }
+                className="hidden lg:block home-vertical-banner"
+                aria-label={`Banner ${section.id}`}
+              >
+                <img
+                  src={
+                    section.id === "laptop"
+                      ? LaptopBannerVer
+                      : section.id === "phone"
+                        ? PhoneBannerVer
+                        : MonitorBannerVer
+                  }
+                  alt={`${section.id} banner`}
+                  className="h-full w-full object-cover rounded-lg"
+                />
+              </button>
+
+              <div
+                ref={section.scroller}
+                className="home-horizontal-scroller -mx-4 -my-7 flex items-stretch gap-6 overflow-x-auto overflow-y-visible px-4 py-7 no-scrollbar lg:gap-7"
+              >
+                {renderProductSectionContent(section.data)}
+              </div>
             </div>
           </section>
         ))}
+
+        <section className="reveal-on-scroll mt-8" data-reveal-delay="260">
+          <div className="mb-5 flex items-center justify-between px-1">
+            <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
+              REVIEW SẢN PHẨM
+            </h3>
+            <a href="https://youtu.be/dQw4w9WgXcQ"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="motion-default text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-primary)] hover:opacity-80"
+            >
+              Xem Thêm tại Youtube
+            </a>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {REVIEW_VIDEOS.map((v) => (
+              <div
+                key={v.id}
+                className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm"
+              >
+                <div className="w-full h-[420px] sm:h-[520px] md:h-[620px]">
+                  <iframe
+                    src={v.src}
+                    title={v.id}
+                    className="w-full h-full"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );

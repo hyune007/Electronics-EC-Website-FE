@@ -3,6 +3,7 @@ import vi from "../../../../i18n/vi.js";
 import { getProducts } from "../../../../services/customer/productService.js";
 import ProductCard from "../ProductCard/ProductCard.jsx";
 import BreadcrumbNav from "../ProductNav/BreadcrumbNav/BreadcrumbNav.jsx";
+import DoubleBanner from "../../../common/DoubleBanner.jsx";
 // import { div } from "framer-motion/client";
 import { useSearchParams } from "react-router-dom";
 import { useProductCache } from "../../../../contexts/ProductCacheContext.jsx";
@@ -290,6 +291,7 @@ export default function ProductList({
   return (
     <div className="min-w-0 flex-1">
       <BreadcrumbNav category={currentCategory} />
+      <DoubleBanner />
       <main className="card-default px-4 py-5 sm:px-6">
         <div className="mb-6">
           <div className="mb-2 text-sm font-semibold text-[var(--color-text-muted)]">
