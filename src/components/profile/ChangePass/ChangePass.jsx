@@ -34,7 +34,7 @@ export default function ChangePass() {
       }
       const decoded = decodeJwt(token);
       const customerId = decoded.sub;
-      await changePassword(customerId, form.password);
+      await changePassword(customerId, form.current, form.password);
       alert("Đổi mật khẩu thành công");
       setOpen(false);
     } catch (error) {

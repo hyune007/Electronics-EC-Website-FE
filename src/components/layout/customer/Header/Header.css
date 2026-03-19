@@ -51,6 +51,83 @@
   background-color: var(--color-surface-elevated);
 }
 
+.category-trigger-btn {
+  border-radius: var(--radius-default);
+  border: 1px solid color-mix(in oklab, var(--color-secondary) 62%, transparent);
+  background: var(--color-secondary);
+  color: #fff !important;
+  min-height: 2.45rem;
+  padding: 0.42rem 0.78rem;
+  font-weight: 700;
+}
+
+.category-trigger-btn:hover {
+  border-color: color-mix(in oklab, var(--color-secondary) 80%, #fff 20%);
+  background: color-mix(in oklab, var(--color-secondary) 88%, #fff 12%);
+  color: #fff !important;
+}
+
+.search-bar-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.search-bar-track {
+  position: absolute;
+  right: calc(100% + 0.42rem);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: width 0.24s var(--ease-standard);
+}
+
+.search-bar-leading-icon {
+  position: absolute;
+  left: 0.68rem;
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.search-bar-wrap.open .search-bar-track {
+  width: min(72vw, 280px);
+  pointer-events: auto;
+}
+
+.search-bar-input {
+  width: min(72vw, 280px);
+  min-width: min(72vw, 280px);
+  border-radius: 999px !important;
+  padding-left: 2.2rem !important;
+  opacity: 0;
+  transition: opacity 0.2s var(--ease-standard);
+}
+
+.search-bar-wrap.open .search-bar-input {
+  opacity: 1;
+}
+
+.search-bar-suggestion {
+  position: absolute;
+  right: calc(100% + 0.42rem);
+  top: calc(100% + 0.4rem);
+}
+
+.search-mobile-toggle {
+  display: inline-flex;
+}
+
 @keyframes scroll {
   from {
     transform: translateX(0);
@@ -71,6 +148,33 @@
 }
 
 @media (min-width: 1024px) {
+  .search-bar-wrap {
+    width: 280px;
+  }
+
+  .search-bar-track {
+    position: static;
+    transform: none;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+    pointer-events: auto;
+  }
+
+  .search-bar-input {
+    width: 100%;
+    min-width: 0;
+    opacity: 1;
+  }
+
+  .search-mobile-toggle {
+    display: none;
+  }
+
+  .search-bar-suggestion {
+    right: 0;
+  }
+
   .header-mobile-menu-btn {
     display: none !important;
   }

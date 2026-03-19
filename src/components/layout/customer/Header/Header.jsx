@@ -7,10 +7,10 @@ import UserDropdown from "../../../profile/UserDropdown/UserDropdown.jsx";
 import ThemeToggleButton from "../../../common/ThemeToggleButtonHome.jsx";
 import BrandLogo from "../../../common/BrandLogo.jsx";
 import vi from "../../../../i18n/vi.js";
-import SubMenuHeader from "../../../customer/home/SubMenuHeader/SubMenuheader.jsx";
 import { useAuth } from "../../../../hooks/useAuth";
 import { useProductCache } from "../../../../contexts/ProductCacheContext.jsx";
 import demoImg from "../../../../assets/demo/demo.jpg";
+import { useCategoryDrawer } from "../../../../contexts/CategoryDrawerContext.jsx";
 
 const CATEGORY_NAME_BY_ID = {
   LSP01: "Điện thoại",
@@ -29,9 +29,9 @@ export default function Header() {
   const { toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
+  const { toggleDrawer } = useCategoryDrawer();
 
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showSubmenu, setShowSubmenu] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -232,72 +232,100 @@ export default function Header() {
           </Link>
 
           <nav className="hidden items-center gap-8 lg:flex">
-            <NavLink to="/home" className="nav-link">
+            <button
+              type="button"
+              onClick={toggleDrawer}
+              className="nav-link category-trigger-btn inline-flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[18px]">
+                grid_view
+              </span>{" "}
+              Danh mục
+            </button>
+
+            <NavLink
+              to="/home"
+              className={({ isActive }) =>
+                isActive ? "nav-link nav-link-active" : "nav-link"
+              }
+            >
               {vi.layout.header.home}
             </NavLink>
 
-            <div
-              className="relative"
-              onMouseEnter={() => setShowSubmenu(true)}
-              onMouseLeave={() => setShowSubmenu(false)}
+            <NavLink
+              to="/products"
+              className={({ isActive }) =>
+                isActive ? "nav-link nav-link-active" : "nav-link"
+              }
             >
-              <NavLink to="/products" className="nav-link">
-                {vi.layout.header.products}
-              </NavLink>
-              {showSubmenu && (
-                <>
-                  <div className="absolute left-1/2 top-full -translate-x-1/2 w-12 h-3 bg-transparent rounded-b-md z-40 pointer-events-auto" />
-                  <SubMenuHeader onSelect={() => setShowSubmenu(false)} />
-                </>
-              )}
-            </div>
+              {vi.layout.header.products}
+            </NavLink>
 
-            <NavLink to="/news" className="nav-link">
+            <NavLink
+              to="/news"
+              className={({ isActive }) =>
+                isActive ? "nav-link nav-link-active" : "nav-link"
+              }
+            >
               {vi.layout.header.news}
             </NavLink>
 
-            <NavLink to="/contact" className="nav-link">
+            <NavLink
+              to="/contact"
+              className={({ isActive }) =>
+                isActive ? "nav-link nav-link-active" : "nav-link"
+              }
+            >
               {vi.layout.header.contact}
             </NavLink>
           </nav>
 
           <div className="relative flex items-center gap-1.5 sm:gap-2">
-            <div ref={searchWrapRef} className="relative">
+            <div
+              ref={searchWrapRef}
+              className={`search-bar-wrap${searchOpen ? " open" : ""}`}
+            >
+              <div className="search-bar-track">
+                <span className="material-symbols-outlined search-bar-leading-icon">
+                  search
+                </span>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchKeyword}
+                  onFocus={() => setSearchOpen(true)}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSeeMore();
+                  }}
+                  placeholder="Bạn muốn mua gì hôm nay"
+                  className="input-default search-bar-input"
+                />
+              </div>
+
               <button
                 onClick={() => setSearchOpen((prev) => !prev)}
-                className="icon-btn hidden items-center lg:flex"
-                aria-label="Mở tìm kiếm"
+                className="icon-btn search-mobile-toggle"
+                aria-label={searchOpen ? "Đóng tìm kiếm" : "Mở tìm kiếm"}
               >
-                <span className="material-symbols-outlined">search</span>
+                <span className="material-symbols-outlined">
+                  {searchOpen ? "close" : "search"}
+                </span>
               </button>
 
-              {searchOpen && (
-                <div className="modal-shell absolute right-0 top-full z-50 mt-2 w-[320px] p-3 sm:w-[360px]">
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchKeyword}
-                    onChange={(e) => setSearchKeyword(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleSeeMore();
-                    }}
-                    placeholder="Nhập tên hoặc loại sản phẩm..."
-                    className="input-default"
-                  />
+              {searchOpen && normalizedKeyword && (
+                <div className="modal-shell search-bar-suggestion z-50 w-[320px] p-3 sm:w-[360px]">
+                  <div className="overflow-hidden rounded-lg border border-[var(--color-border)]">
+                    {renderSuggestionContent()}
 
-                  {normalizedKeyword && (
-                    <div className="mt-2 overflow-hidden rounded-lg border border-[var(--color-border)]">
-                      {renderSuggestionContent()}
-
-                      <button
-                        type="button"
-                        onClick={handleSeeMore}
-                        className="w-full px-3 py-2 text-left text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-muted)] motion-default"
-                      >
-                        Xem thêm
-                      </button>
-                    </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={handleSeeMore}
+                      className="w-full px-3 py-2 text-left text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-muted)] motion-default"
+                    >
+                      Xem thêm
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -373,29 +401,42 @@ export default function Header() {
             <div className="space-y-4 px-4 py-4 sm:px-6">
               <nav className="flex flex-col gap-2">
                 <button
-                  className="icon-btn justify-start flex"
+                  className="nav-link category-trigger-btn text-left inline-flex items-center gap-2"
                   onClick={() => {
-                    setSearchOpen((prev) => !prev);
+                    toggleDrawer();
                     setMobileOpen(false);
                   }}
                 >
-                  <span className="material-symbols-outlined">search</span>
+                  <span className="material-symbols-outlined text-[18px]">
+                    grid_view
+                  </span>{" "}
+                  Danh mục
                 </button>
+
                 <NavLink
                   to="/home"
                   onClick={() => setMobileOpen(false)}
-                  className="nav-link"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link nav-link-active" : "nav-link"
+                  }
                 >
                   {vi.layout.header.home}
                 </NavLink>
 
-                <NavLink to="/products" className="nav-link">
+                <NavLink
+                  to="/products"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link nav-link-active" : "nav-link"
+                  }
+                >
                   {vi.layout.header.products}
                 </NavLink>
                 <NavLink
                   to="/news"
                   onClick={() => setMobileOpen(false)}
-                  className="nav-link"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link nav-link-active" : "nav-link"
+                  }
                 >
                   {vi.layout.header.news}
                 </NavLink>
@@ -403,7 +444,9 @@ export default function Header() {
                 <NavLink
                   to="/contact"
                   onClick={() => setMobileOpen(false)}
-                  className="nav-link"
+                  className={({ isActive }) =>
+                    isActive ? "nav-link nav-link-active" : "nav-link"
+                  }
                 >
                   {vi.layout.header.contact}
                 </NavLink>

@@ -1,5 +1,6 @@
 import PriceRange from "../PriceRange/PriceRange.jsx";
 import vi from "../../../../i18n/vi.js";
+import ProductFilterVerticalBanner from "../../../common/ProductFilterVerticalBanner.jsx";
 
 const PRICE_LABELS = new Map([
   ["0-5000", "0 – 5.000₫"],
@@ -128,6 +129,7 @@ export default function ProductFilter({
             ))}
           </div>
         </div>
+        <ProductFilterVerticalBanner />
       </aside>
       <div
         className={`fixed inset-0 z-40 transition-opacity duration-220 ease-standard ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}
