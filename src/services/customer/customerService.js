@@ -1,6 +1,6 @@
 import api, { apiGetCached, invalidateApiCache } from "../api"; 
-const API_URL = "http://localhost:8080/api/customer";
-// const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/customer";
+// const API_URL = "http://localhost:8080/api/customer";
+const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/customer";
 
 export const getCustomerById = async (id) => {
   return apiGetCached(`${API_URL}/${id}`, {}, {
