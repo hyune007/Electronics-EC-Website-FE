@@ -1,11 +1,11 @@
 import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
 import { CACHE_TTL } from "../utils/cachePolicy";
 
-// const API_URL = "http://localhost:8080/api/imports";
-// const BASE_URL = "http://localhost:8080";
+const API_URL = "http://localhost:8080/api/imports";
+const BASE_URL = "http://localhost:8080";
 const IMPORT_CREATOR_MAP_KEY = "admin_import_creator_map_v1";
-const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/imports";
-const BASE_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app";
+// const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/imports";
+// // const BASE_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app";
 
 function getImportCreatorMap() {
     try {
@@ -188,3 +188,4 @@ export async function deleteImport(id) {
 
     invalidateCacheByPrefix("cache:import:");
 }
+

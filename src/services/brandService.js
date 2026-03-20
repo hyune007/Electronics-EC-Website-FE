@@ -1,7 +1,7 @@
 import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
 import { CACHE_TTL } from "../utils/cachePolicy";
-// const API_URL = "http://localhost:8080/api/brand";
-const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/brand";
+const API_URL = "http://localhost:8080/api/brand";
+// const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/brand";
 
 // Helper to get auth token
 function getAuthHeaders() {
@@ -75,3 +75,4 @@ export async function deleteBrand(id) {
     if (!res.ok) throw new Error("Xóa thất bại");
     invalidateCacheByPrefix("cache:brand:");
 }
+
