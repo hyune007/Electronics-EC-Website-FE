@@ -54,6 +54,9 @@ const ImportManage = lazy(
 const VoucherManage = lazy(
   () => import("../pages/admin/adminDashboard/Voucher/VoucherManage.jsx"),
 );
+const ChatManage = lazy(
+  () => import("../pages/admin/adminDashboard/Chat/ChatManage.jsx"),
+);
 import ProtectedRoute from "../components/common/ProtectedRoute.jsx";
 const ShipperDashboard = lazy(
   () => import("../pages/shipper/ShipperDashboard/ShipperDashboard.jsx"),
@@ -189,6 +192,16 @@ export default function AppRoutes({ location }) {
             element={
               <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
                 <VoucherManage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Chat - ADMIN + EMPLOYEE */}
+          <Route
+            path="chat"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
+                <ChatManage />
               </ProtectedRoute>
             }
           />

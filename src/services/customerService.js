@@ -129,4 +129,3 @@ export async function deleteCustomer(id) {
 
     invalidateCacheByPrefix("cache:customer:");
 }
-

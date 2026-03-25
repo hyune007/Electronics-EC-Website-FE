@@ -75,4 +75,3 @@ export async function deleteBrand(id) {
     if (!res.ok) throw new Error("Xóa thất bại");
     invalidateCacheByPrefix("cache:brand:");
 }
-

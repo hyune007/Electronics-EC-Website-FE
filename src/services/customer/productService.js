@@ -36,4 +36,3 @@ export const invalidateProductCache = (id) => {
   if (id) productCache.delete(id);
   else productCache.clear();
 };
-
