@@ -140,8 +140,8 @@ export default function Header() {
               <img
                 src={
                   product?.image
-                    ? `http://localhost:8080${product.image}`
-                    // ? `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}`
+                    // ? `http://localhost:8080${product.image}`
+                    ? `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}`
                     : demoImg
                 }
                 alt={product?.name || "product"}
