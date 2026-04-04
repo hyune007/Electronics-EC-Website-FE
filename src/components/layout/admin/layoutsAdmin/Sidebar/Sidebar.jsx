@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "../../../../../hooks/useAuth";
 import { useCart } from "../../../../../contexts/CartContext";
@@ -25,6 +26,7 @@ import { SECTION_TITLE, SIDEBAR_ITEMS } from "./sidebar.config";
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [isManageOpen, setIsManageOpen] = useState(true);
+  const [isStatsOpen, setIsStatsOpen] = useState(true);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,6 +45,13 @@ export default function Sidebar() {
     imports: ROUTE_MAP.imports,
     vouchers: ROUTE_MAP.vouchers,
     chat: ROUTE_MAP.chat,
+    customer_stats: ROUTE_MAP.customer_stats,
+    order_stats: ROUTE_MAP.order_stats,
+    product_stats: ROUTE_MAP.product_stats,
+    brand_stats: ROUTE_MAP.brand_stats,
+    staff_stats: ROUTE_MAP.staff_stats,
+    import_stats: ROUTE_MAP.import_stats,
+    voucher_stats: ROUTE_MAP.voucher_stats,
   };
 
   const iconByKey = {
@@ -55,6 +64,13 @@ export default function Sidebar() {
     imports: Warehouse,
     vouchers: TicketPercent,
     chat: MessageCircle,
+    customer_stats: Users,
+    order_stats: Package,
+    product_stats: DollarSign,
+    brand_stats: ShoppingBag,
+    staff_stats: UserCog,
+    import_stats: Warehouse,
+    voucher_stats: TicketPercent,
   };
 
   const hasNestedPath = (path, route) => path === route || path.startsWith(`${route}/`);
@@ -66,9 +82,15 @@ export default function Sidebar() {
 
   const topItems = visibleItems.filter((item) => item.section === "overview");
   const managementItems = visibleItems.filter((item) => item.section === "management");
+  const statisticsItems = visibleItems.filter((item) => item.section === "statistics");
   const communicationItems = visibleItems.filter((item) => item.section === "communication");
 
   const isManagementActive = managementItems.some((item) => {
+    const route = routeByKey[item.key];
+    return route ? hasNestedPath(location.pathname, route) : false;
+  });
+
+  const isStatisticsActive = statisticsItems.some((item) => {
     const route = routeByKey[item.key];
     return route ? hasNestedPath(location.pathname, route) : false;
   });
@@ -85,6 +107,12 @@ export default function Sidebar() {
     }
   }, [isManagementActive]);
 
+  useEffect(() => {
+    if (isStatisticsActive) {
+      setIsStatsOpen(true);
+    }
+  }, [isStatisticsActive]);
+
   return (
     <aside
       className={`
@@ -94,14 +122,14 @@ export default function Sidebar() {
         bg-gradient-to-b from-slate-50 via-slate-100 to-slate-100
         border-r border-slate-200
         text-slate-700
-        flex flex-col justify-between
+        flex flex-col
         transition-all duration-400 ease-out
       `}
     >
       <div className="pointer-events-none absolute -right-14 top-16 h-52 w-52 rounded-full bg-slate-300/35 blur-3xl" />
       <div className="pointer-events-none absolute -left-24 bottom-4 h-56 w-56 rounded-full bg-white/80 blur-3xl" />
 
-      <div>
+      <div className="flex-1 min-h-0 flex flex-col">
         <div
           className={`
             h-20 flex items-center px-4 border-b border-slate-200
@@ -142,91 +170,140 @@ export default function Sidebar() {
           </button>
         </div>
 
-        <nav className="relative px-3 py-5 space-y-4">
-          {!isOpen && (
-            <div
-              className="
-                h-9 flex items-center justify-center rounded-lg
-                bg-white border border-slate-200 text-slate-500
-              "
-            >
-              <Menu size={16} />
-            </div>
-          )}
+        <div className="flex-1 min-h-0 overflow-y-auto px-2 py-4">
+          <nav className="relative px-1 py-1 space-y-4">
+            {!isOpen && (
+              <div
+                className="
+                  h-9 flex items-center justify-center rounded-lg
+                  bg-white border border-slate-200 text-slate-500
+                "
+              >
+                <Menu size={16} />
+              </div>
+            )}
 
-          <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.overview} />
-          {topItems.map((item) => {
-            const Icon = iconByKey[item.key];
-            return (
-              <SidebarItem
-                key={item.key}
-                icon={Icon}
-                label={item.title}
-                to={routeByKey[item.key]}
-                isOpen={isOpen}
-              />
-            );
-          })}
-
-          <div>
-            <button
-              onClick={() => setIsManageOpen(!isManageOpen)}
-              className="
-                w-full h-11 flex items-center justify-between gap-3 px-3 rounded-xl
-                text-slate-600 hover:text-slate-900 hover:bg-slate-200/70
-                border border-slate-200
-                transition-all duration-300
-              "
-            >
-              <span className="flex items-center gap-3">
-                <Package size={18} />
-                {isOpen && <span className="font-medium">Quản lý</span>}
-              </span>
-              {isOpen && (
-                <ChevronDown
-                  size={16}
-                  className={`transition-transform duration-300 ${isManageOpen ? "rotate-180" : "rotate-0"}`}
+            <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.overview} />
+            {topItems.map((item) => {
+              const Icon = iconByKey[item.key];
+              return (
+                <SidebarItem
+                  key={item.key}
+                  icon={Icon}
+                  label={item.title}
+                  to={routeByKey[item.key]}
+                  isOpen={isOpen}
                 />
-              )}
-            </button>
+              );
+            })}
 
-            <div
-              className={`
-                overflow-hidden transition-all duration-300
-                ${isManageOpen ? "max-h-[500px]" : "max-h-0"}
-              `}
-            >
-              <div className={`mt-2 space-y-2 ${isOpen ? "pl-4" : "pl-0"}`}>
-                {managementItems.map((item) => {
-                  const Icon = iconByKey[item.key];
-                  return (
-                    <SidebarItem
-                      key={item.key}
-                      icon={Icon}
-                      label={item.title}
-                      to={routeByKey[item.key]}
-                      isOpen={isOpen}
-                    />
-                  );
-                })}
+            <div>
+              <button
+                onClick={() => setIsManageOpen(!isManageOpen)}
+                className="
+                  w-full h-11 flex items-center justify-between gap-3 px-3 rounded-xl
+                  text-slate-600 hover:text-slate-900 hover:bg-slate-200/70
+                  border border-slate-200
+                  transition-all duration-300
+                "
+              >
+                <span className="flex items-center gap-3">
+                  <Package size={18} />
+                  {isOpen && <span className="font-medium">Quản lý</span>}
+                </span>
+                {isOpen && (
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-300 ${isManageOpen ? "rotate-180" : "rotate-0"}`}
+                  />
+                )}
+              </button>
+
+              <div
+                className={`
+                  overflow-hidden transition-all duration-300
+                  ${isManageOpen ? "max-h-[500px]" : "max-h-0"}
+                `}
+              >
+                <div className={`mt-2 space-y-2 ${isOpen ? "pl-4" : "pl-0"}`}>
+                  {managementItems.map((item) => {
+                    const Icon = iconByKey[item.key];
+                    return (
+                      <SidebarItem
+                        key={item.key}
+                        icon={Icon}
+                        label={item.title}
+                        to={routeByKey[item.key]}
+                        isOpen={isOpen}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
 
-          <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.communication} />
-          {communicationItems.map((item) => {
-            const Icon = iconByKey[item.key];
-            return (
-              <SidebarItem
-                key={item.key}
-                icon={Icon}
-                label={item.title}
-                to={routeByKey[item.key]}
-                isOpen={isOpen}
-              />
-            );
-          })}
-        </nav>
+            {statisticsItems.length > 0 && (
+            <div>
+              <button
+                onClick={() => setIsStatsOpen(!isStatsOpen)}
+                className="
+                  w-full h-11 flex items-center justify-between gap-3 px-3 rounded-xl
+                  text-slate-600 hover:text-slate-900 hover:bg-slate-200/70
+                  border border-slate-200
+                  transition-all duration-300
+                "
+              >
+                <span className="flex items-center gap-3">
+                  <BarChart3 size={18} />
+                  {isOpen && <span className="font-medium">Thống kê</span>}
+                </span>
+                {isOpen && (
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-300 ${isStatsOpen ? "rotate-180" : "rotate-0"}`}
+                  />
+                )}
+              </button>
+
+              <div
+                className={`
+                  overflow-hidden transition-all duration-300
+                  ${isStatsOpen ? "max-h-[500px]" : "max-h-0"}
+                `}
+              >
+                <div className={`mt-2 space-y-2 ${isOpen ? "pl-4" : "pl-0"}`}>
+                  {statisticsItems.map((item) => {
+                    const Icon = iconByKey[item.key];
+                    return (
+                      <SidebarItem
+                        key={item.key}
+                        icon={Icon}
+                        label={item.title}
+                        to={routeByKey[item.key]}
+                        isOpen={isOpen}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            )}
+
+            <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.communication} />
+            {communicationItems.map((item) => {
+              const Icon = iconByKey[item.key];
+              return (
+                <SidebarItem
+                  key={item.key}
+                  icon={Icon}
+                  label={item.title}
+                  to={routeByKey[item.key]}
+                  isOpen={isOpen}
+                />
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
       <div className="px-4 pb-5">
