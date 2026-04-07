@@ -3,13 +3,14 @@ import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 import { getBillDetails } from "../../../services/customer/billDetailServiceCustomer";
 import { formatVND } from "../../../utils/priceFormatter";
-import Warning from "../../common/Warning";
+import Warning from "../../common/warning";
 
 export default function OrderDetailModal({ open, onClose, orderId, order }) {
   const [loading, setLoading] = useState(false);
   const [payload, setPayload] = useState(null);
   const [isReturnMode, setIsReturnMode] = useState(false);
   const [selectedReturnItems, setSelectedReturnItems] = useState([]);
+  const [returnQuantities, setReturnQuantities] = useState({});
   const [returnReason, setReturnReason] = useState("");
   const [showReturnNotice, setShowReturnNotice] = useState(false);
 
@@ -17,10 +18,10 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
   const formatDate = (rawDate) => {
     return rawDate
       ? new Date(rawDate).toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "2-digit",
-      })
+          day: "2-digit",
+          month: "2-digit",
+          year: "2-digit",
+        })
       : "--";
   };
 
@@ -115,8 +116,8 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
       sum +
       Number(
         it?.subtotal ??
-        it?.total ??
-        Number(it?.price || 0) * Number(it?.quantity || 1),
+          it?.total ??
+          Number(it?.price || 0) * Number(it?.quantity || 1),
       ),
     0,
   );
@@ -150,39 +151,97 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
   const isAllSelected =
     allItemKeys.length > 0 && selectedReturnItems.length === allItemKeys.length;
 
+  const getPurchasedQtyByKey = (itemKey) => {
+    const target = items.find((it, idx) => itemKeyOf(it, idx) === itemKey);
+    const rawQty = Number(target?.quantity ?? target?.qty ?? 1);
+    if (!Number.isFinite(rawQty) || rawQty < 1) return 1;
+    return rawQty;
+  };
+
+  const getReturnQtyByKey = (itemKey) => {
+    const qty = Number(returnQuantities[itemKey] ?? 1);
+    if (!Number.isFinite(qty) || qty < 1) return 1;
+    return qty;
+  };
+
+  const changeReturnQty = (itemKey, delta) => {
+    const maxQty = getPurchasedQtyByKey(itemKey);
+    setReturnQuantities((prev) => {
+      const currentQty = Number(prev[itemKey] ?? 1);
+      const safeCurrent =
+        !Number.isFinite(currentQty) || currentQty < 1 ? 1 : currentQty;
+      const nextQty = Math.max(1, Math.min(maxQty, safeCurrent + delta));
+      return { ...prev, [itemKey]: nextQty };
+    });
+  };
+
+  const totalReturnUnits = selectedReturnItems.reduce(
+    (sum, itemKey) => sum + getReturnQtyByKey(itemKey),
+    0,
+  );
+
   const toggleReturnItem = (itemKey) => {
-    setSelectedReturnItems((prev) =>
-      prev.includes(itemKey)
-        ? prev.filter((id) => id !== itemKey)
-        : [...prev, itemKey],
-    );
+    setSelectedReturnItems((prev) => {
+      if (prev.includes(itemKey)) {
+        setReturnQuantities((qtyPrev) => {
+          const next = { ...qtyPrev };
+          delete next[itemKey];
+          return next;
+        });
+        return prev.filter((id) => id !== itemKey);
+      }
+
+      setReturnQuantities((qtyPrev) => ({
+        ...qtyPrev,
+        [itemKey]: qtyPrev[itemKey] ?? 1,
+      }));
+
+      return [...prev, itemKey];
+    });
   };
 
   const toggleSelectAll = () => {
-    setSelectedReturnItems((prev) =>
-      prev.length === allItemKeys.length ? [] : allItemKeys,
-    );
+    setSelectedReturnItems((prev) => {
+      if (prev.length === allItemKeys.length) {
+        setReturnQuantities({});
+        return [];
+      }
+
+      const nextQuantities = {};
+      allItemKeys.forEach((itemKey) => {
+        nextQuantities[itemKey] = 1;
+      });
+      setReturnQuantities(nextQuantities);
+      return allItemKeys;
+    });
   };
 
   const openReturnMode = () => {
     setIsReturnMode(true);
     setSelectedReturnItems([]);
+    setReturnQuantities({});
     setReturnReason("");
   };
 
   const cancelReturnMode = () => {
     setIsReturnMode(false);
     setSelectedReturnItems([]);
+    setReturnQuantities({});
     setReturnReason("");
   };
 
   const confirmReturnRequest = () => {
     if (selectedReturnItems.length === 0 || !returnReason.trim()) return;
 
+    const selectedItems = selectedReturnItems.map((itemKey) => ({
+      itemId: itemKey,
+      quantity: getReturnQtyByKey(itemKey),
+    }));
+
     // UI flow only: return API is not wired yet.
     console.log("Return request", {
       orderId: orderId || order?.id,
-      itemIds: selectedReturnItems,
+      items: selectedItems,
       reason: returnReason.trim(),
     });
 
@@ -273,9 +332,35 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
             </div>
           </td>
           <td className="py-4 text-center">
-            <span className="inline-block px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs font-bold text-slate-600 dark:text-slate-300">
-              {qty}
-            </span>
+            {isReturnMode && selectedReturnItems.includes(itemKey) ? (
+              <div className="inline-flex items-center overflow-hidden rounded-md border border-[var(--color-border)] bg-[var(--color-muted)]">
+                <button
+                  type="button"
+                  onClick={() => changeReturnQty(itemKey, -1)}
+                  className="h-7 w-7 text-sm font-bold text-[var(--color-text-muted)] motion-default hover:bg-[var(--color-border)]"
+                  disabled={getReturnQtyByKey(itemKey) <= 1}
+                  aria-label="Giảm số lượng trả"
+                >
+                  -
+                </button>
+                <span className="w-8 text-center text-xs font-bold text-[var(--color-text)]">
+                  {getReturnQtyByKey(itemKey)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => changeReturnQty(itemKey, 1)}
+                  className="h-7 w-7 text-sm font-bold text-[var(--color-text-muted)] motion-default hover:bg-[var(--color-border)]"
+                  disabled={getReturnQtyByKey(itemKey) >= qty}
+                  aria-label="Tăng số lượng trả"
+                >
+                  +
+                </button>
+              </div>
+            ) : (
+              <span className="inline-block px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs font-bold text-slate-600 dark:text-slate-300">
+                {qty}
+              </span>
+            )}
           </td>
           <td className="py-4 text-right text-xs font-medium text-[var(--color-text-muted)]">
             {formatVND(price)}
@@ -450,7 +535,8 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
             {isReturnMode && (
               <div className="space-y-3 rounded-md border border-[var(--color-border)] bg-[var(--color-muted)] p-4">
                 <div className="text-sm font-medium text-[var(--color-text)]">
-                  Đã chọn {selectedReturnItems.length} sản phẩm để trả hàng
+                  Đã chọn {selectedReturnItems.length} sản phẩm, tổng số lượng
+                  trả: {totalReturnUnits}
                 </div>
 
                 <div>
@@ -518,6 +604,7 @@ OrderDetailModal.propTypes = {
     totalAmount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     total_amount: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     phone: PropTypes.string,
+    deliveryDate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     customer: PropTypes.shape({
       name: PropTypes.string,
       phone: PropTypes.string,
