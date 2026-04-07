@@ -8,6 +8,15 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
   const [payload, setPayload] = useState(null);
 
   const navyDark = "var(--color-navy-light)";
+  const formatDate = (rawDate) => {
+    return rawDate
+      ? new Date(rawDate).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      })
+      : "--";
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -100,8 +109,8 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
       sum +
       Number(
         it?.subtotal ??
-          it?.total ??
-          Number(it?.price || 0) * Number(it?.quantity || 1),
+        it?.total ??
+        Number(it?.price || 0) * Number(it?.quantity || 1),
       ),
     0,
   );
@@ -225,6 +234,16 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
                 </span>
                 {getStatusBadge(status)}
               </div>
+              {order.deliveryDate && (
+                <div className="flex items-center justify-between rounded-md border border-[var(--color-border)] bg-[var(--color-muted)] p-4">
+                  <span className="text-xs font-bold uppercase text-[var(--color-text-muted)]">
+                    Ngày nhận hàng
+                  </span>
+                  <span className="text-sm font-medium text-[var(--color-text)]">
+                    {formatDate(order.deliveryDate)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <div className="space-y-4">

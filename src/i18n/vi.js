@@ -195,7 +195,7 @@ const vi = {
         delivered: "Đã giao",
         cancelled: "Đã hủy",
       },
-      headers: ["Mã đơn", "Ngày", "Tổng tiền", "Trạng thái", ""],
+      headers: ["Mã đơn", "Ngày đặt", "Tổng tiền", "Trạng thái", ""],
       viewDetail: "Xem chi tiết",
       showing: "Hiển thị {shown} trên {total} đơn hàng",
     },
