@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useMemo } from "react";
+import PropTypes from "prop-types";
 import { useAuth } from "../hooks/useAuth";
 import {
   getCartByCustomer,
@@ -6,6 +7,7 @@ import {
   updateCartItem,
   deleteCartItem,
 } from "../services/customer/shoppingCartService";
+import Warning from "../components/common/Warning";
 
 const CartContext = createContext();
 
@@ -16,9 +18,15 @@ export function CartProvider({ children }) {
     const stored = localStorage.getItem("cart");
     return stored ? JSON.parse(stored) : [];
   });
+  const [showStockWarning, setShowStockWarning] = useState(false);
+
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
+
+  const openStockWarning = () => {
+    setShowStockWarning(true);
+  };
 
   // đồng bộ giỏ hàng theo tài khoản nếu đã đăng nhập
   useEffect(() => {
@@ -49,7 +57,9 @@ export function CartProvider({ children }) {
                 cartItemId: saved.id,
                 id: item.id,
                 name: item.name,
-                price: item.discountedPrice ? Number(item.discountedPrice) : Number(item.price),
+                price: item.discountedPrice
+                  ? Number(item.discountedPrice)
+                  : Number(item.price),
                 quantity: item.quantity,
                 image: item.image,
               });
@@ -67,7 +77,9 @@ export function CartProvider({ children }) {
           cartItemId: row.id,
           id: row.product.id,
           name: row.product.name,
-          price: row.product.discountedPrice ? Number(row.product.discountedPrice) : Number(row.product.price),
+          price: row.product.discountedPrice
+            ? Number(row.product.discountedPrice)
+            : Number(row.product.price),
           quantity: row.quantity,
           stock: row.product.stock,
           // image: `http://localhost:8080${row.product.image}`,
@@ -89,7 +101,7 @@ export function CartProvider({ children }) {
     const newQty = existingItem ? existingItem.quantity + quantity : quantity;
 
     if (product.stock < newQty) {
-      alert("Số lượng sản phẩm trong giỏ vượt quá số lượng tồn kho");
+      openStockWarning();
       return;
     }
 
@@ -109,7 +121,9 @@ export function CartProvider({ children }) {
         {
           id: product.id,
           name: product.name,
-          price: product.discountedPrice ? Number(product.discountedPrice) : Number(product.price),
+          price: product.discountedPrice
+            ? Number(product.discountedPrice)
+            : Number(product.price),
           quantity,
           stock: product.stock,
           // image: `http://localhost:8080${product.image}`,
@@ -146,7 +160,7 @@ export function CartProvider({ children }) {
           );
         }
       } catch (err) {
-        void err;
+        console.error("Không thể thêm sản phẩm vào giỏ hàng", err);
       }
     }
   };
@@ -160,7 +174,7 @@ export function CartProvider({ children }) {
         try {
           await deleteCartItem(item.cartItemId);
         } catch (err) {
-          void err;
+          console.error("Không thể xóa sản phẩm khỏi giỏ hàng", err);
         }
       }
     }
@@ -172,7 +186,7 @@ export function CartProvider({ children }) {
     const item = cart.find((x) => x.id === id);
 
     if (item && newQty > item.stock) {
-      alert("Số lượng sản phẩm trong giỏ vượt quá số lượng tồn kho");
+      openStockWarning();
       return;
     }
 
@@ -203,13 +217,28 @@ export function CartProvider({ children }) {
     setCart([]);
   };
 
+  const contextValue = useMemo(
+    () => ({ cart, addToCart, removeFromCart, updateQuantity, clearCart }),
+    [cart, addToCart, removeFromCart, updateQuantity, clearCart],
+  );
+
   return (
-    <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart }}
-    >
+    <CartContext.Provider value={contextValue}>
       {children}
+
+      <Warning
+        open={showStockWarning}
+        onClose={() => setShowStockWarning(false)}
+        title="Thông báo"
+        message="Số lượng sản phẩm trong giỏ vượt quá số lượng tồn kho của sản phẩm, thành thật xin lỗi bạn"
+        buttonText="Đã hiểu"
+      />
     </CartContext.Provider>
   );
 }
+
+CartProvider.propTypes = {
+  children: PropTypes.node,
+};
 
 export const useCart = () => useContext(CartContext);

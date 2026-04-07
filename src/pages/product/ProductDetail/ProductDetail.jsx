@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import ProductTabs from "../../../components/customer/product/ProductTabs/ProductTabs.jsx";
@@ -8,10 +7,11 @@ import { getProductById } from "../../../services/customer/productService.js";
 import { useCart } from "../../../contexts/CartContext";
 import { useAuth } from "../../../hooks/useAuth";
 import NotiAuth from "../../../components/common/NotiAuth";
+import Warning from "../../../components/common/Warning";
 import { useProductCache } from "../../../contexts/ProductCacheContext.jsx";
 
 export default function ProductDetail() {
-  const { addToCart } = useCart();
+  const { addToCart, cart } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
   const navigate = useNavigate();
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
@@ -21,14 +21,35 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showStockWarning, setShowStockWarning] = useState(false);
   const imgRef = useRef();
+
+  const stock = Number(product?.stock ?? 0);
+  const cartItem = cart.find((item) => String(item.id) === String(product?.id));
+  const quantityInCart = cartItem?.quantity || 0;
+  const maxAddable = Math.max(stock - quantityInCart, 0);
+  const canIncrease = quantity < maxAddable;
+  const canAddToCart = maxAddable > 0 && quantity > 0 && quantity <= maxAddable;
+
   const handleQuantityChange = (type) => {
     setQuantity((prev) => {
-      if (type === "increase") return prev + 1;
+      if (type === "increase") {
+        if (maxAddable <= 0 || prev >= maxAddable) {
+          setShowStockWarning(true);
+          return prev;
+        }
+        return prev < maxAddable ? prev + 1 : prev;
+      }
       if (type === "decrease") return prev > 1 ? prev - 1 : 1;
       return prev;
     });
   };
+
+  useEffect(() => {
+    if (maxAddable > 0 && quantity > maxAddable) {
+      setQuantity(maxAddable);
+    }
+  }, [maxAddable, quantity]);
 
   const flyToCart = () => {
     const cartIcon = document.getElementById("cart-icon");
@@ -65,12 +86,12 @@ export default function ProductDetail() {
   };
 
   useEffect(() => {
-    const warmUp = window.setTimeout(() => {
+    const warmUp = globalThis.setTimeout(() => {
       prefetchAllProducts().catch(() => {});
     }, 600);
 
     return () => {
-      window.clearTimeout(warmUp);
+      globalThis.clearTimeout(warmUp);
     };
   }, [prefetchAllProducts]);
 
@@ -223,18 +244,26 @@ export default function ProductDetail() {
                 <span className="w-8 text-center font-bold">{quantity}</span>
                 <button
                   onClick={() => handleQuantityChange("increase")}
-                  className="icon-btn p-0.5"
+                  className={`icon-btn p-0.5 ${
+                    canIncrease ? "" : "text-[var(--color-text-muted)]"
+                  }`}
                   aria-label="Tăng số lượng"
                 >
                   +
                 </button>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   flyToCart();
                   addToCart(product, quantity);
                 }}
-                className="btn-primary flex flex-1 items-center justify-center gap-1 rounded-xl py-2"
+                disabled={!canAddToCart}
+                className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 ${
+                  canAddToCart
+                    ? "btn-primary"
+                    : "cursor-not-allowed bg-gray-600 text-white opacity-85"
+                }`}
               >
                 <span className="material-symbols-outlined">shopping_cart</span>
                 {vi.product.addToCart}
@@ -295,6 +324,14 @@ export default function ProductDetail() {
       <NotiAuth
         open={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
+      />
+
+      <Warning
+        open={showStockWarning}
+        onClose={() => setShowStockWarning(false)}
+        title="Thông báo"
+        message="Số lượng sản phẩm trong giỏ vượt quá số lượng tồn kho của sản phẩm, thành thật xin lỗi bạn"
+        buttonText="Đã hiểu"
       />
     </main>
   );
