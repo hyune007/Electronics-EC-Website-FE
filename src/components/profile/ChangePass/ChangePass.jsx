@@ -3,6 +3,7 @@ import ChangePassModal from "./ChangePassModal";
 import vi from "../../../i18n/vi";
 import { changePassword } from "../../../services/customer/customerService";
 import LoadingCircle from "../../common/LoadScreen";
+import Complete from "../../common/Complete";
 const decodeJwt = (token) => {
   try {
     const parts = token.split(".");
@@ -12,11 +13,11 @@ const decodeJwt = (token) => {
       payload.length + ((4 - (payload.length % 4)) % 4),
       "=",
     );
-    const base64 = padded.replace(/-/g, "+").replace(/_/g, "/");
+    const base64 = padded.replaceAll("-", "+").replaceAll("_", "/");
     const json = atob(base64);
     return JSON.parse(json);
   } catch (e) {
-    void e;
+    console.error(e);
     return null;
   }
 };
@@ -24,6 +25,7 @@ const decodeJwt = (token) => {
 export default function ChangePass() {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [showComplete, setShowComplete] = useState(false);
   const handleChangePassword = async (form) => {
     try {
       setLoading(true);
@@ -35,7 +37,7 @@ export default function ChangePass() {
       const decoded = decodeJwt(token);
       const customerId = decoded.sub;
       await changePassword(customerId, form.current, form.password);
-      alert("Đổi mật khẩu thành công");
+      setShowComplete(true);
       setOpen(false);
     } catch (error) {
       console.error(error);
@@ -76,6 +78,14 @@ export default function ChangePass() {
           open={open}
           onClose={() => setOpen(false)}
           onSubmit={handleChangePassword}
+        />
+
+        <Complete
+          open={showComplete}
+          onClose={() => setShowComplete(false)}
+          title="Thành công"
+          message="Lưu thay đổi thành công"
+          buttonText="Đã hiểu"
         />
       </div>
     </>

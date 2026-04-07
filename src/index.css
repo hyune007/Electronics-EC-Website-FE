@@ -168,9 +168,9 @@
   }
 
   .badge-return {
-    background-color: color-mix(in oklab, #5f768d 20%, white);
-    color: #506579;
-    border-color: color-mix(in oklab, #5f768d 42%, white);
+    background-color: color-mix(in oklab, #0f766e 18%, white);
+    color: #0f766e;
+    border-color: color-mix(in oklab, #0f766e 42%, white);
   }
 
   .modal-shell {

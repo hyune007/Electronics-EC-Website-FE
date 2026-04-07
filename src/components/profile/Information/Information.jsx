@@ -10,6 +10,7 @@ import {
 } from "../../../services/customer/addressService";
 import vi from "../../../i18n/vi";
 import LoadingCircle from "../../common/LoadScreen";
+import Complete from "../../common/Complete";
 
 export default function Information() {
   const [customerId, setCustomerId] = useState(null);
@@ -20,6 +21,7 @@ export default function Information() {
   const [defaultAddress, setDefaultAddress] = useState("");
   const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showComplete, setShowComplete] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -109,7 +111,7 @@ export default function Information() {
 
       setEditMode(false);
 
-      alert("Cập nhật thành công");
+      setShowComplete(true);
     } catch (error) {
       console.error(error);
 
@@ -218,6 +220,14 @@ export default function Information() {
           </div>
         </form>
       </div>
+
+      <Complete
+        open={showComplete}
+        onClose={() => setShowComplete(false)}
+        title="Thành công"
+        message="Lưu thay đổi thành công"
+        buttonText="Đã hiểu"
+      />
     </>
   );
 }

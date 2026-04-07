@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import { useCart } from "../../../../contexts/CartContext";
 import { decodeJwtPayload } from "../../../../utils/jwt";
 import { getCustomerById } from "../../../../services/customer/customerService";
 import { getAddresses } from "../../../../services/customer/addressService";
-import { getShippingFee } from "../../../../services/billService";
+import Warning from "../../../common/Warning";
 
 export default function InforStep({ onSubmit }) {
   const { cart } = useCart();
-  const [shippingFee, setShippingFee] = useState(0);
-  const [customerId, setCustomerId] = useState(null);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -18,6 +17,7 @@ export default function InforStep({ onSubmit }) {
   });
 
   const [addresses, setAddresses] = useState([]);
+  const [showAddressWarning, setShowAddressWarning] = useState(false);
 
   const inputStyle = "input-default h-12 px-4";
 
@@ -30,15 +30,12 @@ export default function InforStep({ onSubmit }) {
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
-  const discount = 0;
-  const total = subtotal - discount + shippingFee;
+  const total = subtotal;
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     const id = token ? decodeJwtPayload(token)?.sub : null;
     if (!id) return;
-
-    setCustomerId(id);
 
     const cacheKey = `customerInfo_${id}`;
 
@@ -95,28 +92,14 @@ export default function InforStep({ onSubmit }) {
     })();
   }, []);
 
-  useEffect(() => {
-    if (!formData.addressId || !customerId) {
-      setShippingFee(0);
-      return;
-    }
-
-    const fetchShippingFee = async () => {
-      try {
-        const res = await getShippingFee(customerId, formData.addressId);
-        setShippingFee(res.data);
-      } catch (err) {
-        console.error("Shipping fee error:", err);
-        setShippingFee(0);
-      }
-    };
-
-    fetchShippingFee();
-  }, [formData.addressId, customerId]);
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!onSubmit) return;
+
+    if (!formData.addressId) {
+      setShowAddressWarning(true);
+      return;
+    }
 
     const selectedAddress =
       addresses.find((a) => String(a.id) === String(formData.addressId)) ||
@@ -153,10 +136,14 @@ export default function InforStep({ onSubmit }) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium mb-1 block">
+              <label
+                htmlFor="checkout-full-name"
+                className="text-sm font-medium mb-1 block"
+              >
                 Họ và tên
               </label>
               <input
+                id="checkout-full-name"
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
@@ -167,10 +154,14 @@ export default function InforStep({ onSubmit }) {
             </div>
 
             <div>
-              <label className="text-sm font-medium mb-1 block">
+              <label
+                htmlFor="checkout-phone"
+                className="text-sm font-medium mb-1 block"
+              >
                 Số điện thoại
               </label>
               <input
+                id="checkout-phone"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
@@ -182,10 +173,14 @@ export default function InforStep({ onSubmit }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium">
+            <label
+              htmlFor="checkout-address"
+              className="block text-sm font-medium"
+            >
               Chọn địa chỉ giao hàng
             </label>
             <select
+              id="checkout-address"
               name="addressId"
               value={formData.addressId}
               onChange={handleChange}
@@ -207,8 +202,14 @@ export default function InforStep({ onSubmit }) {
           </div>
 
           <div>
-            <label className="text-sm font-medium mb-1 block">Ghi chú</label>
+            <label
+              htmlFor="checkout-note"
+              className="text-sm font-medium mb-1 block"
+            >
+              Ghi chú
+            </label>
             <textarea
+              id="checkout-note"
               name="note"
               value={formData.note}
               onChange={handleChange}
@@ -258,20 +259,6 @@ export default function InforStep({ onSubmit }) {
               <span>{formatCurrency(subtotal)}</span>
             </div>
 
-            <div className="flex justify-between text-sm">
-              <span>Mã giảm giá</span>
-              <span className="text-[var(--color-danger)]">
-                -{formatCurrency(discount)}
-              </span>
-            </div>
-
-            <div className="flex justify-between text-sm">
-              <span>Phí vận chuyển</span>
-              <span className="text-[var(--color-danger)]">
-                +{formatCurrency(shippingFee)}
-              </span>
-            </div>
-
             <div className="flex justify-between border-t border-[var(--color-border)] pt-3 text-lg font-bold">
               <span>Tổng cộng</span>
               <span className="text-[var(--color-primary)]">
@@ -281,6 +268,18 @@ export default function InforStep({ onSubmit }) {
           </div>
         </div>
       </aside>
+
+      <Warning
+        open={showAddressWarning}
+        onClose={() => setShowAddressWarning(false)}
+        title="Thông báo"
+        message="Vui lòng chọn địa chỉ giao hàng để chúng tôi thuận tiên hơn trong việc giao hàng cho bạn"
+        buttonText="Đã hiểu"
+      />
     </div>
   );
 }
+
+InforStep.propTypes = {
+  onSubmit: PropTypes.func,
+};

@@ -9,6 +9,7 @@ export default function MyOrder() {
   const [orders, setOrders] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -63,6 +64,21 @@ export default function MyOrder() {
   const filtered = orders.filter(
     (o) => filter === "all" || o.status === filter,
   );
+  const itemsPerPage = 10;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * itemsPerPage;
+  const paginatedOrders = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, user?.id]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const formatVND = (n) => {
     const value = Number(n);
@@ -121,52 +137,46 @@ export default function MyOrder() {
   const renderBody = () => {
     if (isLoading) {
       return (
-        <>
-          <tr>
-            <td
-              className="px-6 py-8 text-sm text-center text-slate-500"
-              colSpan={5}
-            >
-              Đang tải đơn hàng...
-            </td>
-          </tr>
-        </>
+        <tr>
+          <td
+            className="px-6 py-8 text-sm text-center text-slate-500"
+            colSpan={5}
+          >
+            Đang tải đơn hàng...
+          </td>
+        </tr>
       );
     }
 
     if (loadError) {
       return (
-        <>
-          <tr>
-            <td
-              className="px-6 py-8 text-sm text-center text-red-500"
-              colSpan={5}
-            >
-              {loadError}
-            </td>
-          </tr>
-        </>
+        <tr>
+          <td
+            className="px-6 py-8 text-sm text-center text-red-500"
+            colSpan={5}
+          >
+            {loadError}
+          </td>
+        </tr>
       );
     }
 
     if (!filtered.length) {
       return (
-        <>
-          <tr>
-            <td
-              className="px-6 py-8 text-sm text-center text-slate-500"
-              colSpan={5}
-            >
-              Chưa có đơn hàng phù hợp.
-            </td>
-          </tr>
-        </>
+        <tr>
+          <td
+            className="px-6 py-8 text-sm text-center text-slate-500"
+            colSpan={5}
+          >
+            Chưa có đơn hàng phù hợp.
+          </td>
+        </tr>
       );
     }
 
     return (
       <>
-        {filtered.map((o) => (
+        {paginatedOrders.map((o) => (
           <tr key={o.id} className="transition-colors">
             <td className="px-6 py-5 text-sm font-medium dark:group-hover:text-slate-100">
               {o.id}
@@ -179,7 +189,9 @@ export default function MyOrder() {
             <td className="px-6 py-5 text-sm">{formatVND(o.total)}</td>
 
             <td className="px-6 py-5">
-              <span className={badgeClassFor(o.status)}>
+              <span
+                className={`badge-default ${badgeClassFor(o.status)} whitespace-nowrap`}
+              >
                 {statusLabel[o.status] || o.status}
               </span>
             </td>
@@ -259,21 +271,35 @@ export default function MyOrder() {
 
         <div className="flex items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-4">
           <p className="text-sm text-[var(--color-text-muted)]">
-            {showingText}
+            {filtered.length === 0
+              ? showingText
+              : `Hiển thị ${startIndex + 1}-${Math.min(
+                  startIndex + paginatedOrders.length,
+                  filtered.length,
+                )} trên ${filtered.length} đơn hàng`}
           </p>
           <div className="flex items-center gap-2">
             <button
+              type="button"
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               className="h-8 w-8 rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] motion-default hover:text-[var(--color-primary)] disabled:opacity-50"
-              disabled
+              disabled={safeCurrentPage === 1 || filtered.length === 0}
             >
               <span className="material-symbols-outlined text-[20px]">
                 chevron_left
               </span>
             </button>
-            <button className="h-8 w-8 rounded-md bg-[var(--primary-navy)] text-sm font-medium text-white">
-              1
+            <button className="h-8 min-w-8 rounded-md bg-[var(--primary-navy)] px-2 text-sm font-medium text-white">
+              {safeCurrentPage}
             </button>
-            <button className="h-8 w-8 rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] motion-default hover:text-[var(--color-primary)]">
+            <button
+              type="button"
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              className="h-8 w-8 rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] motion-default hover:text-[var(--color-primary)] disabled:opacity-50"
+              disabled={safeCurrentPage === totalPages || filtered.length === 0}
+            >
               <span className="material-symbols-outlined text-[20px]">
                 chevron_right
               </span>

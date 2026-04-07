@@ -8,12 +8,14 @@ import {
 } from "../../../services/customer/addressService";
 import { jwtDecode } from "jwt-decode";
 import LoadingCircle from "../../common/LoadScreen";
+import Complete from "../../common/Complete";
 
 export default function Address() {
   const [addresses, setAddresses] = useState([]);
   const [open, setOpen] = useState(false);
   const [customerId, setCustomerId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showComplete, setShowComplete] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -46,7 +48,7 @@ export default function Address() {
 
       await createAddress(payload);
 
-      alert("Thêm địa chỉ thành công");
+      setShowComplete(true);
       reloadAddresses();
     } catch (err) {
       const msg = err.response?.data;
@@ -57,7 +59,7 @@ export default function Address() {
   };
 
   const handleDeleteAddress = async (id) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
+    if (!globalThis.confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
 
     try {
       await deleteAddress(id);
@@ -140,6 +142,14 @@ export default function Address() {
           open={open}
           onClose={() => setOpen(false)}
           onSave={handleCreateAddress}
+        />
+
+        <Complete
+          open={showComplete}
+          onClose={() => setShowComplete(false)}
+          title="Thành công"
+          message="Lưu địa chỉ thành công"
+          buttonText="Đã hiểu"
         />
       </div>
     </>
