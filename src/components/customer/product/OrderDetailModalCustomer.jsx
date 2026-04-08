@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import PropTypes from "prop-types";
+import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { getBillDetails } from "../../../services/customer/billDetailServiceCustomer";
 import { formatVND } from "../../../utils/priceFormatter";

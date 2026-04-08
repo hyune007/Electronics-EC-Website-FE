@@ -1,5 +1,12 @@
 export const ROUTE_MAP = {
     home: "/admin/dashboard",
+    customer_stats: "/admin/statistics/customers",
+    order_stats: "/admin/statistics/orders",
+    product_stats: "/admin/statistics/products",
+    brand_stats: "/admin/statistics/brands",
+    staff_stats: "/admin/statistics/staff",
+    import_stats: "/admin/statistics/imports",
+    voucher_stats: "/admin/statistics/vouchers",
     customers: "/admin/customers",
     orders: "/admin/orders",
     products: "/admin/products",
@@ -7,4 +14,5 @@ export const ROUTE_MAP = {
     staff: "/admin/staff",
     imports: "/admin/imports",
     vouchers: "/admin/vouchers",
+    chat: "/admin/chat",
 };
