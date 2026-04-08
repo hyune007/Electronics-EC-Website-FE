@@ -9,6 +9,7 @@ import {
 import { jwtDecode } from "jwt-decode";
 import LoadingCircle from "../../common/LoadScreen";
 import Complete from "../../common/Complete";
+import ConfirmActionModal from "../../common/ConfirmActionModal";
 
 export default function Address() {
   const [addresses, setAddresses] = useState([]);
@@ -16,6 +17,9 @@ export default function Address() {
   const [customerId, setCustomerId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteAddressId, setDeleteAddressId] = useState(null);
+  const [deletingAddress, setDeletingAddress] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("authToken");
@@ -58,17 +62,26 @@ export default function Address() {
     }
   };
 
-  const handleDeleteAddress = async (id) => {
-    if (!globalThis.confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
-
+  const handleDeleteAddress = async () => {
+    if (!deleteAddressId) return;
     try {
-      await deleteAddress(id);
+      setDeletingAddress(true);
+      await deleteAddress(deleteAddressId);
       alert("Xóa địa chỉ thành công");
       reloadAddresses();
+      setShowDeleteConfirm(false);
+      setDeleteAddressId(null);
     } catch (err) {
       alert("Xóa địa chỉ thất bại");
       console.error(err);
+    } finally {
+      setDeletingAddress(false);
     }
+  };
+
+  const openDeleteConfirm = (id) => {
+    setDeleteAddressId(id);
+    setShowDeleteConfirm(true);
   };
 
   const reloadAddresses = () => {
@@ -105,7 +118,7 @@ export default function Address() {
           </div>
           <button
             onClick={() => setOpen(true)}
-            className="btn-primary px-5 py-2"
+            className="inline-flex items-center justify-center rounded-md border border-transparent bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-white shadow-sm motion-default hover:bg-[var(--color-primary-hover)] hover:shadow-md"
           >
             {vi.profile.address.addButton}
           </button>
@@ -128,7 +141,7 @@ export default function Address() {
                 </div>
 
                 <button
-                  onClick={() => handleDeleteAddress(a.id)}
+                  onClick={() => openDeleteConfirm(a.id)}
                   className="text-sm font-semibold text-[var(--color-danger)] motion-default hover:opacity-80"
                 >
                   Xóa
@@ -150,6 +163,21 @@ export default function Address() {
           title="Thành công"
           message="Lưu địa chỉ thành công"
           buttonText="Đã hiểu"
+        />
+
+        <ConfirmActionModal
+          open={showDeleteConfirm}
+          onClose={() => {
+            if (deletingAddress) return;
+            setShowDeleteConfirm(false);
+            setDeleteAddressId(null);
+          }}
+          onConfirm={handleDeleteAddress}
+          loading={deletingAddress}
+          title="Xác nhận xóa địa chỉ"
+          message="Bạn có chắc muốn xóa địa chỉ này, hành động này sẽ khiến bạn phải nhập lại sau này!"
+          confirmText="Xóa địa chỉ"
+          cancelText="Giữ lại"
         />
       </div>
     </>

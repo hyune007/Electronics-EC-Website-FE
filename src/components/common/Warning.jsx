@@ -34,7 +34,7 @@ export default function Warning({
         <button
           type="button"
           onClick={onClose}
-          className="btn btn-primary mt-6 px-5 py-2 text-sm"
+          className="btn-primary mt-6 px-5 py-2 text-sm"
         >
           {buttonText}
         </button>
