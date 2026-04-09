@@ -61,9 +61,17 @@ export default function MyOrder() {
     fetchCustomerBills();
   }, [user?.id]);
 
-  const filtered = orders.filter(
-    (o) => filter === "all" || o.status === filter,
-  );
+  const RETURN_STATUSES = ['Yêu cầu trả hàng', 'Đã trả hàng', 'Từ chối trả hàng'];
+  
+  const filtered = orders.filter((o) => {
+  if (filter === 'all') return true;
+  
+  if (filter === 'Trả hàng') {
+    return RETURN_STATUSES.includes(o.status);
+  }
+  
+  return o.status === filter;
+});
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
 import { getBillDetails } from "../../../services/customer/billDetailServiceCustomer";
+import { requestReturnBill } from "../../../services/customer/billServiceCustomer";
 import { formatVND } from "../../../utils/priceFormatter";
 import Warning from "../../common/warning";
 
@@ -18,10 +19,10 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
   const formatDate = (rawDate) => {
     return rawDate
       ? new Date(rawDate).toLocaleDateString("vi-VN", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "2-digit",
-        })
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      })
       : "--";
   };
 
@@ -116,8 +117,8 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
       sum +
       Number(
         it?.subtotal ??
-          it?.total ??
-          Number(it?.price || 0) * Number(it?.quantity || 1),
+        it?.total ??
+        Number(it?.price || 0) * Number(it?.quantity || 1),
       ),
     0,
   );
@@ -230,23 +231,33 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
     setReturnReason("");
   };
 
-  const confirmReturnRequest = () => {
+  const confirmReturnRequest = async () => {
     if (selectedReturnItems.length === 0 || !returnReason.trim()) return;
 
-    const selectedItems = selectedReturnItems.map((itemKey) => ({
-      itemId: itemKey,
-      quantity: getReturnQtyByKey(itemKey),
-    }));
+    try {
+      const returnItems = selectedReturnItems.map((itemKey) => ({
+        detailBillId: itemKey,
+        returnQuantity: getReturnQtyByKey(itemKey),
+      }));
 
-    // UI flow only: return API is not wired yet.
-    console.log("Return request", {
-      orderId: orderId || order?.id,
-      items: selectedItems,
-      reason: returnReason.trim(),
-    });
+      const payload = {
+        billId: orderId || order?.id,
+        reason: returnReason.trim(),
+        returnItems: returnItems,
+      };
 
-    cancelReturnMode();
-    setShowReturnNotice(true);
+      await requestReturnBill(payload);
+
+      cancelReturnMode();
+      setShowReturnNotice(true);
+    } catch (error) {
+
+      alert(
+        error?.response?.data?.message ||
+        error?.response?.data ||
+        "Không thể gửi yêu cầu trả hàng. Vui lòng thử lại!"
+      );
+    }
   };
 
   const renderItemsBody = () => {
