@@ -68,12 +68,23 @@ function mapBillsToOrders(bills) {
       bill.address?.city,
     ].filter(Boolean);
 
+    const totalAmount = Number(bill.totalAmount || bill.total_amount || 0);
+    const shippingFee = Number(
+      bill.shippingFee ||
+        bill.shipping_fee ||
+        bill.shipFee ||
+        bill.ship_fee ||
+        0,
+    );
+
     return {
       order_id: bill.id || "",
       customer_name: bill.customer?.name || "N/A",
       customer_id: bill.customer?.id || "",
       customer_phone: bill.customer?.phone || "",
-      total_amount: bill.totalAmount || 0,
+      total_amount: totalAmount,
+      shipping_fee: shippingFee,
+      grand_total: totalAmount + shippingFee,
       status,
       raw_status: rawStatus,
       created_at: createdAt,
@@ -213,7 +224,7 @@ export function useOrderLogic() {
 
       const group = groups.get(key);
       group.orders.push(order);
-      group.total_spent += Number(order.total_amount || 0);
+      group.total_spent += Number(order.grand_total || order.total_amount || 0);
 
       if (!group.last_order_date || String(order.created_at) > group.last_order_date) {
         group.last_order_date = order.created_at;

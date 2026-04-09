@@ -34,6 +34,23 @@ export default function OrderDetailModal({
     };
   });
 
+  const itemsSubtotal = normalizedItems.reduce(
+    (sum, it) => sum + Number(it.subtotal || 0),
+    0,
+  );
+  const rawTotalAmount = Number(order?.total_amount || 0);
+  const shippingFee = Number(
+    order?.shipping_fee ||
+      order?.shippingFee ||
+      order?.ship_fee ||
+      order?.shipFee ||
+      0,
+  );
+  const productTotal =
+    itemsSubtotal > 0 ? itemsSubtotal : Math.max(rawTotalAmount - shippingFee, 0);
+  const payableTotal =
+    rawTotalAmount > 0 ? Math.max(rawTotalAmount, productTotal + shippingFee) : productTotal + shippingFee;
+
   const buildInvoiceHtml = () => {
     const safeText = (value) =>
       String(value ?? "--")
@@ -59,8 +76,9 @@ export default function OrderDetailModal({
           .join("")
         : '<tr><td colspan="5" style="text-align:center">Không có sản phẩm trong đơn hàng</td></tr>';
 
-    const totalNumber = Number(order?.total_amount || 0);
-    const total = totalNumber.toLocaleString("vi-VN");
+    const productTotalText = productTotal.toLocaleString("vi-VN");
+    const shippingFeeText = shippingFee.toLocaleString("vi-VN");
+    const payableTotalText = payableTotal.toLocaleString("vi-VN");
     const createdDate = safeText(order?.created_at || "--");
     const statusText = safeText(order?.raw_status || order?.status || "--");
     const paymentMethod = safeText(order?.payment_method || "--");
@@ -358,15 +376,15 @@ export default function OrderDetailModal({
               <div class="summary">
                 <div class="summary-row">
                   <span>Tổng tiền hàng</span>
-                  <span>${total} VND</span>
+                  <span>${productTotalText} VND</span>
                 </div>
                 <div class="summary-row">
                   <span>Phí vận chuyển</span>
-                  <span>0 VND</span>
+                  <span>${shippingFeeText} VND</span>
                 </div>
                 <div class="summary-row">
                   <span>Cần thanh toán</span>
-                  <span>${total} VND</span>
+                  <span>${payableTotalText} VND</span>
                 </div>
               </div>
 
@@ -558,10 +576,18 @@ export default function OrderDetailModal({
               </table>
             </div>
 
-            <div className="mt-4 text-right font-semibold">
-              Tổng:{" "}
-              {orderDetails?.order?.total_amount?.toLocaleString("vi-VN") || 0}{" "}
-              ₫
+            <div className="mt-4 text-right text-sm space-y-1">
+              <p>
+                <span className="font-medium">Tổng tiền hàng:</span>{" "}
+                <span className="font-semibold">{productTotal.toLocaleString("vi-VN")} ₫</span>
+              </p>
+              <p>
+                <span className="font-medium">Phí vận chuyển:</span>{" "}
+                <span className="font-semibold">{shippingFee.toLocaleString("vi-VN")} ₫</span>
+              </p>
+              <p className="font-semibold text-base">
+                Cần thanh toán: {payableTotal.toLocaleString("vi-VN")} ₫
+              </p>
             </div>
             {["Yêu cầu trả hàng", "Đã trả hàng"].includes(order.status) && (
               <div className="mt-8 border-t pt-4">

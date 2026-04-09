@@ -1,6 +1,8 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { getAllPromotions, createPromotion, updatePromotion, deletePromotion } from "../../../../services/promotionService";
-import { getProductsUsingPromotion, updateProduct } from "../../../../services/productService";
+import { getAllProducts, getProductsUsingPromotion, updateProduct } from "../../../../services/productService";
+import { getAllBrands } from "../../../../services/brandService";
+import { getAllCategories } from "../../../../services/categoryService";
 import { showToast } from "../../../../utils/adminToast";
 import { generateSmartNextId } from "../../../../utils/codeGenerator";
 
@@ -171,6 +173,17 @@ export function useVoucherLogic() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [isImportingFile, setIsImportingFile] = useState(false);
+    const [isLoadingApplyData, setIsLoadingApplyData] = useState(false);
+    const [isApplyingScope, setIsApplyingScope] = useState(false);
+    const [productOptions, setProductOptions] = useState([]);
+    const [brandOptions, setBrandOptions] = useState([]);
+    const [categoryOptions, setCategoryOptions] = useState([]);
+    const [quickApply, setQuickApply] = useState({
+        mode: "none",
+        productIds: [],
+        brandIds: [],
+        categoryIds: [],
+    });
     const itemsPerPage = 12;
 
     const emptyForm = {
@@ -183,6 +196,170 @@ export function useVoucherLogic() {
     };
 
     const [form, setForm] = useState(emptyForm);
+
+    const resetQuickApply = useCallback(() => {
+        setQuickApply({
+            mode: "none",
+            productIds: [],
+            brandIds: [],
+            categoryIds: [],
+        });
+    }, []);
+
+    const normalizeProductForUpdate = useCallback((product, promotionId = null) => ({
+        name: product.name,
+        price: Number(product.price || 0),
+        stock: Number(product.stock || 0),
+        description: product.description ?? "",
+        image: product.raw_image ?? product.image ?? "",
+        brandId: product.brand?.id ?? "",
+        categoryId: product.category?.id ?? "",
+        promotionId,
+    }), []);
+
+    const loadApplyOptions = useCallback(async () => {
+        if (productOptions.length > 0 && brandOptions.length > 0 && categoryOptions.length > 0) {
+            return;
+        }
+
+        setIsLoadingApplyData(true);
+        try {
+            const [products, brands, categories] = await Promise.all([
+                getAllProducts(false),
+                getAllBrands(),
+                getAllCategories(),
+            ]);
+
+            setProductOptions(Array.isArray(products) ? products : []);
+            setBrandOptions(Array.isArray(brands) ? brands : []);
+            setCategoryOptions(Array.isArray(categories) ? categories : []);
+        } catch (error) {
+            console.error("Load quick apply options failed:", error);
+            showToast("Không thể tải danh sách sản phẩm/hãng/danh mục", "error", 3200);
+        } finally {
+            setIsLoadingApplyData(false);
+        }
+    }, [brandOptions.length, categoryOptions.length, productOptions.length]);
+
+    const syncQuickApplyFromVoucher = useCallback(async (voucherId) => {
+        if (!voucherId) {
+            resetQuickApply();
+            return;
+        }
+
+        try {
+            const linkedProducts = await getProductsUsingPromotion(voucherId);
+            const productIds = linkedProducts.map((p) => p.id).filter(Boolean);
+            setQuickApply({
+                mode: productIds.length > 0 ? "product" : "none",
+                productIds,
+                brandIds: [],
+                categoryIds: [],
+            });
+        } catch (error) {
+            console.error("Load linked products for voucher failed:", error);
+            resetQuickApply();
+        }
+    }, [resetQuickApply]);
+
+    const resolveTargetProductIds = useCallback((products, applyState) => {
+        if (!Array.isArray(products) || products.length === 0) return [];
+
+        if (applyState.mode === "all") {
+            return products.map((p) => p.id).filter(Boolean);
+        }
+
+        if (applyState.mode === "product") {
+            const selected = new Set((applyState.productIds || []).filter(Boolean));
+            return products.map((p) => p.id).filter((id) => selected.has(id));
+        }
+
+        if (applyState.mode === "brand") {
+            const selected = new Set((applyState.brandIds || []).filter(Boolean));
+            return products
+                .filter((p) => selected.has(p.brand?.id))
+                .map((p) => p.id)
+                .filter(Boolean);
+        }
+
+        if (applyState.mode === "category") {
+            const selected = new Set((applyState.categoryIds || []).filter(Boolean));
+            return products
+                .filter((p) => selected.has(p.category?.id))
+                .map((p) => p.id)
+                .filter(Boolean);
+        }
+
+        return [];
+    }, []);
+
+    const applyVoucherToScope = useCallback(async (voucherId, applyState) => {
+        if (!voucherId || !applyState || applyState.mode === "none") return;
+
+        const allProducts = await getAllProducts(false);
+        const safeProducts = Array.isArray(allProducts) ? allProducts : [];
+        const targetIds = new Set(resolveTargetProductIds(safeProducts, applyState));
+
+        const usingThisVoucher = safeProducts.filter((p) => (p.promotion?.id ?? "") === voucherId);
+        const usingThisVoucherSet = new Set(usingThisVoucher.map((p) => p.id));
+
+        const toAssign = safeProducts.filter((p) => targetIds.has(p.id) && !usingThisVoucherSet.has(p.id));
+        const toUnassign = usingThisVoucher.filter((p) => !targetIds.has(p.id));
+
+        await runWithConcurrency(toAssign, 5, async (product) => {
+            await updateProduct(product.id, normalizeProductForUpdate(product, voucherId));
+        });
+
+        await runWithConcurrency(toUnassign, 5, async (product) => {
+            await updateProduct(product.id, normalizeProductForUpdate(product, null));
+        });
+    }, [normalizeProductForUpdate, resolveTargetProductIds]);
+
+    const validateQuickApply = useCallback((applyState) => {
+        if (applyState.mode === "none") {
+            showToast("Vui lòng chọn phạm vi áp dụng voucher", "warning");
+            return false;
+        }
+
+        if (applyState.mode === "product" && applyState.productIds.length === 0) {
+            showToast("Vui lòng chọn ít nhất 1 sản phẩm để áp dụng nhanh", "warning");
+            return false;
+        }
+
+        if (applyState.mode === "brand" && applyState.brandIds.length === 0) {
+            showToast("Vui lòng chọn ít nhất 1 loại hàng/hãng", "warning");
+            return false;
+        }
+
+        if (applyState.mode === "category" && applyState.categoryIds.length === 0) {
+            showToast("Vui lòng chọn ít nhất 1 danh mục", "warning");
+            return false;
+        }
+
+        return true;
+    }, []);
+
+    const openApplyPanel = useCallback(async (voucher) => {
+        await loadApplyOptions();
+        await syncQuickApplyFromVoucher(voucher?.km_id);
+    }, [loadApplyOptions, syncQuickApplyFromVoucher]);
+
+    const applyScopeForVoucher = useCallback(async (voucherId) => {
+        if (!validateQuickApply(quickApply)) return false;
+
+        setIsApplyingScope(true);
+        try {
+            await applyVoucherToScope(voucherId, quickApply);
+            showToast("Áp dụng voucher thành công", "success");
+            return true;
+        } catch (error) {
+            console.error("Apply voucher scope failed:", error);
+            showToast(error?.message || "Áp dụng voucher thất bại", "error", 3400);
+            return false;
+        } finally {
+            setIsApplyingScope(false);
+        }
+    }, [applyVoucherToScope, quickApply, validateQuickApply]);
 
     /* ================= LOAD DATA ================= */
     const loadVouchers = useCallback(async () => {
@@ -321,14 +498,18 @@ export function useVoucherLogic() {
     /* ================= OPEN ADD ================= */
     const openAdd = async () => {
         setEditing(null);
+        resetQuickApply();
+        await loadApplyOptions();
         const nextId = generateSmartNextId(vouchers.map((item) => item.km_id), "KM", 3);
         setForm({ ...emptyForm, km_id: nextId });
         setOpenForm(true);
     };
 
     /* ================= OPEN EDIT ================= */
-    const openEdit = (voucher) => {
+    const openEdit = async (voucher) => {
         setEditing(voucher);
+        await loadApplyOptions();
+        await syncQuickApplyFromVoucher(voucher?.km_id);
         setForm({ ...voucher });
         setOpenForm(true);
     };
@@ -360,6 +541,10 @@ export function useVoucherLogic() {
             return;
         }
 
+        if (quickApply.mode !== "none" && !validateQuickApply(quickApply)) {
+            return;
+        }
+
         setIsSubmitting(true);
         const payload = {
             ...form,
@@ -370,12 +555,15 @@ export function useVoucherLogic() {
         };
         
         try {
+            let savedVoucherId = form.km_id;
+
             if (editing) {
                 // Update
                 await updatePromotion(editing.km_id, {
                     ...payload,
                     km_id: editing.km_id,
                 });
+                savedVoucherId = editing.km_id;
                 const updatedVouchers = vouchers.map(v =>
                     v.km_id === editing.km_id ? { ...v, ...payload } : v
                 );
@@ -384,9 +572,14 @@ export function useVoucherLogic() {
             } else {
                 // Create
                 const newVoucher = await createPromotion(payload);
+                savedVoucherId = newVoucher?.km_id || payload.km_id;
                 const updatedVouchers = [...vouchers, newVoucher];
                 setVouchers(updatedVouchers);
                 setCachedVouchers(updatedVouchers);
+            }
+
+            if (quickApply.mode !== "none") {
+                await applyVoucherToScope(savedVoucherId, quickApply);
             }
             
             setOpenForm(false);
@@ -581,6 +774,15 @@ export function useVoucherLogic() {
         openForm, setOpenForm,
         editing,
         form, setForm,
+        quickApply, setQuickApply,
+        isLoadingApplyData,
+        isApplyingScope,
+        productOptions,
+        brandOptions,
+        categoryOptions,
+        resetQuickApply,
+        openApplyPanel,
+        applyScopeForVoucher,
         filteredVouchers,
         sortedVouchers,
         paginatedVouchers,
