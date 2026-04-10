@@ -4,8 +4,18 @@ import { getAllCustomers } from "../../../../services/customerService";
 import { getProductsByPage } from "../../../../services/productService";
 import { getCache, setCache } from "../../../../utils/localCache";
 
-const DASHBOARD_CACHE_KEY = "dashboard_data_enterprise_v1";
+const DASHBOARD_CACHE_KEY = "dashboard_data_enterprise_v2";
 const DASHBOARD_CACHE_TTL = 5 * 60 * 1000;
+const DASHBOARD_CACHE_MIGRATION_FLAG = "dashboard_cache_migrated_v2";
+
+function cleanupLegacyDashboardCache() {
+  if (localStorage.getItem(DASHBOARD_CACHE_MIGRATION_FLAG) === "1") return;
+
+  // Remove known legacy dashboard cache keys once to prevent stale serialized Date values.
+  localStorage.removeItem("dashboard_data_enterprise_v1");
+  localStorage.removeItem("dashboard_data_enterprise");
+  localStorage.setItem(DASHBOARD_CACHE_MIGRATION_FLAG, "1");
+}
 
 function safeNumber(value) {
   const n = Number(value);
@@ -77,6 +87,11 @@ function normalizeBill(bill, index) {
   };
 }
 
+function hydrateCachedOrders(items) {
+  if (!Array.isArray(items)) return [];
+  return items.map((item, index) => normalizeBill(item, index));
+}
+
 function toMonthLabel(monthIndex) {
   return `Tháng ${monthIndex}`;
 }
@@ -121,9 +136,11 @@ export function useDashboardLogic() {
   ]);
 
   useEffect(() => {
+    cleanupLegacyDashboardCache();
+
     const cached = getCache(DASHBOARD_CACHE_KEY, DASHBOARD_CACHE_TTL);
     if (cached) {
-      setOrders(Array.isArray(cached.orders) ? cached.orders : []);
+      setOrders(hydrateCachedOrders(cached.orders));
       setRevenue(safeNumber(cached.revenue));
       setRevenueTrend(cached.revenueTrend || {
         percent: 0,
@@ -231,7 +248,7 @@ export function useDashboardLogic() {
     ];
 
     const dateValues = orders
-      .map((o) => o.createdAt)
+      .map((o) => parseDate(o.createdAt))
       .filter(Boolean)
       .map((d) => d.getTime());
 

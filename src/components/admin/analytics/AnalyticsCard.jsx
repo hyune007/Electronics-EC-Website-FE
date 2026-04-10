@@ -1,6 +1,6 @@
 export default function AnalyticsCard({ title, subtitle, rightSlot, children, className = "" }) {
   return (
-    <section className={`rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`.trim()}>
+    <section className={`min-w-0 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm ${className}`.trim()}>
       {(title || subtitle || rightSlot) && (
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
