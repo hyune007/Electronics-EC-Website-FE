@@ -267,6 +267,8 @@ export default function AppRoutes({ location }) {
             }
           />
 
+          <Route path="live-chat" element={<Navigate to="/admin/chat" replace />} />
+
           {/* Chat - ADMIN + EMPLOYEE */}
           <Route
             path="chat"
