@@ -6,7 +6,10 @@ import useTheme from "../../../hooks/useTheme";
 import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
 import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx";
 import BrandLogo from "../../../components/common/BrandLogo.jsx";
-import { resetPassword, validateResetToken } from "../../../services/authService.js";
+import {
+  resetPassword,
+  validateResetToken,
+} from "../../../services/authService.js";
 
 export default function ChangePassword() {
   const { toggleTheme } = useTheme();
@@ -111,7 +114,7 @@ export default function ChangePassword() {
               display: "flex",
             }}
           >
-            <div className="max-w-[320px] mx-auto w-full text-center">
+            <div className="max-w-xs sm:max-w-sm md:max-w-md mx-auto w-full px-4 sm:px-6 text-center">
               <span className="material-symbols-outlined text-5xl text-red-500 mb-4 block">
                 error
               </span>
@@ -119,8 +122,8 @@ export default function ChangePassword() {
                 Link không hợp lệ
               </h2>
               <p className="text-gray-500 dark:text-gray-400 text-xs mb-6">
-                Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng
-                yêu cầu gửi lại link mới.
+                Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu
+                cầu gửi lại link mới.
               </p>
               <a
                 className="inline-flex items-center gap-2 text-xs font-bold text-primary dark:text-blue-400 transition-colors"
@@ -153,7 +156,7 @@ export default function ChangePassword() {
             display: "flex",
           }}
         >
-          <div className="max-w-[320px] mx-auto w-full">
+          <div className="max-w-xs sm:max-w-sm md:max-w-md mx-auto w-full px-4 sm:px-6">
             <div className="lg:hidden text-center mb-8">
               <div className="flex justify-center ">
                 <a href="/" className="block">

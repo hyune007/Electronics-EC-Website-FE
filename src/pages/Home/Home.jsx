@@ -26,8 +26,11 @@ import LoadScreen from "../../components/common/LoadScreen.jsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProductCache } from "../../contexts/ProductCacheContext.jsx";
+import { fetchGearVnNews } from "../../utils/newsSource.js";
 
 const HOME_SLIDE_SIZE = 8;
+const HOME_NEWS_PREVIEW_SIZE = 3;
+const HOME_NEWS_BADGES = ["Bài nổi bật", "Bài cập nhật", "Bài đáng chú ý"];
 
 const TRUST_BADGES = [
   {
@@ -105,6 +108,9 @@ export default function Home() {
   const navigate = useNavigate();
   useRevealOnScroll();
   const [homeHoverPanelStyle, setHomeHoverPanelStyle] = useState(null);
+  const [homeNews, setHomeNews] = useState([]);
+  const [loadingHomeNews, setLoadingHomeNews] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
 
@@ -117,6 +123,29 @@ export default function Home() {
       globalThis.clearTimeout(warmUp);
     };
   }, [prefetchAllProducts]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadHomeNews = async () => {
+      try {
+        setLoadingHomeNews(true);
+        const parsed = await fetchGearVnNews({ limit: HOME_NEWS_PREVIEW_SIZE });
+
+        if (active) setHomeNews(parsed);
+      } catch {
+        if (active) setHomeNews([]);
+      } finally {
+        if (active) setLoadingHomeNews(false);
+      }
+    };
+
+    loadHomeNews();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const syncHomeHoverPanel = () => {
@@ -270,7 +299,7 @@ export default function Home() {
     [loadingAll, allProducts],
   );
 
-  const renderProductSectionContent = (products) => {
+  const renderProductSectionContent = (products, scrollerRef = null) => {
     if (loadingHome) {
       return <LoadScreen show={true} className="py-24 w-full" size={12} />;
     }
@@ -283,14 +312,34 @@ export default function Home() {
       );
     }
 
-    return products.map((p) => (
-      <div
-        key={p.id}
-        className="w-[242px] shrink-0 transition-transform duration-500 sm:w-[258px] lg:w-[272px] min-h-[330px] md:min-h-[300px] lg:min-h-[390px]"
-      >
-        <ProductCard product={p} className="h-full" />
-      </div>
-    ));
+    // Render as responsive grid on small/medium screens, horizontal scroller on large screens
+    return (
+      <>
+        {/* Grid layout for mobile/tablet (hidden on lg+) */}
+        <div className="lg:hidden grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+          {products.map((p) => (
+            <div key={p.id} className="min-h-[320px] sm:min-h-[380px]">
+              <ProductCard product={p} className="h-full" />
+            </div>
+          ))}
+        </div>
+
+        {/* Horizontal scroller for desktop (hidden on <lg) */}
+        <div
+          ref={scrollerRef}
+          className="hidden lg:flex home-horizontal-scroller items-stretch gap-6 overflow-x-auto overflow-y-visible no-scrollbar"
+        >
+          {products.map((p) => (
+            <div
+              key={p.id}
+              className="lg:w-[272px] lg:shrink-0 lg:min-h-[390px]"
+            >
+              <ProductCard product={p} className="h-full" />
+            </div>
+          ))}
+        </div>
+      </>
+    );
   };
 
   const renderDealHotContent = (products) => {
@@ -324,8 +373,27 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen w-full overflow-hidden bg-transparent pb-10 text-[var(--color-text)] transition-colors duration-220 ease-standard">
+    <div className="page-ambient page-ambient-home min-h-screen w-full overflow-hidden bg-transparent pb-10 text-[var(--color-text)] transition-colors duration-220 ease-standard">
       <div className="mx-auto w-full max-w-[1320px] px-4 pb-12 pt-2 sm:px-5 lg:px-6">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 top-16 z-[60] bg-black/50 backdrop-blur-sm xl:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Mobile sidebar menu */}
+        <aside
+          className={`fixed left-0 top-16 z-[70] h-[calc(100vh-4rem)] w-56 bg-[var(--color-surface)] shadow-xl transition-transform duration-300 ease-standard xl:hidden ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="overflow-y-auto p-4">
+            <CategoryMenuPanel hoverPanelStyle={homeHoverPanelStyle} />
+          </div>
+        </aside>
+
         <section
           className="reveal-on-scroll pt-3 relative"
           data-reveal-delay="0"
@@ -335,7 +403,18 @@ export default function Home() {
               <CategoryMenuPanel hoverPanelStyle={homeHoverPanelStyle} />
             </aside>
 
-            <div className="home-main-banner-shell overflow-hidden rounded-[0.72rem] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-md">
+            <div className="home-main-banner-shell relative overflow-hidden rounded-[0.72rem] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-md">
+              {/* Mobile menu button */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="absolute left-4 top-4 z-10 flex items-center justify-center rounded-lg bg-white/90 p-2 text-slate-900 shadow-md transition-all hover:bg-white backdrop-blur xl:hidden"
+                aria-label="Toggle menu"
+              >
+                <span className="material-symbols-outlined text-xl">
+                  {sidebarOpen ? "close" : "menu"}
+                </span>
+              </button>
               <Banner variant="home" />
             </div>
 
@@ -617,11 +696,8 @@ export default function Home() {
                 />
               </button>
 
-              <div
-                ref={section.scroller}
-                className="home-horizontal-scroller -mx-4 -my-7 flex items-stretch gap-6 overflow-x-auto overflow-y-visible px-4 py-7 no-scrollbar lg:gap-7"
-              >
-                {renderProductSectionContent(section.data)}
+              <div className="w-full">
+                {renderProductSectionContent(section.data, section.scroller)}
               </div>
             </div>
           </section>
@@ -632,7 +708,8 @@ export default function Home() {
             <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
               REVIEW SẢN PHẨM
             </h3>
-            <a href="https://youtu.be/dQw4w9WgXcQ"
+            <a
+              href="https://youtu.be/dQw4w9WgXcQ"
               target="_blank"
               rel="noopener noreferrer"
               className="motion-default text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-primary)] hover:opacity-80"
@@ -659,6 +736,79 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="reveal-on-scroll mt-8" data-reveal-delay="300">
+          <div className="mb-5 flex items-center justify-between px-1">
+            <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
+              Tin tức công nghệ
+            </h3>
+            <button
+              type="button"
+              onClick={() => navigate("/news")}
+              className="motion-default text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-primary)] hover:opacity-80"
+            >
+              Xem thêm tại đây
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {(loadingHomeNews || !homeNews.length) &&
+              Array.from({ length: HOME_NEWS_PREVIEW_SIZE }).map((_, idx) => (
+                <div
+                  key={`news-skeleton-${idx}`}
+                  className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"
+                >
+                  <div className="skeleton-base h-44 w-full" />
+                  <div className="space-y-3 p-4">
+                    <div className="skeleton-base h-4 w-28 rounded" />
+                    <div className="skeleton-base h-4 w-full rounded" />
+                    <div className="skeleton-base h-4 w-5/6 rounded" />
+                    <div className="skeleton-base h-3 w-24 rounded" />
+                  </div>
+                </div>
+              ))}
+
+            {!loadingHomeNews &&
+              homeNews.map((news, index) => (
+                <a
+                  key={news.href}
+                  href={news.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--color-primary)] hover:shadow-md"
+                >
+                  {news.image ? (
+                    <img
+                      src={news.image}
+                      alt={news.title}
+                      className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-44 items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+                      {HOME_NEWS_BADGES[index] || "Bài tin công nghệ"}
+                    </div>
+                  )}
+
+                  <div className="p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-primary)]">
+                      {HOME_NEWS_BADGES[index] || `Bài tin ${index + 1}`}
+                    </p>
+                    <h4 className="mt-2 line-clamp-3 text-sm font-semibold text-[var(--color-text)] md:text-base">
+                      {news.title}
+                    </h4>
+                    <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-[var(--color-text-muted)] md:text-sm">
+                      {news.summary ||
+                        "Nhấn xem thêm để đọc nội dung chi tiết của bài viết này trên trang GearVN."}
+                    </p>
+                    <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                      Nguồn: GearVN
+                    </p>
+                  </div>
+                </a>
+              ))}
           </div>
         </section>
       </div>

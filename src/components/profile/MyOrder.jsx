@@ -61,17 +61,21 @@ export default function MyOrder() {
     fetchCustomerBills();
   }, [user?.id]);
 
-  const RETURN_STATUSES = ['Yêu cầu trả hàng', 'Đã trả hàng', 'Từ chối trả hàng'];
-  
+  const RETURN_STATUSES = [
+    "Yêu cầu trả hàng",
+    "Đã trả hàng",
+    "Từ chối trả hàng",
+  ];
+
   const filtered = orders.filter((o) => {
-  if (filter === 'all') return true;
-  
-  if (filter === 'Trả hàng') {
-    return RETURN_STATUSES.includes(o.status);
-  }
-  
-  return o.status === filter;
-});
+    if (filter === "all") return true;
+
+    if (filter === "Trả hàng") {
+      return RETURN_STATUSES.includes(o.status);
+    }
+
+    return o.status === filter;
+  });
   const itemsPerPage = 10;
   const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -223,28 +227,28 @@ export default function MyOrder() {
 
   return (
     <div className="card-default overflow-hidden rounded-2xl border">
-      <div className="p-6">
-        <div className="flex items-start gap-4 mb-4">
-          <div className="rounded-lg bg-[var(--accent-light)] p-3 text-[var(--color-primary)]">
+      <div className="p-4 sm:p-6">
+        <div className="mb-4 flex items-start gap-3 sm:gap-4">
+          <div className="rounded-lg bg-[var(--accent-light)] p-2.5 text-[var(--color-primary)] sm:p-3">
             <span className="material-symbols-outlined">receipt_long</span>
           </div>
           <div>
-            <h1 className="text-2xl font-semibold">
+            <h1 className="text-xl font-semibold sm:text-2xl">
               {vi.profile.myOrder.title}
             </h1>
-            <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+            <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)] sm:text-sm">
               {vi.profile.myOrder.desc}
             </p>
           </div>
         </div>
 
-        <div className="mb-6 flex flex-wrap items-center gap-2 rounded-md bg-[var(--color-muted)] p-2 py-2">
+        <div className="mb-5 flex gap-2 overflow-x-auto rounded-md bg-[var(--color-muted)] p-2 no-scrollbar sm:flex-wrap sm:overflow-visible">
           {filters.map(([key, label]) => (
             <button
               key={key}
               onClick={() => setFilter(key)}
               aria-pressed={filter === key}
-              className={`rounded-md px-4 py-1.5 text-sm transition ease-in-out duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent-light)]
+              className={`shrink-0 rounded-md px-3 py-1.5 text-xs transition ease-in-out duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent-light)] sm:px-4 sm:text-sm
               ${
                 filter === key
                   ? "border border-[var(--color-primary)] bg-[var(--accent-light)] font-semibold text-[var(--color-primary)]"
@@ -256,29 +260,100 @@ export default function MyOrder() {
           ))}
         </div>
 
-        <table className="w-full text-left border-collapse no-row-hover">
-          <thead>
-            <tr className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
-              {vi.profile.myOrder.headers.map((h, i) => (
-                <th
-                  key={h}
-                  className={`px-6 py-4 text-xs font-semibold uppercase tracking-wider ${
-                    i === 4 ? "text-right" : ""
-                  }`}
+        <div className="md:hidden space-y-3">
+          {!isLoading &&
+            !loadError &&
+            filtered.length > 0 &&
+            paginatedOrders.map((o) => (
+              <article
+                key={o.id}
+                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm"
+              >
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                      Mã đơn
+                    </p>
+                    <p className="mt-1 break-all text-sm font-semibold text-[var(--color-text)]">
+                      {o.id}
+                    </p>
+                  </div>
+                  <span
+                    className={`badge-default ${badgeClassFor(o.status)} shrink-0 whitespace-nowrap`}
+                  >
+                    {statusLabel[o.status] || o.status}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                      Ngày đặt
+                    </p>
+                    <p className="mt-1 font-medium text-[var(--color-text)]">
+                      {o.date}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                      Tổng tiền
+                    </p>
+                    <p className="mt-1 font-semibold text-[var(--color-text)]">
+                      {formatVND(o.total)}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => openDetail(o)}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm font-medium text-[var(--color-primary)] transition-colors duration-220 ease-standard hover:border-[var(--color-primary)] hover:bg-[var(--accent-light)]"
                 >
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
+                  {vi.profile.myOrder.viewDetail}
+                  <span className="material-symbols-outlined text-[18px]">
+                    chevron_right
+                  </span>
+                </button>
+              </article>
+            ))}
 
-          <tbody className="divide-y divide-[var(--color-border)]">
-            {renderBody()}
-          </tbody>
-        </table>
+          {!isLoading && !loadError && !filtered.length && (
+            <div className="rounded-xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-10 text-center text-sm text-[var(--color-text-muted)]">
+              Chưa có đơn hàng phù hợp.
+            </div>
+          )}
 
-        <div className="flex items-center justify-between border-t border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-4">
-          <p className="text-sm text-[var(--color-text-muted)]">
+          {(isLoading || loadError) && (
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-8 text-center text-sm text-[var(--color-text-muted)]">
+              {isLoading ? "Đang tải đơn hàng..." : loadError}
+            </div>
+          )}
+        </div>
+
+        <div className="hidden md:block">
+          <table className="w-full text-left border-collapse no-row-hover">
+            <thead>
+              <tr className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
+                {vi.profile.myOrder.headers.map((h, i) => (
+                  <th
+                    key={h}
+                    className={`px-6 py-4 text-xs font-semibold uppercase tracking-wider ${
+                      i === 4 ? "text-right" : ""
+                    }`}
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            <tbody className="divide-y divide-[var(--color-border)]">
+              {renderBody()}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="flex flex-col gap-3 border-t border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-xs text-[var(--color-text-muted)] sm:text-sm">
             {filtered.length === 0
               ? showingText
               : `Hiển thị ${startIndex + 1}-${Math.min(
@@ -286,18 +361,18 @@ export default function MyOrder() {
                   filtered.length,
                 )} trên ${filtered.length} đơn hàng`}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-end gap-2 self-end sm:self-auto">
             <button
               type="button"
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              className="h-8 w-8 rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] motion-default hover:text-[var(--color-primary)] disabled:opacity-50"
+              className="h-9 w-9 rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] motion-default hover:text-[var(--color-primary)] disabled:opacity-50"
               disabled={safeCurrentPage === 1 || filtered.length === 0}
             >
               <span className="material-symbols-outlined text-[20px]">
                 chevron_left
               </span>
             </button>
-            <button className="h-8 min-w-8 rounded-md bg-[var(--primary-navy)] px-2 text-sm font-medium text-white">
+            <button className="h-9 min-w-9 rounded-md bg-[var(--primary-navy)] px-2 text-sm font-medium text-white">
               {safeCurrentPage}
             </button>
             <button
@@ -305,7 +380,7 @@ export default function MyOrder() {
               onClick={() =>
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }
-              className="h-8 w-8 rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] motion-default hover:text-[var(--color-primary)] disabled:opacity-50"
+              className="h-9 w-9 rounded-md border border-[var(--color-border)] text-[var(--color-text-muted)] motion-default hover:text-[var(--color-primary)] disabled:opacity-50"
               disabled={safeCurrentPage === totalPages || filtered.length === 0}
             >
               <span className="material-symbols-outlined text-[20px]">

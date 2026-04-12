@@ -10,23 +10,55 @@ export default function ProductCard({ product, className = "" }) {
   const pendingPos = useRef({ x: 0, y: 0 });
   const navigate = useNavigate();
 
+  const constrainTooltipPosition = (x, y, width = 300, height = 40) => {
+    const margin = 8;
+    const viewportWidth = globalThis.innerWidth;
+    const viewportHeight = globalThis.innerHeight;
+
+    let finalX = x + 12;
+    let finalY = y + 12;
+
+    // Prevent overflow on right edge (mobile-safe)
+    if (finalX + width + margin > viewportWidth) {
+      finalX = Math.max(margin, x - width - 12);
+    }
+
+    // Prevent overflow on bottom edge
+    if (finalY + height + margin > viewportHeight) {
+      finalY = y - height - 12;
+    }
+
+    return { x: Math.max(margin, finalX), y: Math.max(margin, finalY) };
+  };
+
   const handlePointerEnter = (e) => {
+    // Skip tooltip on mobile (avoid confusion with touch)
+    if (globalThis.innerWidth < 768) return;
+
     pendingPos.current = { x: e.clientX, y: e.clientY };
     timerRef.current = setTimeout(() => {
+      const { x, y } = constrainTooltipPosition(
+        pendingPos.current.x,
+        pendingPos.current.y,
+      );
       setTooltip({
         visible: true,
-        x: pendingPos.current.x + 12,
-        y: pendingPos.current.y + 12,
+        x,
+        y,
       });
       timerRef.current = null;
     }, 1000);
   };
 
   const handlePointerMove = (e) => {
+    if (globalThis.innerWidth < 768) return;
+
     pendingPos.current = { x: e.clientX, y: e.clientY };
-    setTooltip((t) =>
-      t.visible ? { ...t, x: e.clientX + 12, y: e.clientY + 12 } : t,
-    );
+    setTooltip((t) => {
+      if (!t.visible) return t;
+      const { x, y } = constrainTooltipPosition(e.clientX, e.clientY);
+      return { ...t, x, y };
+    });
   };
 
   const handlePointerLeave = () => {
@@ -99,9 +131,7 @@ export default function ProductCard({ product, className = "" }) {
             className="h-full w-full object-contain py-2 transition-transform duration-220 ease-standard group-hover:scale-[1.02]"
             src={
               // product?.image ? `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}` : demoImg
-              product?.image
-                ? `http://localhost:8080${product.image}`
-                : demoImg
+              product?.image ? `http://localhost:8080${product.image}` : demoImg
             }
           />
         </div>

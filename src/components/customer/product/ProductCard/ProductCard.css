@@ -4,7 +4,6 @@
   overflow: hidden;
 }
 
-/* Price box displayed in card body when product is discounted */
 .price-box {
   display: flex;
   align-items: center;
@@ -27,6 +26,7 @@
   flex-direction: column;
   justify-content: center;
   position: relative;
+  overflow: hidden;
 }
 
 .price-new {
@@ -47,13 +47,16 @@
   position: absolute;
   top: -10px;
   right: 8px;
-  background: var(--color-warning, #f6c84c);
-  color: #0b0b0b;
-  font-weight: 800;
-  padding: 6px 10px;
+  background: linear-gradient(135deg, #ffd700, #ffb800, #ff8c00);
+  color: #1a1a1a;
+  font-weight: 900;
+  padding: 6px 12px;
   border-radius: 9999px;
-  font-size: 0.85rem;
-  box-shadow: 0 6px 12px rgba(2, 8, 23, 0.08);
+  font-size: 0.9rem;
+  box-shadow:
+    0 6px 14px rgba(255, 180, 0, 0.35),
+    0 0 6px rgba(255, 215, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .product-card-shine::before {
@@ -61,27 +64,28 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: rgba(2, 21, 38, 0);
-  transition: background 260ms ease;
   z-index: 2;
+  background: rgba(2, 21, 38, 0);
+  transition: background 220ms ease;
 }
 
 .product-card-shine::after {
   content: "";
   position: absolute;
-  inset: -140% -62%;
+  inset: -120% -64%;
   pointer-events: none;
+  z-index: 3;
   opacity: 0;
   background: linear-gradient(
     128deg,
-    rgba(255, 255, 255, 0) 46%,
-    rgba(255, 255, 255, 0.92) 50%,
-    rgba(255, 255, 255, 0) 54%
+    rgba(255, 255, 255, 0) 26%,
+    rgba(255, 255, 255, 0.78) 33%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0) 58%,
+    rgba(255, 255, 255, 0.92) 66%,
+    rgba(255, 255, 255, 0) 74%
   );
-  transform: translate3d(-125%, -125%, 0) rotate(16deg);
-  will-change: transform, opacity;
-  transition: opacity 200ms ease 50ms;
-  z-index: 3;
+  transform: translate3d(-70%, -70%, 0) rotate(16deg);
 }
 
 .product-card-shine > * {
@@ -89,127 +93,34 @@
   z-index: 1;
 }
 
-.product-card-shine:hover::after {
-  opacity: 0.98;
-  animation: product-card-metal-shine 6.8s linear infinite;
-  animation-delay: 50ms;
-}
-
 .product-card-shine:hover::before {
   background: rgba(2, 21, 38, 0.08);
 }
 
+.product-card-shine:hover::after {
+  opacity: 0.98;
+  animation: product-card-metal-shine 6.3s cubic-bezier(0.22, 1, 0.36, 1)
+    infinite;
+}
+
 @keyframes product-card-metal-shine {
   0% {
-    transform: translate3d(-125%, -125%, 0) rotate(16deg);
+    transform: translate3d(-70%, -70%, 0) rotate(16deg);
   }
 
   100% {
-    transform: translate3d(125%, 125%, 0) rotate(16deg);
+    transform: translate3d(70%, 70%, 0) rotate(16deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .product-card-shine::before,
+  .product-card-shine::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
   .product-card-shine:hover::after {
-    animation: none;
     opacity: 0.25;
   }
-}
-.product-card-gold-border::after {
-  opacity: 0.98;
-  animation: product-card-metal-shine 3.5s linear infinite;
-  animation-delay: 0s;
-  transition: none;
-}
-
-.product-card-gold-border::before {
-  opacity: 0.9;
-  animation: gold-spikes 1.8s linear infinite;
-}
-
-.product-card-gold-border:hover::after {
-  opacity: 0.98;
-  animation-play-state: running;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .product-card-gold-border::after,
-  .product-card-gold-border::before {
-    animation: none !important;
-    opacity: 0.6;
-  }
-}
-
-
-.product-card-discount {
-  border: 1.5px solid transparent;
-  border-radius: 12px;
-
-  background:
-    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
-    linear-gradient(
-      120deg,
-      #fff3b0,
-      #ffd700,
-      #ffb800,
-      #ffd700,
-      #fff6cc
-    ) border-box;
-
-  box-shadow:
-    0 6px 16px rgba(255, 200, 0, 0.18),
-    0 0 0.5px rgba(255, 215, 0, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-
-.product-card-discount::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-
-  background: linear-gradient(
-    120deg,
-    transparent 40%,
-    rgba(255, 215, 0, 0.35) 50%,
-    transparent 60%
-  );
-
-  opacity: 0;
-}
-
-.product-card-discount:hover::before {
-  opacity: 1;
-  animation: gold-shine 3.2s linear infinite;
-}
-
-@keyframes gold-shine {
-  0% {
-    transform: translateX(-120%);
-  }
-  100% {
-    transform: translateX(120%);
-  }
-}
-
-
-.price-percent {
-  position: absolute;
-  top: -10px;
-  right: 8px;
-
-  background: linear-gradient(135deg, #ffd700, #ffb800, #ff8c00);
-  color: #1a1a1a;
-
-  font-weight: 900;
-  padding: 6px 12px;
-  border-radius: 9999px;
-  font-size: 0.9rem;
-
-  box-shadow:
-    0 6px 14px rgba(255, 180, 0, 0.35),
-    0 0 6px rgba(255, 215, 0, 0.6);
-
-  border: 1px solid rgba(255, 255, 255, 0.6);
 }
