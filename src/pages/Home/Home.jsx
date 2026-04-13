@@ -31,6 +31,7 @@ import { fetchGearVnNews } from "../../utils/newsSource.js";
 const HOME_SLIDE_SIZE = 8;
 const HOME_NEWS_PREVIEW_SIZE = 3;
 const HOME_NEWS_BADGES = ["Bài nổi bật", "Bài cập nhật", "Bài đáng chú ý"];
+const RECENT_VIEWED_PRODUCT_IDS_KEY = "recentViewedProductIds";
 
 const TRUST_BADGES = [
   {
@@ -105,12 +106,14 @@ export default function Home() {
   const scroller1 = useDragScroll();
   const scroller2 = useDragScroll();
   const scroller3 = useDragScroll();
+  const viewedScroller = useDragScroll();
   const navigate = useNavigate();
   useRevealOnScroll();
   const [homeHoverPanelStyle, setHomeHoverPanelStyle] = useState(null);
   const [homeNews, setHomeNews] = useState([]);
   const [loadingHomeNews, setLoadingHomeNews] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [recentViewedIds, setRecentViewedIds] = useState([]);
 
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
 
@@ -144,6 +147,26 @@ export default function Home() {
 
     return () => {
       active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const loadRecentViewedIds = () => {
+      try {
+        const raw = localStorage.getItem(RECENT_VIEWED_PRODUCT_IDS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        const normalized = Array.isArray(parsed) ? parsed.map(String) : [];
+        setRecentViewedIds(normalized);
+      } catch {
+        setRecentViewedIds([]);
+      }
+    };
+
+    loadRecentViewedIds();
+    globalThis.addEventListener("storage", loadRecentViewedIds);
+
+    return () => {
+      globalThis.removeEventListener("storage", loadRecentViewedIds);
     };
   }, []);
 
@@ -223,6 +246,71 @@ export default function Home() {
         .slice(0, HOME_SLIDE_SIZE),
     [allProducts],
   );
+
+  const recentlyViewedProducts = useMemo(() => {
+    if (!recentViewedIds.length || !allProducts?.length) return [];
+
+    const productById = new Map(
+      allProducts.map((product) => [String(product.id), product]),
+    );
+
+    return recentViewedIds
+      .map((id) => productById.get(String(id)))
+      .filter(Boolean)
+      .slice(0, 12);
+  }, [allProducts, recentViewedIds]);
+
+  const scrollViewedBy = (offset) => {
+    const el = viewedScroller?.current;
+    if (!el) return;
+    el.scrollBy({ left: offset, behavior: "smooth" });
+  };
+
+  const getViewedScrollStep = useCallback(() => {
+    const el = viewedScroller?.current;
+    if (!el) return 0;
+    const first = el.querySelector(":scope > .viewed-item");
+    if (!first) return 0;
+    const itemWidth = first.getBoundingClientRect().width;
+    const computed = getComputedStyle(el);
+    const gap = Number.parseFloat(computed.columnGap || computed.gap) || 0;
+    return Math.round((itemWidth + gap) * 3);
+  }, [viewedScroller]);
+
+  const scrollViewedPrev = () => {
+    const step = getViewedScrollStep();
+    if (!step) return;
+    scrollViewedBy(-step);
+  };
+
+  const scrollViewedNext = () => {
+    const step = getViewedScrollStep();
+    if (!step) return;
+    scrollViewedBy(step);
+  };
+
+  const persistRecentViewedIds = (nextIds) => {
+    setRecentViewedIds(nextIds);
+    try {
+      localStorage.setItem(
+        RECENT_VIEWED_PRODUCT_IDS_KEY,
+        JSON.stringify(nextIds),
+      );
+    } catch (error) {
+      console.error("Failed to update recently viewed product IDs.", error);
+    }
+  };
+
+  const handleClearRecentlyViewed = () => {
+    persistRecentViewedIds([]);
+  };
+
+  const handleRemoveViewedItem = (productId) => {
+    const next = recentViewedIds.filter(
+      (id) => String(id) !== String(productId),
+    );
+    persistRecentViewedIds(next);
+  };
 
   const scrollDealBy = (offset) => {
     const el = dealHotScroller?.current;
@@ -371,6 +459,21 @@ export default function Home() {
     { id: "r3", src: "https://www.youtube.com/embed/eHiaesghquI" },
     { id: "r4", src: "https://www.youtube.com/embed/Yelu3NsfCNE" },
   ];
+
+  const renderViewedProductCard = (product) => (
+    <div key={product.id} className="relative min-h-[320px] sm:min-h-[380px]">
+      <button
+        type="button"
+        onClick={() => handleRemoveViewedItem(product.id)}
+        className="absolute right-2 top-2 z-20 inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)] shadow-sm transition-colors duration-200 hover:text-[var(--color-danger)]"
+        aria-label={`Xóa ${product.name} khỏi sản phẩm đã xem`}
+      >
+        <span>Xóa sản phẩm</span>
+        <span aria-hidden="true">×</span>
+      </button>
+      <ProductCard product={product} className="h-full" />
+    </div>
+  );
 
   return (
     <div className="page-ambient page-ambient-home min-h-screen w-full overflow-hidden bg-transparent pb-10 text-[var(--color-text)] transition-colors duration-220 ease-standard">
@@ -809,6 +912,92 @@ export default function Home() {
                   </div>
                 </a>
               ))}
+          </div>
+        </section>
+
+        <section className="reveal-on-scroll mt-8" data-reveal-delay="340">
+          <div className="mb-5 flex items-end justify-between px-1 sm:px-2">
+            <div className="space-y-3">
+              <div className="h-[2px] w-14 bg-[var(--color-primary)]"></div>
+              <h2 className="text-2xl font-bold uppercase leading-none tracking-tight sm:text-3xl">
+                Sản phẩm đã xem
+              </h2>
+            </div>
+            <div className="flex items-center gap-3">
+              {recentlyViewedProducts.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={handleClearRecentlyViewed}
+                  className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-danger)] hover:opacity-80"
+                >
+                  Xóa tất cả
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => navigate("/products?p=1")}
+                className="group motion-default flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+              >
+                <span>Xem thêm sản phẩm</span>
+                <span className="material-symbols-outlined !text-xl transition-transform duration-220 ease-standard group-hover:translate-x-1.5">
+                  trending_flat
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {recentlyViewedProducts.length > 0 ? (
+            <div className="lg:hidden grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {recentlyViewedProducts.map((p) => renderViewedProductCard(p))}
+            </div>
+          ) : (
+            <div className="lg:hidden w-full text-center text-slate-400 py-16 border border-dashed border-slate-200 dark:border-white/5 rounded-[2rem] font-light italic tracking-widest text-xs uppercase">
+              Bạn chưa xem sản phẩm nào gần đây.
+            </div>
+          )}
+
+          <div className="relative hidden lg:block">
+            {recentlyViewedProducts.length >= 5 ? (
+              <button
+                type="button"
+                aria-label="Cuon trai san pham da xem"
+                onClick={scrollViewedPrev}
+                className="scroller-nav-button scroller-prev"
+              >
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
+            ) : null}
+
+            <div
+              ref={viewedScroller}
+              className="home-horizontal-scroller flex items-stretch gap-6 overflow-x-auto overflow-y-visible no-scrollbar"
+            >
+              {recentlyViewedProducts.length > 0 ? (
+                recentlyViewedProducts.map((p) => (
+                  <div
+                    key={p.id}
+                    className="viewed-item lg:w-[272px] lg:shrink-0"
+                  >
+                    {renderViewedProductCard(p)}
+                  </div>
+                ))
+              ) : (
+                <div className="w-full text-center text-slate-400 py-16 border border-dashed border-slate-200 dark:border-white/5 rounded-[2rem] font-light italic tracking-widest text-xs uppercase">
+                  Bạn chưa xem sản phẩm nào gần đây.
+                </div>
+              )}
+            </div>
+
+            {recentlyViewedProducts.length >= 5 ? (
+              <button
+                type="button"
+                aria-label="Cuon phai san pham da xem"
+                onClick={scrollViewedNext}
+                className="scroller-nav-button scroller-next"
+              >
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+            ) : null}
           </div>
         </section>
       </div>
