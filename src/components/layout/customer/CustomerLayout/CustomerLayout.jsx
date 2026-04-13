@@ -3,10 +3,10 @@ import Header from "../Header/Header.jsx";
 import Footer from "../Footer/Footer.jsx";
 import { Outlet, useLocation } from "react-router-dom";
 import { useEffect, useRef } from "react";
+import usePageTransition from "../../../../hooks/usePageTransition";
 import ScrollToTop from "../../../common/ScrollToTop.jsx";
 import BackToTopButton from "../../../common/BackToTopButton.jsx";
 import { ROUTE_TITLE_MAP } from "../../../../routes/routesConfig/customer/routeTitle.js";
-import SocialChatPopup from "../../../common/SocialChatPopup.jsx";
 import CategoryDrawer from "../../../customer/home/CategoryDrawer/CategoryDrawer.jsx";
 
 const LAYOUT_ELECTRONICS_ICONS = [
@@ -42,6 +42,7 @@ export default function CustomerLayout() {
   const location = useLocation();
   const pageTitle = ROUTE_TITLE_MAP[location.pathname] || "Poly Shop";
   const shellRef = useRef(null);
+  const isTransitioning = usePageTransition();
 
   useEffect(() => {
     document.title = pageTitle;
@@ -121,7 +122,11 @@ export default function CustomerLayout() {
         <Header />
 
         <main className="relative z-10 flex-1 bg-transparent">
-          <div className="min-h-full">
+          <div
+            className={`min-h-full ${
+              isTransitioning ? "page-transition-exit" : "page-transition-enter"
+            }`}
+          >
             <Outlet />
           </div>
         </main>

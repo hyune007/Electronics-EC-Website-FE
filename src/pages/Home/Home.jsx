@@ -521,8 +521,8 @@ export default function Home() {
   );
 
   return (
-    <div className="page-ambient page-ambient-home min-h-screen w-full overflow-hidden bg-transparent pb-10 text-[var(--color-text)] transition-colors duration-220 ease-standard">
-      <div className="mx-auto w-full max-w-[1320px] px-4 pb-12 pt-2 sm:px-5 lg:px-6">
+    <div className="page-ambient page-ambient-home min-h-screen w-full overflow-hidden bg-transparent pb-14 text-[var(--color-text)] transition-colors duration-220 ease-standard">
+      <div className="mx-auto w-full max-w-[1320px] px-4 pb-16 pt-4 sm:px-5 lg:px-6">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
           <div
@@ -543,7 +543,7 @@ export default function Home() {
         </aside>
 
         <section
-          className="reveal-on-scroll pt-3 relative"
+          className="reveal-on-scroll pt-5 relative"
           data-reveal-delay="0"
         >
           <div className="grid grid-cols-1 gap-1.5 xl:grid-cols-[224px_minmax(0,1fr)_156px]">
@@ -580,7 +580,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-6" data-reveal-delay="60">
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="60">
           <div className="mb-5 flex items-center justify-between px-1">
             <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
               Ưu đãi nổi bật hôm nay
@@ -627,7 +627,7 @@ export default function Home() {
         </section>
 
         <section
-          className="reveal-on-scroll mt-6 grid grid-cols-2 gap-4 border-y border-[var(--color-border)] py-6 lg:grid-cols-4"
+          className="reveal-on-scroll mt-10 grid grid-cols-2 gap-4 border-y border-[var(--color-border)] py-8 lg:grid-cols-4"
           data-reveal-delay="100"
         >
           {TRUST_BADGES.map((badge) => (
@@ -648,7 +648,7 @@ export default function Home() {
           ))}
         </section>
 
-        <section className="reveal-on-scroll mt-6" data-reveal-delay="140">
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="140">
           <div className="mb-7 flex flex-col items-center">
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
               Bộ sưu tập mới nhất
@@ -679,7 +679,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-6" data-reveal-delay="160">
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="160">
           <div className="mb-7 flex flex-col items-center">
             <h3 className="text-3xl font-light tracking-tight md:text-4xl text-center">
               Thương Hiệu <span className="font-bold">Nổi Bật</span>
@@ -707,7 +707,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-6" data-reveal-delay="180">
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="180">
           <div className="overflow-hidden rounded-[2rem] border border-[var(--color-border)] shadow-md">
             <Swiper
               modules={[Navigation, Pagination, Autoplay]}
@@ -731,7 +731,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-6" data-reveal-delay="220">
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="220">
           <div
             className="dealhot-shell relative overflow-hidden rounded-[1rem] border border-[var(--color-border)] shadow-md"
             style={{
@@ -828,7 +828,7 @@ export default function Home() {
           <section
             key={section.id}
             id={section.id}
-            className="reveal-on-scroll mt-6"
+            className="reveal-on-scroll mt-10"
           >
             <div className="mb-5 flex items-end justify-between px-1 sm:px-2">
               <div className="space-y-3">
@@ -879,7 +879,7 @@ export default function Home() {
           </section>
         ))}
 
-        <section className="reveal-on-scroll mt-8" data-reveal-delay="260">
+        <section className="reveal-on-scroll mt-12" data-reveal-delay="260">
           <div className="mb-5 flex items-center justify-between px-1">
             <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
               REVIEW SẢN PHẨM
@@ -915,7 +915,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-8" data-reveal-delay="300">
+        <section className="reveal-on-scroll mt-12" data-reveal-delay="300">
           <div className="mb-5 flex items-center justify-between px-1">
             <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
               Tin tức công nghệ
@@ -988,7 +988,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-8" data-reveal-delay="340">
+        <section className="reveal-on-scroll mt-12" data-reveal-delay="340">
           <div className="mb-5 flex items-end justify-between px-1 sm:px-2">
             <div className="space-y-3">
               <div className="h-[2px] w-14 bg-[var(--color-primary)]"></div>

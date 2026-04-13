@@ -7,6 +7,21 @@
     font-family: var(--font-sans);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Smooth scrolling for both vertical and horizontal containers */
+  [class*="overflow-auto"],
+  [class*="overflow-scroll"],
+  [class*="overflow-y-auto"],
+  [class*="overflow-y-scroll"],
+  [class*="overflow-x-auto"],
+  [class*="overflow-x-scroll"],
+  .home-horizontal-scroller {
+    scroll-behavior: smooth;
+  }
+
   html,
   body,
   #root {
@@ -238,6 +253,37 @@
 
   .dark .page-ambient::after {
     content: none;
+  }
+
+  /* Page transition animations */
+  @keyframes page-fade-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes page-fade-exit {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+  }
+
+  .page-transition-enter {
+    animation: page-fade-enter 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .page-transition-exit {
+    animation: page-fade-exit 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
   .dark .page-ambient-home::before {
