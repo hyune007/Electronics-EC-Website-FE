@@ -16,6 +16,12 @@ import WatchAdsBanner from "../../assets/banner/watch_ads.png";
 import LaptopBannerVer from "../../assets/banner/laptopBannerVer.png";
 import PhoneBannerVer from "../../assets/banner/phoneBannerVer.png";
 import MonitorBannerVer from "../../assets/banner/monitorBannerVer.png";
+import AppleBrandLogo from "../../assets/logoBrand/logo-apple.png";
+import SamsungBrandLogo from "../../assets/logoBrand/logo-samsung.png";
+import AsusBrandLogo from "../../assets/logoBrand/logo-asus.png";
+import DellBrandLogo from "../../assets/logoBrand/logo-dell.png";
+import AcerBrandLogo from "../../assets/logoBrand/logo-acer.png";
+import LenovoBrandLogo from "../../assets/logoBrand/logo-lenovo.png";
 import DealHotBackground from "../../assets/background/DealHot.jpg";
 import useDragScroll from "../../hooks/useDragScroll";
 import useRevealOnScroll from "../../hooks/useRevealOnScroll";
@@ -63,6 +69,45 @@ const CATEGORIES = [
   { id: "tablet", icon: "tablet_mac", cat: "LSP03", label: "Máy tính bảng" },
   { id: "watch", icon: "watch", cat: "LSP04", label: "Đồng hồ thông minh" },
   { id: "headphones", icon: "headphones", cat: "LSP05", label: "Tai nghe" },
+];
+
+const FEATURED_BRANDS = [
+  {
+    id: "apple",
+    name: "Apple",
+    logo: AppleBrandLogo,
+    logoClassName: "max-h-10",
+  },
+  {
+    id: "samsung",
+    name: "Samsung",
+    logo: SamsungBrandLogo,
+    logoClassName: "max-h-10",
+  },
+  {
+    id: "asus",
+    name: "Asus",
+    logo: AsusBrandLogo,
+    logoClassName: "max-h-30",
+  },
+  {
+    id: "dell",
+    name: "Dell",
+    logo: DellBrandLogo,
+    logoClassName: "max-h-14",
+  },
+  {
+    id: "acer",
+    name: "Acer",
+    logo: AcerBrandLogo,
+    logoClassName: "max-h-14",
+  },
+  {
+    id: "lenovo",
+    name: "Lenovo",
+    logo: LenovoBrandLogo,
+    logoClassName: "max-h-10",
+  },
 ];
 
 const PROMO_CARDS = [
@@ -629,6 +674,34 @@ export default function Home() {
                 <span className="mt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-muted)] transition-colors duration-220 ease-standard group-hover:text-[var(--color-primary)]">
                   {cat.label}
                 </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="reveal-on-scroll mt-6" data-reveal-delay="160">
+          <div className="mb-7 flex flex-col items-center">
+            <h3 className="text-3xl font-light tracking-tight md:text-4xl text-center">
+              Thương Hiệu <span className="font-bold">Nổi Bật</span>
+            </h3>
+            <div className="mt-4 h-1 w-14 bg-[var(--color-primary)]"></div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {FEATURED_BRANDS.map((brand) => (
+              <button
+                key={brand.id}
+                type="button"
+                onClick={() => navigate(`/products?p=1&brand=${brand.name}`)}
+                className="group flex flex-col items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4 text-center shadow-sm motion-default hover:-translate-y-0.5 hover:border-[var(--color-primary)]"
+              >
+                <div className="flex h-14 w-full items-center justify-center">
+                  <img
+                    src={brand.logo}
+                    alt={brand.name}
+                    className={`h-full w-auto object-contain transition-transform duration-220 ease-standard ${brand.id === "asus" ? "max-w-[176px] scale-[1.45] group-hover:scale-[1.48]" : "max-w-[140px] group-hover:scale-[1.03]"}`}
+                  />
+                </div>
               </button>
             ))}
           </div>

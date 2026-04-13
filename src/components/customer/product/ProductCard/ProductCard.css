@@ -99,17 +99,16 @@
 
 .product-card-shine:hover::after {
   opacity: 0.98;
-  animation: product-card-metal-shine 6.3s cubic-bezier(0.22, 1, 0.36, 1)
-    infinite;
+  animation: product-card-metal-shine 4s cubic-bezier(0.22, 1, 0.5, 1) infinite;
 }
 
 @keyframes product-card-metal-shine {
   0% {
-    transform: translate3d(-70%, -70%, 0) rotate(16deg);
+    transform: translate3d(-36%, -36%, 0) rotate(16deg);
   }
 
   100% {
-    transform: translate3d(70%, 70%, 0) rotate(16deg);
+    transform: translate3d(36%, 36%, 0) rotate(16deg);
   }
 }
 
