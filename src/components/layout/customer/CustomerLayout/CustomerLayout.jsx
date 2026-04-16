@@ -2,12 +2,15 @@ import "./CustomerLayout.css";
 import Header from "../Header/Header.jsx";
 import Footer from "../Footer/Footer.jsx";
 import { Outlet, useLocation } from "react-router-dom";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import usePageTransition from "../../../../hooks/usePageTransition";
 import ScrollToTop from "../../../common/ScrollToTop.jsx";
 import BackToTopButton from "../../../common/BackToTopButton.jsx";
+import FavoritesPanel from "../../../common/FavoritesPanel.jsx";
 import { ROUTE_TITLE_MAP } from "../../../../routes/routesConfig/customer/routeTitle.js";
 import CategoryDrawer from "../../../customer/home/CategoryDrawer/CategoryDrawer.jsx";
+import AIChatButton from "../../../common/aiChat/AIChatButton.jsx";
+import AIChatBox from "../../../common/aiChat/AIChatBox.jsx";
 
 const LAYOUT_ELECTRONICS_ICONS = [
   "smartphone",
@@ -43,6 +46,7 @@ export default function CustomerLayout() {
   const pageTitle = ROUTE_TITLE_MAP[location.pathname] || "Poly Shop";
   const shellRef = useRef(null);
   const isTransitioning = usePageTransition();
+  const [isAiChatOpen, setIsAiChatOpen] = useState(false);
 
   useEffect(() => {
     document.title = pageTitle;
@@ -131,13 +135,22 @@ export default function CustomerLayout() {
           </div>
         </main>
 
+        <FavoritesPanel />
         <BackToTopButton />
-
+        <AIChatButton
+          isOpen={isAiChatOpen}
+          onToggle={() => setIsAiChatOpen((prev) => !prev)}
+        />
+        <AIChatBox
+          isOpen={isAiChatOpen}
+          onClose={() => setIsAiChatOpen(false)}
+        />
+        {/* 
         <script
           async
           src="https://chat.taggoai.com/v2.js"
           data-taggo-botid="69c930ced8ce2922941af32b"
-        ></script>
+        ></script> */}
         {/* <SocialChatPopup /> */}
         <CategoryDrawer />
         <div className="relative z-10">
