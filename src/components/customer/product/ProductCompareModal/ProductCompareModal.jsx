@@ -474,7 +474,7 @@ export default function ProductCompareModal({
           <div>
             <h2 className="text-base font-semibold">So sánh sản phẩm</h2>
             <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-              Cột 1 cố định theo sản phẩm đang xem, chọn cột 2 trong cùng loại.
+              Chọn các sản phẩm để so sánh.
             </p>
           </div>
           <button
@@ -519,7 +519,7 @@ export default function ProductCompareModal({
                 onChange={(event) => setRightSelectedId(event.target.value)}
                 disabled={loadingProducts || !sameCategoryProducts.length}
               >
-                <option value="">Chọn sản phẩm cột 2</option>
+                <option value="">Chọn sản phẩm để so sánh</option>
                 {searchableRightProducts.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.name} - {item.brand?.name || "Không rõ hãng"}
