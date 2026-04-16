@@ -133,12 +133,7 @@ export default function CustomerLayout() {
 
         <BackToTopButton />
 
-        <script
-          async
-          src="https://chat.taggoai.com/v2.js"
-          data-taggo-botid="69c930ced8ce2922941af32b"
-        ></script>
-        {/* <SocialChatPopup /> */}
+        <SocialChatPopup />
         <CategoryDrawer />
         <div className="relative z-10">
           <Footer />
