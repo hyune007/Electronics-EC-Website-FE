@@ -614,7 +614,8 @@ export default function Favorites() {
   const [loadingAiSpecs, setLoadingAiSpecs] = useState(false);
   const [aiSpecsError, setAiSpecsError] = useState("");
 
-  // Restore scroll position when returning to this page
+
+
   useEffect(() => {
     if (loading) return;
     try {
@@ -776,6 +777,7 @@ export default function Favorites() {
         );
 
         if (!active) return;
+
 
         // Kiểm tra xem AI có trả về specs đầy đủ không
         const hasEmptySpecs = responses.some(
