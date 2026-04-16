@@ -262,29 +262,16 @@ function mergeSpecsRows({
   leftAiSpecs,
   rightAiSpecs,
 }) {
-  console.log("📦 leftBaseSpecs:", leftBaseSpecs);
-  console.log("📦 rightBaseSpecs:", rightBaseSpecs);
-  console.log("🤖 leftAiSpecs:", leftAiSpecs);
-  console.log("🤖 rightAiSpecs:", rightAiSpecs);
-
   const leftMap = toSpecMap(leftBaseSpecs);
   const rightMap = toSpecMap(rightBaseSpecs);
 
-  console.log("🗺️ leftMap after toSpecMap:", leftMap);
-  console.log("🗺️ rightMap after toSpecMap:", rightMap);
-
   toSpecMap(leftAiSpecs).forEach((value, label) => {
-    console.log(`✏️ Setting leftMap[${label}] = ${value}`);
     leftMap.set(label, value);
   });
 
   toSpecMap(rightAiSpecs).forEach((value, label) => {
-    console.log(`✏️ Setting rightMap[${label}] = ${value}`);
     rightMap.set(label, value);
   });
-
-  console.log("🗺️ leftMap after AI merge:", leftMap);
-  console.log("🗺️ rightMap after AI merge:", rightMap);
 
   const orderedLabels = [
     ...leftMap.keys(),
@@ -292,15 +279,11 @@ function mergeSpecsRows({
     ...rightMap.keys(),
   ].filter((label, index, arr) => arr.indexOf(label) === index);
 
-  console.log("📋 orderedLabels:", orderedLabels);
-
   const result = orderedLabels.map((label) => ({
     label,
     leftValue: leftMap.get(label) || "Chưa rõ",
     rightValue: rightMap.get(label) || "Chưa rõ",
   }));
-
-  console.log("✅ Final merged specs:", result);
   return result;
 }
 
@@ -312,8 +295,6 @@ function mapSpecsResponsesToCache(prevCache, responses) {
       next[item.productId] = item.specs;
       return;
     }
-
-    // Do not cache empty specs, so the product can be fetched again.
     delete next[item.productId];
   });
   return next;
@@ -493,7 +474,6 @@ function CompareProductsPanel({
                     </span>
                   </div>
                 )}
-               
               </div>
             ) : (
               <p className="text-sm text-[var(--color-text-muted)]">
@@ -748,13 +728,6 @@ export default function Favorites() {
     const leftAiSpecs = aiSpecsByProductId[String(leftProduct.id)] || [];
     const rightAiSpecs = aiSpecsByProductId[String(rightProduct.id)] || [];
 
-    console.log("=== allSpecs useMemo ===");
-    console.log("leftProduct:", leftProduct?.name);
-    console.log("rightProduct:", rightProduct?.name);
-    console.log("aiSpecsByProductId:", aiSpecsByProductId);
-    console.log("leftAiSpecs from state:", leftAiSpecs);
-    console.log("rightAiSpecs from state:", rightAiSpecs);
-
     return mergeSpecsRows({
       leftBaseSpecs,
       rightBaseSpecs,
@@ -797,9 +770,7 @@ export default function Favorites() {
         const responses = await Promise.all(
           missingProducts.map(async (product) => {
             const prompt = buildTechnicalSpecsPrompt(product);
-            console.log("🔍 AI Specs Prompt:", prompt);
             const specs = await requestProductTechnicalSpecs(prompt);
-            console.log(`📊 AI Specs Response for ${product?.name}:`, specs);
             return { productId: String(product.id), specs };
           }),
         );
@@ -812,13 +783,12 @@ export default function Favorites() {
         );
         if (hasEmptySpecs) {
           setAiSpecsError(
-            "⚠ AI chưa có thể lấy đầy đủ thông số kỹ thuật chi tiết. Đang hiển thị các thông số sơ bộ. Hãy cập nhật thông số thêm thủ công nếu cần.",
+            "AI chưa có thể lấy đầy đủ thông số kỹ thuật chi tiết. Đang hiển thị các thông số sơ bộ. Hãy cập nhật thông số thêm thủ công nếu cần.",
           );
         }
 
         setAiSpecsByProductId((prev) => {
           const next = mapSpecsResponsesToCache(prev, responses);
-          console.log("🧩 setAiSpecsByProductId - merged cache:", next);
           return next;
         });
       } catch (error) {
@@ -882,9 +852,7 @@ export default function Favorites() {
           leftSpecs,
           rightSpecs,
         );
-        console.log("💬 AI Suggestion Prompt:", prompt);
         const result = await requestComparisonSuggestion(prompt);
-        console.log("💭 AI Suggestion Response:", result);
         if (!active) return;
         setAiSuggestion(result || "AI chưa trả về nội dung gợi ý.");
       } catch (error) {

@@ -132,15 +132,15 @@ export async function requestProductTechnicalSpecs(prompt) {
   });
 
   const raw = String(response?.data?.generation || "").trim();
-  console.log("🔴 Raw AI Response:", raw);
+  // console.log("Raw AI Response:", raw);
   if (!raw) return [];
 
   const fromJson = normalizeSpecs(extractJsonArray(raw));
-  console.log("✅ Extracted JSON specs:", fromJson);
+  // console.log("Extracted JSON specs:", fromJson);
   if (fromJson.length > 0) return fromJson;
 
   const fromText = normalizeSpecs(parsePlainTextSpecs(raw));
-  console.log("📝 Parsed text specs:", fromText);
+  // console.log("Parsed text specs:", fromText);
   if (fromText.length > 0) return fromText;
 
   return [];
