@@ -7,6 +7,7 @@ import vi from "../../../i18n/vi.js";
 import { getProductById } from "../../../services/customer/productService.js";
 import { useCart } from "../../../contexts/CartContext";
 import { useAuth } from "../../../hooks/useAuth";
+import { useFavorites } from "../../../hooks/useFavorites";
 import NotiAuth from "../../../components/common/NotiAuth";
 import Warning from "../../../components/common/Warning";
 import { useProductCache } from "../../../contexts/ProductCacheContext.jsx";
@@ -17,6 +18,7 @@ const RECENT_VIEWED_PRODUCT_IDS_LIMIT = 12;
 export default function ProductDetail() {
   const { addToCart, cart } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
   const { id } = useParams();
@@ -288,9 +290,29 @@ export default function ProductDetail() {
             <span className="badge-default badge-info mb-4 inline-flex">
               Mới nhất
             </span>
-            <h1 className="mb-2 text-xl font-bold leading-tight">
-              {product?.name || "Android is the best"}
-            </h1>
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <h1 className="text-xl font-bold leading-tight">
+                {product?.name || "Android is the best"}
+              </h1>
+              <button
+                type="button"
+                onClick={() => toggleFavorite(product?.id)}
+                className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition-all duration-220 hover:border-[var(--color-primary)] hover:bg-yellow-50 dark:hover:bg-yellow-900/20 motion-default"
+                aria-label={
+                  isFavorited(product?.id) ? "Bỏ yêu thích" : "Yêu thích"
+                }
+              >
+                <span
+                  className={`material-symbols-outlined text-xl ${
+                    isFavorited(product?.id)
+                      ? "text-yellow-400 filled"
+                      : "text-gray-600"
+                  }`}
+                >
+                  favorite
+                </span>
+              </button>
+            </div>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <div className="flex items-center text-yellow-500">
                 {[1, 2, 3, 4, 5].map((star) => (

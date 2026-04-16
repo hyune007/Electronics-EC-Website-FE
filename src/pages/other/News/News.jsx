@@ -287,7 +287,7 @@ export default function NewsGearVN() {
                 if (!searchTerm.trim()) event.preventDefault();
               }}
             >
-              Đối chiếu trên GearVN
+              Tìm kiếm trên GearVN
             </a>
           </div>
         </section>
