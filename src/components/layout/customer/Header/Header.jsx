@@ -1,6 +1,7 @@
 import "./Header.css";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "../../../../contexts/CartContext";
 import useTheme from "../../../../hooks/useTheme.js";
 import UserDropdown from "../../../profile/UserDropdown/UserDropdown.jsx";
@@ -41,6 +42,7 @@ export default function Header() {
   const badgeRef = useRef(null);
   const searchWrapRef = useRef(null);
   const searchInputRef = useRef(null);
+  const userMenuRef = useRef(null);
 
   const totalQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -71,6 +73,19 @@ export default function Header() {
     document.addEventListener("mousedown", onMouseDown);
     return () => document.removeEventListener("mousedown", onMouseDown);
   }, [searchOpen]);
+
+  useEffect(() => {
+    if (!showDropdown) return;
+
+    const onMouseDown = (event) => {
+      if (!userMenuRef.current?.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [showDropdown]);
 
   const normalizedKeyword = searchKeyword.trim().toLowerCase();
 
@@ -313,21 +328,29 @@ export default function Header() {
                 </span>
               </button>
 
-              {searchOpen && normalizedKeyword && (
-                <div className="modal-shell search-bar-suggestion z-50 w-[320px] p-3 sm:w-[360px]">
-                  <div className="overflow-hidden rounded-lg border border-[var(--color-border)]">
-                    {renderSuggestionContent()}
-
-                    <button
-                      type="button"
-                      onClick={handleSeeMore}
-                      className="w-full px-3 py-2 text-left text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-muted)] motion-default"
+              <AnimatePresence>
+                {searchOpen && normalizedKeyword && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.985 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.985 }}
+                        transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                        className="modal-shell search-bar-suggestion z-50 w-[320px] p-3 sm:w-[360px]"
                     >
-                      Xem thêm
-                    </button>
-                  </div>
-                </div>
-              )}
+                      <div className="overflow-hidden rounded-lg border border-[var(--color-border)]">
+                        {renderSuggestionContent()}
+
+                        <button
+                            type="button"
+                            onClick={handleSeeMore}
+                            className="w-full px-3 py-2 text-left text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-muted)] motion-default"
+                        >
+                          Xem thêm
+                        </button>
+                      </div>
+                    </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <NavLink
@@ -350,7 +373,7 @@ export default function Header() {
             </NavLink>
 
             {isAuthenticated ? (
-              <>
+              <div ref={userMenuRef} className="relative">
                 <button
                   onClick={() => setShowDropdown((s) => !s)}
                   className="icon-btn flex items-center gap-2"
@@ -370,7 +393,7 @@ export default function Header() {
                   onLogout={handleLogout}
                   user={user}
                 />
-              </>
+              </div>
             ) : (
               <Link
                 to="/login"

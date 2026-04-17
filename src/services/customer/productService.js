@@ -1,11 +1,8 @@
-import axios from "axios";
+import api from "../api";
 
-const API = axios.create({
-  // baseURL: "http://localhost:8080/api/product",
-  baseURL: "https://ec-website-be-312564370609.asia-southeast1.run.app/api/product",
-});
+const API = "/api/product";
 
-export const getProducts = (params) => API.get("/all", { params });
+export const getProducts = (params) => api.get(`${API}/all`, { params });
 
 const productCache = new Map();
 
@@ -18,7 +15,8 @@ export const getProductById = (id, { force = false } = {}) => {
     return Promise.resolve(productCache.get(id));
   }
 
-  const request = API.get(`/detail/${id}`)
+  const request = api
+    .get(`${API}/detail/${id}`)
     .then((res) => {
       productCache.set(id, res);
       return res;

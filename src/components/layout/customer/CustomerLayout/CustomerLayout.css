@@ -4,6 +4,8 @@
   position: relative;
   isolation: isolate;
   overflow: visible;
+  --cursor-spot-x: 50vw;
+  --cursor-spot-y: -20vh;
   /* padding-top removed — header is sticky, not fixed */
 }
 
@@ -13,6 +15,50 @@
   inset: 0;
   z-index: 0;
   overflow: hidden;
+}
+
+.customer-layout-cursor-spot {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 160ms ease;
+  background:
+    radial-gradient(
+      3rem 3rem at var(--cursor-spot-x) var(--cursor-spot-y),
+      rgba(125, 211, 252, 0.22) 0%,
+      rgba(125, 211, 252, 0.14) 36%,
+      rgba(125, 211, 252, 0) 72%
+    ),
+    radial-gradient(
+      5.6rem 5.6rem at var(--cursor-spot-x) var(--cursor-spot-y),
+      rgba(56, 189, 248, 0.13) 0%,
+      rgba(56, 189, 248, 0.06) 42%,
+      rgba(56, 189, 248, 0.02) 62%,
+      transparent 82%
+    );
+}
+
+.customer-layout-shell.cursor-spot-active .customer-layout-cursor-spot {
+  opacity: 1;
+}
+
+.dark .customer-layout-cursor-spot {
+  background:
+    radial-gradient(
+      3.2rem 3.2rem at var(--cursor-spot-x) var(--cursor-spot-y),
+      rgba(186, 230, 253, 0.2) 0%,
+      rgba(125, 211, 252, 0.12) 36%,
+      rgba(125, 211, 252, 0) 72%
+    ),
+    radial-gradient(
+      6rem 6rem at var(--cursor-spot-x) var(--cursor-spot-y),
+      rgba(56, 189, 248, 0.11) 0%,
+      rgba(59, 130, 246, 0.06) 44%,
+      rgba(14, 165, 233, 0.025) 64%,
+      transparent 84%
+    );
 }
 
 .customer-layout-particle {
@@ -60,5 +106,15 @@
 @media (prefers-reduced-motion: reduce) {
   .customer-layout-particle {
     animation: none !important;
+  }
+
+  .customer-layout-cursor-spot {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .customer-layout-cursor-spot {
+    display: none;
   }
 }

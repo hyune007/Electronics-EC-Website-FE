@@ -7,7 +7,11 @@ import useTheme from "../../../hooks/useTheme";
 import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
 import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx";
 import BrandLogo from "../../../components/common/BrandLogo.jsx";
-import { login as loginApi, loginEmployee as loginEmployeeApi, loginWithGoogle as loginWithGoogleApi } from "../../../services/authService.js";
+import {
+  login as loginApi,
+  loginEmployee as loginEmployeeApi,
+  loginWithGoogle as loginWithGoogleApi,
+} from "../../../services/authService.js";
 import { useAuth } from "../../../hooks/useAuth";
 
 export default function Login() {
@@ -63,9 +67,10 @@ export default function Login() {
 
     try {
       // Call appropriate API based on login type
-      const response = loginType === "customer"
-        ? await loginApi(formData)
-        : await loginEmployeeApi(formData);
+      const response =
+        loginType === "customer"
+          ? await loginApi(formData)
+          : await loginEmployeeApi(formData);
 
       if (!response || !response.token) {
         setErrorMessage("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
@@ -129,7 +134,7 @@ export default function Login() {
             flexDirection: "column",
           }}
         >
-          <div className="max-w-[320px] mx-auto w-full my-auto">
+          <div className="max-w-xs sm:max-w-sm md:max-w-md mx-auto w-full px-4 sm:px-6 my-auto">
             <div className="lg:hidden text-center mb-8">
               <div className="mt-6 flex justify-center ">
                 <a href="/" className="block">

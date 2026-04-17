@@ -4,15 +4,19 @@ import tailwindcss from "@tailwindcss/vite";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react({
-      babel: {
-        plugins: [["babel-plugin-react-compiler"]],
+  plugins: [react(), tailwindcss()],
+  define: {
+    global: "globalThis",
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: "globalThis",
       },
-    }),
-    tailwindcss(),
-  ],
+    },
+  },
   server: {
-    allowedHosts: true
+    host: "0.0.0.0",
+    allowedHosts: true,
   },
 });

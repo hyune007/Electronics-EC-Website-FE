@@ -21,11 +21,15 @@ export default function OrderDetailModal({
       "San pham";
     const qty = Number(it?.quantity || it?.qty || it?.amount || 0);
     const price = Number(it?.price || it?.unitPrice || it?.product?.price || 0);
+    const returnedQuantity = Number(it?.returnedQuantity || 0);
+    const totalRefund = Number(it?.totalRefund || 0);
 
     return {
       name,
       qty,
       price,
+      returnedQuantity,
+      totalRefund,
       subtotal: qty * price,
     };
   });
@@ -59,8 +63,8 @@ export default function OrderDetailModal({
     const rowsHtml =
       normalizedItems.length > 0
         ? normalizedItems
-            .map(
-              (it, idx) => `
+          .map(
+            (it, idx) => `
                 <tr>
                   <td>${idx + 1}</td>
                   <td>${safeText(it.name)}</td>
@@ -68,8 +72,8 @@ export default function OrderDetailModal({
                   <td class="text-right">${it.price.toLocaleString("vi-VN")} VND</td>
                   <td class="text-right">${it.subtotal.toLocaleString("vi-VN")} VND</td>
                 </tr>`,
-            )
-            .join("")
+          )
+          .join("")
         : '<tr><td colspan="5" style="text-align:center">Không có sản phẩm trong đơn hàng</td></tr>';
 
     const productTotalText = productTotal.toLocaleString("vi-VN");
@@ -585,6 +589,49 @@ export default function OrderDetailModal({
                 Cần thanh toán: {payableTotal.toLocaleString("vi-VN")} ₫
               </p>
             </div>
+            {["Yêu cầu trả hàng", "Đã trả hàng"].includes(order.status) && (
+              <div className="mt-8 border-t pt-4">
+                <h3 className="text-red-600 font-bold mb-2 uppercase text-sm">Thông tin trả hàng</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left bg-red-50/30 rounded-lg">
+                    <thead>
+                      <tr className="text-sm text-neutral-600 uppercase">
+                        <th className="px-3 py-2">Sản phẩm trả</th>
+                        <th className="px-3 py-2 text-center">Số lượng trả</th>
+                        <th className="px-3 py-2 text-right">Tiền cần hoàn trả</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-red-100">
+                      {normalizedItems.map((it, idx) => (
+                        it.returnedQuantity > 0 && (
+                          <tr key={`return-${idx}`} className="text-sm">
+                            <td className="px-3 py-2 font-medium">{it.name}</td>
+                            <td className="px-3 py-2 text-center text-red-600 font-bold">
+                              {it.returnedQuantity}
+                            </td>
+                            <td className="px-3 py-2 text-right font-medium">
+                              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(it.totalRefund || 0)}
+                            </td>
+                          </tr>
+                        )
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-red-100/50 border-t-2 border-red-200">
+                        <td colSpan="2" className="px-3 py-3 text-sm font-bold text-red-700 text-right uppercase">
+                          Tổng tiền cần hoàn trả:
+                        </td>
+                        <td className="px-3 py-3 text-right text-base font-bold text-red-600 underline decoration-double">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                            normalizedItems.reduce((sum, it) => sum + (it.returnedQuantity > 0 ? (it.totalRefund || 0) : 0), 0)
+                          )}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

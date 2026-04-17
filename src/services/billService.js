@@ -41,3 +41,15 @@ export const updateBill = async (id, status, employeeId) => {
   invalidateApiCache("cache:api:bill:");
   return response;
 };
+
+export const approveReturn = (billId) => {
+  return api.put(`${API}/approve-return`, null, {
+    params: { billId },
+  });
+};
+
+export const rejectReturn = (billId) => {
+  return api.put(`${API}/reject-return`, null, {
+    params: { billId },
+  });
+};

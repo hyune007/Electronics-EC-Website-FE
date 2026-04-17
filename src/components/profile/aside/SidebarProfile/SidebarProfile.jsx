@@ -154,7 +154,7 @@ export default function Sidebar({
       {/* Mobile: profile tab picker trigger */}
       <button
         aria-label="Open profile menu"
-        className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-primary)] shadow-md md:hidden"
+        className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-[var(--color-primary)] shadow-md lg:hidden"
         onClick={() => setMobileOpen(true)}
         title="Mở các mục profile"
       >

@@ -1,27 +1,31 @@
 .reveal-on-scroll {
-  opacity: 0.78;
-  transform: translate3d(0, 16px, 0);
+  opacity: 0;
+  transform: translate3d(0, 24px, 0) scale(0.985);
+  filter: blur(2px);
+  will-change: opacity, transform, filter;
   transition:
-    opacity var(--motion-base) var(--ease-standard),
-    transform var(--motion-base) var(--ease-standard);
+    opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 420ms cubic-bezier(0.22, 1, 0.36, 1);
   transition-delay: 0ms;
 }
 
 .reveal-on-scroll.in-view {
   opacity: 1;
-  transform: none;
+  transform: translate3d(0, 0, 0) scale(1);
+  filter: blur(0);
   transition-delay: var(--reveal-delay, 0ms);
 }
 
 .home-horizontal-scroller {
   cursor: grab;
   scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
 }
 
 .home-horizontal-scroller.dragging {
   cursor: grabbing;
   opacity: 0.96;
+  scroll-behavior: auto;
 }
 
 .home-promo-card {

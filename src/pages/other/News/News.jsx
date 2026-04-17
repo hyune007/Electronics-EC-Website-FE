@@ -1,134 +1,412 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  NEWS_BASE_URL,
+  NEWS_PROXY_URL,
+  pickNewsImageFromElement,
+  toAbsoluteNewsUrl,
+} from "../../../utils/newsSource.js";
 
-const BASE = "https://gearvn.com/blogs/all";
-const PROXY = "https://api.allorigins.win/raw?url=";
+const MAX_ITEMS = 50;
+const INITIAL_BATCH = 15;
+const LOAD_MORE_BATCH = 15;
+
+async function fetchWithTimeout(url, ms = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(id);
+    return res;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+}
+
+function firstImageInHtml(htmlSnippet) {
+  if (!htmlSnippet) return "";
+
+  const doc = new DOMParser().parseFromString(htmlSnippet, "text/html");
+  const img = doc.querySelector("img");
+  const src =
+    img?.getAttribute("src") || img?.dataset.src || img?.dataset.original || "";
+
+  return toAbsoluteNewsUrl(src);
+}
+
+function normalizeItems(rawItems) {
+  const seen = new Set();
+
+  return rawItems
+    .map((item) => ({
+      ...item,
+      title: item.title?.trim(),
+      href: toAbsoluteNewsUrl(item.href),
+      image: toAbsoluteNewsUrl(item.image || ""),
+    }))
+    .filter((item) => {
+      if (!item.title || !item.href) return false;
+      if (seen.has(item.href)) return false;
+      seen.add(item.href);
+      return true;
+    });
+}
+
+function normalizeKeyword(value) {
+  return (value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replaceAll(/\p{Diacritic}/gu, "")
+    .trim();
+}
+
+function parseAtom(xml) {
+  const doc = new DOMParser().parseFromString(xml, "application/xml");
+  return [...doc.querySelectorAll("entry, item")]
+    .map((entry) => ({
+      title: entry.querySelector("title")?.textContent.trim(),
+      href:
+        entry.querySelector("link")?.getAttribute("href") ||
+        entry.querySelector("link")?.textContent,
+      image:
+        entry.querySelector("enclosure")?.getAttribute("url") ||
+        entry.querySelector(String.raw`media\:content`)?.getAttribute("url") ||
+        entry
+          .querySelector(String.raw`media\:thumbnail`)
+          ?.getAttribute("url") ||
+        firstImageInHtml(
+          entry.querySelector("content")?.textContent ||
+            entry.querySelector("summary")?.textContent ||
+            entry.querySelector("description")?.textContent ||
+            "",
+        ),
+    }))
+    .filter((item) => item.title && item.href);
+}
+
+function parseHTML(html) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+
+  return [...doc.querySelectorAll('a[href*="/blogs/"]')]
+    .map((anchor) => {
+      const href = anchor.href;
+      const title =
+        anchor.getAttribute("title")?.trim() || anchor.textContent.trim();
+      if (title.length < 6) return null;
+
+      const container = anchor.closest(
+        "article, li, .item, .blog-item, .post-item",
+      );
+      const imageEl =
+        anchor.querySelector("img") || container?.querySelector("img");
+      const image = pickNewsImageFromElement(imageEl);
+
+      return { title, href, image };
+    })
+    .filter(Boolean);
+}
 
 export default function NewsGearVN() {
   const [items, setItems] = useState([]);
-  const [status, setStatus] = useState("Sẵn sàng");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH);
   const [loading, setLoading] = useState(false);
+  const loadMoreRef = useRef(null);
 
-  useEffect(() => {
-    loadAndRender();
+  const loadFeed = useCallback(async () => {
+    const atomRes = await fetchWithTimeout(`${NEWS_BASE_URL}.atom`).catch(
+      () => null,
+    );
+    if (atomRes?.ok) return { type: "atom", raw: await atomRes.text() };
+
+    const rssRes = await fetchWithTimeout(`${NEWS_BASE_URL}.rss`).catch(
+      () => null,
+    );
+    if (rssRes?.ok) return { type: "rss", raw: await rssRes.text() };
+
+    const htmlRes = await fetchWithTimeout(
+      NEWS_PROXY_URL + encodeURIComponent(NEWS_BASE_URL),
+    );
+    return { type: "html", raw: await htmlRes.text() };
   }, []);
 
-  async function fetchWithTimeout(url, ms = 8000) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), ms);
-    try {
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(id);
-      return res;
-    } catch (e) {
-      clearTimeout(id);
-      throw e;
-    }
-  }
-
-  async function loadFeed() {
-    try {
-      setStatus("Đang thử Atom...");
-      let res = await fetchWithTimeout(`${BASE}.atom`);
-      if (res.ok) return { type: "atom", raw: await res.text() };
-    } catch (e) {
-      void e;
-    }
-
-    try {
-      setStatus("Đang thử RSS...");
-      let res = await fetchWithTimeout(`${BASE}.rss`);
-      if (res.ok) return { type: "rss", raw: await res.text() };
-    } catch (e) {
-      void e;
-    }
-
-    setStatus("Dùng proxy HTML...");
-    let res = await fetchWithTimeout(PROXY + encodeURIComponent(BASE));
-    return { type: "html", raw: await res.text() };
-  }
-
-  function parseAtom(xml) {
-    const doc = new DOMParser().parseFromString(xml, "application/xml");
-    return [...doc.querySelectorAll("entry, item")]
-      .map((e) => ({
-        title: e.querySelector("title")?.textContent.trim(),
-        href:
-          e.querySelector("link")?.getAttribute("href") ||
-          e.querySelector("link")?.textContent,
-      }))
-      .filter((x) => x.title && x.href);
-  }
-
-  function parseHTML(html) {
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const seen = new Set();
-
-    return [...doc.querySelectorAll('a[href*="/blogs/"]')]
-      .map((a) => {
-        let href = a.href;
-        let title = a.textContent.trim();
-        if (title.length < 6) return null;
-        const key = href + title;
-        if (seen.has(key)) return null;
-        seen.add(key);
-        return { title, href };
-      })
-      .filter(Boolean);
-  }
-
-  async function loadAndRender() {
+  const loadAndRender = useCallback(async () => {
     try {
       setLoading(true);
       const result = await loadFeed();
 
-      let data =
+      const data =
         result.type === "html" ? parseHTML(result.raw) : parseAtom(result.raw);
+      const normalized = normalizeItems(data).slice(0, MAX_ITEMS);
 
-      setItems(data.slice(0, 30));
-      setStatus(`Hoàn tất: ${data.length} bài`);
-    } catch (e) {
-      void e;
-      setStatus("Lỗi tải tin");
+      setItems(normalized);
+      setVisibleCount(Math.min(INITIAL_BATCH, normalized.length));
+    } catch {
+      // ignore and show empty/error state via loading flags and results
     } finally {
       setLoading(false);
     }
-  }
+  }, [loadFeed]);
+
+  useEffect(() => {
+    loadAndRender();
+  }, [loadAndRender]);
+
+  const filteredItems = useMemo(() => {
+    const keyword = normalizeKeyword(searchTerm);
+    if (!keyword) return items;
+
+    return items.filter((item) =>
+      normalizeKeyword(item.title).includes(keyword),
+    );
+  }, [items, searchTerm]);
+
+  useEffect(() => {
+    if (!loadMoreRef.current || visibleCount >= filteredItems.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry?.isIntersecting) return;
+
+        setVisibleCount((prev) =>
+          Math.min(prev + LOAD_MORE_BATCH, filteredItems.length),
+        );
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [filteredItems.length, visibleCount]);
+
+  useEffect(() => {
+    setVisibleCount(Math.min(INITIAL_BATCH, filteredItems.length));
+  }, [searchTerm, filteredItems.length]);
+
+  const visibleItems = filteredItems.slice(0, visibleCount);
+  const featuredItem = visibleItems[0];
+  const headlineItems = visibleItems.slice(1, 5);
+  const gridItems = visibleItems.slice(5);
+  const gearVnSearchUrl =
+    searchTerm.trim().length > 0
+      ? `https://gearvn.com/search?type=article&q=${encodeURIComponent(searchTerm.trim())}`
+      : "";
 
   return (
-    <div className="min-h-screen bg-transparent px-4 py-10 md:px-6 md:py-14">
+    <div className="page-ambient page-ambient-news min-h-screen px-4 py-10 md:px-6 md:py-14">
       <div className="mx-auto max-w-7xl">
-        <div className="card-default mb-6 rounded-2xl border p-6 md:p-8">
-          <h1 className="text-2xl font-bold text-[var(--color-text)] md:text-3xl">
-            Tin công nghệ GearVN
+        <div className="mb-6 overflow-hidden rounded-3xl border border-[var(--color-border)] bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-6 py-7 text-slate-100 shadow-xl md:px-10 md:py-10">
+          <h1 className="mt-3 text-3xl font-black leading-tight md:text-5xl">
+            Tin tức công nghệ
           </h1>
-          <p className="mt-2 text-sm text-[var(--color-text-muted)] md:text-base">
-            Cập nhật bài viết mới nhất từ nguồn tin công nghệ. Danh sách được
-            làm mới tự động.
-          </p>
-          <p className="mt-4 inline-flex rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">
-            {status}
+          <p className="mt-3 max-w-3xl text-sm text-slate-300 md:text-base">
+            Tổng hợp tin tức mới nhất từ GearVN, hiển thị tin tức, các bài viết nổi bật
           </p>
         </div>
 
-        <div className="card-default rounded-2xl border p-4 md:p-5">
+        <section className="card-default mb-6 rounded-2xl border p-4 md:p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] pb-3">
+            <h2 className="text-sm font-extrabold uppercase tracking-[0.12em] text-[var(--color-text)] md:text-base">
+              Quản lý tin tức
+            </h2>
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[var(--color-text-muted)]">
+              <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
+                Tổng từ GearVN: {items.length}
+              </span>
+              <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
+                Kết quả phù hợp: {filteredItems.length}
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+            <label className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5">
+              <span className="material-symbols-outlined !text-base text-[var(--color-text-muted)]">
+                search
+              </span>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="w-full bg-transparent text-sm text-[var(--color-text)] outline-none"
+                placeholder="Nhập từ khóa để tìm tin bạn muốn"
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={() => setSearchTerm("")}
+              className="rounded-xl border border-[var(--color-border)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text-muted)] transition hover:text-[var(--color-primary)]"
+            >
+              Xóa lọc
+            </button>
+
+            <a
+              href={gearVnSearchUrl || undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`rounded-xl px-4 py-2.5 text-center text-sm font-semibold transition ${
+                searchTerm.trim()
+                  ? "bg-[var(--color-primary)] text-white hover:opacity-90"
+                  : "cursor-not-allowed border border-[var(--color-border)] text-[var(--color-text-muted)]"
+              }`}
+              onClick={(event) => {
+                if (!searchTerm.trim()) event.preventDefault();
+              }}
+            >
+              Tìm kiếm trên GearVN
+            </a>
+          </div>
+        </section>
+
+        {featuredItem && (
+          <section className="mb-8 grid gap-5 lg:grid-cols-12">
+            <a
+              href={featuredItem.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl lg:col-span-8"
+            >
+              {featuredItem.image ? (
+                <img
+                  src={featuredItem.image}
+                  alt={featuredItem.title}
+                  loading="lazy"
+                  className="h-56 sm:h-80 md:h-96 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                />
+              ) : (
+                <div className="h-56 sm:h-80 md:h-96 w-full bg-gradient-to-br from-slate-200 to-slate-300" />
+              )}
+
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/35 to-transparent" />
+              <div className="absolute bottom-0 p-6 md:p-8">
+                <p className="inline-flex rounded-full bg-white/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white backdrop-blur">
+                  Nổi bật
+                </p>
+                <h2 className="mt-3 text-xl font-extrabold leading-tight text-white md:text-3xl">
+                  {featuredItem.title}
+                </h2>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-200">
+                  Nguồn: trang tin GearVN
+                </p>
+              </div>
+            </a>
+
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm dark:bg-slate-900/70 lg:col-span-4 md:p-5">
+              <div className="mb-4 flex items-center justify-between border-b border-[var(--color-border)] pb-3">
+                <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-[var(--color-text)]">
+                  Tin nhanh
+                </h3>
+                <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                  Mới nhất
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {headlineItems.map((it, index) => (
+                  <a
+                    key={it.href}
+                    href={it.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group flex gap-3 rounded-xl border border-[var(--color-border)] bg-slate-50 p-3 transition hover:bg-white dark:bg-slate-800/70 dark:hover:bg-slate-800"
+                  >
+                    <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-slate-200 dark:bg-slate-700 sm:h-18 sm:w-28">
+                      {it.image ? (
+                        <img
+                          src={it.image}
+                          alt={it.title}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500 dark:text-slate-400">
+                          No image
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400 dark:text-slate-500">
+                        <span>{String(index + 1).padStart(2, "0")}</span>
+                        <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                        <span>Tin nhanh</span>
+                      </div>
+                      <p className="line-clamp-3 text-sm font-semibold leading-relaxed text-[var(--color-text)] group-hover:text-[var(--color-primary)] dark:text-slate-100 dark:group-hover:text-sky-300">
+                        {it.title}
+                      </p>
+                    </div>
+                  </a>
+                ))}
+
+                {!headlineItems.length && (
+                  <p className="py-8 text-center text-sm text-[var(--color-text-muted)]">
+                    Đang cập nhật tin nhanh...
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <div className="card-default rounded-2xl border border-[var(--color-border)] p-4 md:p-5">
+          <div className="mb-5 flex items-end justify-between border-b border-[var(--color-border)] pb-3">
+            <h3 className="text-base font-extrabold uppercase tracking-[0.12em] text-[var(--color-text)] md:text-lg">
+              Dòng sự kiện
+            </h3>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+              Cuộn để xem thêm
+            </span>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((it, i) => (
+            {gridItems.map((it) => (
               <a
-                key={i}
+                key={it.href}
                 href={it.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:border-[var(--color-primary)]"
+                className="group overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
               >
-                <h3 className="line-clamp-2 text-base font-semibold text-[var(--color-text)]">
-                  {it.title}
-                </h3>
-                <p className="mt-3 text-xs font-medium uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
-                  Nguồn: gearvn.com
-                </p>
+                {it.image ? (
+                  <img
+                    src={it.image}
+                    alt={it.title}
+                    loading="lazy"
+                    className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-[1.05]"
+                  />
+                ) : (
+                  <div className="flex h-44 items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+                    Không có ảnh
+                  </div>
+                )}
+
+                <div className="p-5">
+                  <h3 className="line-clamp-3 text-base font-semibold leading-snug text-[var(--color-text)]">
+                    {it.title}
+                  </h3>
+                  <p className="mt-3 text-xs font-medium uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    Nguồn: gearvn.com
+                  </p>
+                </div>
               </a>
             ))}
           </div>
+
+          {filteredItems.length === 0 && !loading && (
+            <p className="py-8 text-center text-sm text-[var(--color-text-muted)]">
+              Không tìm thấy bài viết phù hợp.
+            </p>
+          )}
+
+          {filteredItems.length > 0 && visibleItems.length > 5 && (
+            <p className="mt-4 text-center text-sm text-[var(--color-text-muted)]">
+              Hiển thị {visibleItems.length}/{filteredItems.length} bài
+            </p>
+          )}
+
+          <div ref={loadMoreRef} className="h-4" aria-hidden="true" />
         </div>
         {loading && (
           <p className="mt-6 text-sm font-medium text-[var(--color-text-muted)]">

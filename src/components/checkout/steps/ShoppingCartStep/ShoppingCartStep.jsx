@@ -2,15 +2,17 @@ import { useCart } from "../../../../contexts/CartContext";
 import { useAuth } from "../../../../hooks/useAuth";
 import { useState } from "react";
 import NotiAuth from "../../../common/NotiAuth";
+import Warning from "../../../common/Warning";
 import { NavLink } from "react-router-dom";
+import PropTypes from "prop-types";
 
 export default function ShoppingCartStep({ onProceed }) {
   const { cart, removeFromCart, updateQuantity } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showEmptyCartWarning, setShowEmptyCartWarning] = useState(false);
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  // const vat = Math.round(subtotal * 0.1);
-  // const total = subtotal + vat;
+
   const handleChangeQty = (id, newQty) => {
     updateQuantity(id, newQty);
   };
@@ -20,6 +22,11 @@ export default function ShoppingCartStep({ onProceed }) {
   };
 
   const handleProceed = () => {
+    if (cart.length === 0) {
+      setShowEmptyCartWarning(true);
+      return;
+    }
+
     if (!isAuthenticated || !isCustomer) {
       setShowLoginPrompt(true);
       return;
@@ -32,7 +39,7 @@ export default function ShoppingCartStep({ onProceed }) {
       <div className="space-y-4 lg:col-span-8">
         <div className="flex items-center justify-between px-2">
           <h2 className="text-2xl font-bold tracking-tight">
-            Giỏ hàng của bạn
+            <span>Giỏ hàng của bạn</span>
             <span className="ml-2 text-lg font-normal text-[var(--color-text-muted)]">
               ({cart.length} sản phẩm)
             </span>
@@ -113,7 +120,7 @@ export default function ShoppingCartStep({ onProceed }) {
             <span className="material-symbols-outlined text-lg">
               arrow_back
             </span>
-            Quay lại mua sắm sản phẩm khác
+            <span>Quay lại mua sắm sản phẩm khác</span>
           </NavLink>
         </div>
       </div>
@@ -136,7 +143,7 @@ export default function ShoppingCartStep({ onProceed }) {
             className="btn-primary w-full justify-center gap-2 rounded-md py-4"
             onClick={handleProceed}
           >
-            Tiến hành đặt hàng
+            <span>Tiến hành đặt hàng</span>
             <span className="material-symbols-outlined">arrow_forward</span>
           </button>
         </div>
@@ -146,6 +153,18 @@ export default function ShoppingCartStep({ onProceed }) {
         open={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
       />
+
+      <Warning
+        open={showEmptyCartWarning}
+        onClose={() => setShowEmptyCartWarning(false)}
+        title="Giỏ hàng đang trống"
+        message="Hãy thêm các sản phẩm ưu thích của bạn để tiến hành đặt hàng ngay nhé."
+        buttonText="Tiếp tục mua sắm"
+      />
     </div>
   );
 }
+
+ShoppingCartStep.propTypes = {
+  onProceed: PropTypes.func,
+};

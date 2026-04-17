@@ -1,6 +1,12 @@
 import React from "react";
+import PropTypes from "prop-types";
 
-export default function Stepper({ currentStep = 0, view, onSelectView }) {
+export default function Stepper({
+  currentStep = 0,
+  view,
+  onSelectView,
+  onBlockedClick,
+}) {
   const steps = [
     { id: "cart", icon: "shopping_cart", label: "Giỏ hàng" },
     { id: "infor", icon: "person", label: "Thông tin" },
@@ -26,16 +32,23 @@ export default function Stepper({ currentStep = 0, view, onSelectView }) {
 
         {steps.map((step, index) => {
           const isActive = index <= activeIndex;
+          const isClickable = Boolean(onSelectView) && index <= activeIndex;
 
           return (
-            <div
+            <button
+              type="button"
               key={step.id}
               onClick={() => {
-                if (onSelectView && index <= activeIndex) {
+                if (isClickable) {
                   onSelectView(step.id);
+                  return;
                 }
+
+                onBlockedClick?.(step.id);
               }}
-              className="flex cursor-pointer flex-col items-center gap-2 px-2 text-center sm:px-4"
+              className={`flex flex-col items-center gap-2 px-2 text-center sm:px-4 ${
+                isClickable ? "cursor-pointer" : "cursor-not-allowed"
+              }`}
             >
               <div
                 className={`z-0 flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-220 ease-standard
@@ -59,10 +72,17 @@ export default function Stepper({ currentStep = 0, view, onSelectView }) {
               >
                 {step.label}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
     </div>
   );
 }
+
+Stepper.propTypes = {
+  currentStep: PropTypes.number,
+  view: PropTypes.string,
+  onSelectView: PropTypes.func,
+  onBlockedClick: PropTypes.func,
+};

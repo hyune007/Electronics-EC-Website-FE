@@ -17,6 +17,9 @@ const News = lazy(() => import("../pages/other/News/News.jsx"));
 const ProductDetail = lazy(
   () => import("../pages/product/ProductDetail/ProductDetail.jsx"),
 );
+const Favorites = lazy(
+  () => import("../pages/product/Favorites/Favorites.jsx"),
+);
 const AdminLayout = lazy(
   () => import("../components/layout/admin/layoutsAdmin/AdminLayout.jsx"),
 );
@@ -29,11 +32,25 @@ const CustomerManage = lazy(
 const OrderManage = lazy(
   () => import("../pages/admin/adminDashboard/Order/OrderManage.jsx"),
 );
+const OrderStatisticsPage = lazy(
+  () => import("../pages/admin/adminDashboard/Order/OrderStatisticsPage.jsx"),
+);
 const ProductManage = lazy(
   () => import("../pages/admin/adminDashboard/ProductManage/ProductManage.jsx"),
 );
+const ProductStatisticsPage = lazy(
+  () =>
+    import("../pages/admin/adminDashboard/ProductManage/ProductStatisticsPage.jsx"),
+);
+const CustomerStatisticsPage = lazy(
+  () =>
+    import("../pages/admin/adminDashboard/Customer/CustomerStatisticsPage.jsx"),
+);
 const BrandManage = lazy(
   () => import("../pages/admin/adminDashboard/Brand/BrandManage.jsx"),
+);
+const BrandStatisticsPage = lazy(
+  () => import("../pages/admin/adminDashboard/Brand/BrandStatisticsPage.jsx"),
 );
 const EmployeeManage = lazy(
   () => import("../pages/admin/adminDashboard/Staff/EmployeeManage.jsx"),
@@ -51,8 +68,19 @@ const Product = lazy(() => import("../pages/product/Product/Product.jsx"));
 const ImportManage = lazy(
   () => import("../pages/admin/adminDashboard/Import/ImportManage.jsx"),
 );
+const ImportStatisticsPage = lazy(
+  () => import("../pages/admin/adminDashboard/Import/ImportStatisticsPage.jsx"),
+);
+const EmployeeStatisticsPage = lazy(
+  () =>
+    import("../pages/admin/adminDashboard/Staff/EmployeeStatisticsPage.jsx"),
+);
 const VoucherManage = lazy(
   () => import("../pages/admin/adminDashboard/Voucher/VoucherManage.jsx"),
+);
+const VoucherStatisticsPage = lazy(
+  () =>
+    import("../pages/admin/adminDashboard/Voucher/VoucherStatisticsPage.jsx"),
 );
 const ChatManage = lazy(
   () => import("../pages/admin/adminDashboard/Chat/ChatManage.jsx"),
@@ -103,6 +131,7 @@ export default function AppRoutes({ location }) {
           <Route path="home" element={<Home />} />
           <Route path="products" element={<Product />} />
           <Route path="product-detail/:id" element={<ProductDetail />} />
+          <Route path="favorites" element={<Favorites />} />
           <Route path="news" element={<News />} />
           <Route path="contact" element={<Contact />} />
           <Route path="terms" element={<Terms />} />
@@ -132,6 +161,64 @@ export default function AppRoutes({ location }) {
         >
           {/* Dashboard - ADMIN + EMPLOYEE */}
           <Route path="dashboard" element={<Dashboard />} />
+
+          {/* Statistics - ADMIN + EMPLOYEE */}
+          <Route
+            path="statistics/customers"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
+                <CustomerStatisticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="statistics/orders"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
+                <OrderStatisticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="statistics/products"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
+                <ProductStatisticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="statistics/brands"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
+                <BrandStatisticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="statistics/staff"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                <EmployeeStatisticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="statistics/imports"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
+                <ImportStatisticsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="statistics/vouchers"
+            element={
+              <ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.EMPLOYEE]}>
+                <VoucherStatisticsPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Customers - ADMIN + EMPLOYEE (delete action admin-only in UI/API) */}
           <Route
@@ -194,6 +281,11 @@ export default function AppRoutes({ location }) {
                 <VoucherManage />
               </ProtectedRoute>
             }
+          />
+
+          <Route
+            path="live-chat"
+            element={<Navigate to="/admin/chat" replace />}
           />
 
           {/* Chat - ADMIN + EMPLOYEE */}

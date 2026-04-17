@@ -34,14 +34,14 @@
     position: relative;
     overflow: hidden;
     border-radius: 24px;
-    padding: 28px;
+    padding: 30px;
     border: 1px solid #cbd5e1;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 62%, #f1f5f9 100%);
     color: #0f172a;
     display: grid;
-    grid-template-columns: 1.2fr 0.8fr;
-    gap: 18px;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    grid-template-columns: 1.14fr 0.86fr;
+    gap: 20px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.07);
 }
 
 .dashboard-hero-kicker {
@@ -99,12 +99,41 @@
 }
 
 .dashboard-hero-side {
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #dbe2ea;
     border-radius: 16px;
-    backdrop-filter: blur(8px);
     padding: 14px;
     display: grid;
+    gap: 12px;
+}
+
+.dashboard-hero-chart-head {
+    display: grid;
+    gap: 2px;
+    padding: 2px 2px 0;
+}
+
+.dashboard-hero-chart-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.dashboard-hero-chart-sub {
+    margin: 0;
+    font-size: 11px;
+    color: #64748b;
+}
+
+.dashboard-hero-chart-box {
+    background: #ffffff;
+    border-color: #dbeafe;
+}
+
+.dashboard-hero-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
 
@@ -115,16 +144,20 @@
     border: 1px solid #e2e8f0;
     display: grid;
     gap: 4px;
+    min-height: 66px;
 }
 
 .dashboard-hero-side-item span {
-    font-size: 12px;
+    font-size: 11px;
     color: #64748b;
+    font-weight: 600;
+    letter-spacing: 0.01em;
 }
 
 .dashboard-hero-side-item strong {
-    font-size: 14px;
-    color: #0f172a;
+    font-size: 15px;
+    color: #0b1324;
+    line-height: 1.3;
 }
 
 /* KPI card themes */
@@ -296,9 +329,21 @@
     .dashboard-hero {
         grid-template-columns: 1fr;
     }
+
+    .dashboard-hero-metrics {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 @media (max-width: 768px) {
+    .dashboard-hero {
+        padding: 20px;
+    }
+
+    .dashboard-hero-metrics {
+        grid-template-columns: 1fr;
+    }
+
     .dashboard-bar-row {
         grid-template-columns: 68px 1fr;
     }

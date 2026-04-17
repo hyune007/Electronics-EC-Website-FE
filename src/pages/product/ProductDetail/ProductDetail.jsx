@@ -1,18 +1,25 @@
-import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import ProductTabs from "../../../components/customer/product/ProductTabs/ProductTabs.jsx";
 import BreadcrumbNav from "../../../components/customer/product/ProductNav/BreadcrumbNav/BreadcrumbNav.jsx";
 import vi from "../../../i18n/vi.js";
 import { getProductById } from "../../../services/customer/productService.js";
 import { useCart } from "../../../contexts/CartContext";
 import { useAuth } from "../../../hooks/useAuth";
+import { useFavorites } from "../../../hooks/useFavorites";
 import NotiAuth from "../../../components/common/NotiAuth";
+import Warning from "../../../components/common/Warning";
 import { useProductCache } from "../../../contexts/ProductCacheContext.jsx";
+import ProductCompareModal from "../../../components/customer/product/ProductCompareModal/ProductCompareModal.jsx";
+
+const RECENT_VIEWED_PRODUCT_IDS_KEY = "recentViewedProductIds";
+const RECENT_VIEWED_PRODUCT_IDS_LIMIT = 12;
 
 export default function ProductDetail() {
-  const { addToCart } = useCart();
+  const { addToCart, cart } = useCart();
   const { isAuthenticated, isCustomer } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites();
   const navigate = useNavigate();
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
   const { id } = useParams();
@@ -21,14 +28,96 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showStockWarning, setShowStockWarning] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [isHoveringImage, setIsHoveringImage] = useState(false);
+  const [zoomPoint, setZoomPoint] = useState({ x: 50, y: 50 });
+  const [modalZoom, setModalZoom] = useState(1);
+  const [modalZoomOrigin, setModalZoomOrigin] = useState("50% 50%");
   const imgRef = useRef();
+
+  const imageSrc = product?.image?.startsWith("http")
+    ? product.image
+    : `http://localhost:8080${product?.image || ""}`;
+
+  const stock = Number(product?.stock ?? 0);
+  const cartItem = cart.find((item) => String(item.id) === String(product?.id));
+  const quantityInCart = cartItem?.quantity || 0;
+  const maxAddable = Math.max(stock - quantityInCart, 0);
+  const canIncrease = quantity < maxAddable;
+  const canAddToCart = maxAddable > 0 && quantity > 0 && quantity <= maxAddable;
+
   const handleQuantityChange = (type) => {
     setQuantity((prev) => {
-      if (type === "increase") return prev + 1;
+      if (type === "increase") {
+        if (maxAddable <= 0 || prev >= maxAddable) {
+          setShowStockWarning(true);
+          return prev;
+        }
+        return prev < maxAddable ? prev + 1 : prev;
+      }
       if (type === "decrease") return prev > 1 ? prev - 1 : 1;
       return prev;
     });
   };
+
+  useEffect(() => {
+    if (maxAddable > 0 && quantity > maxAddable) {
+      setQuantity(maxAddable);
+    }
+  }, [maxAddable, quantity]);
+
+  const getPointerPercent = (event) => {
+    const frame = event.currentTarget;
+    const rect = frame.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 100;
+    const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+    const safeX = Math.min(Math.max(x, 0), 100);
+    const safeY = Math.min(Math.max(y, 0), 100);
+
+    return { x: safeX, y: safeY };
+  };
+
+  const updatePreviewPointByPointer = (event) => {
+    const pointer = getPointerPercent(event);
+    setZoomPoint(pointer);
+  };
+
+  const updateModalZoomByPointer = (event) => {
+    const pointer = getPointerPercent(event);
+    setModalZoomOrigin(`${pointer.x}% ${pointer.y}%`);
+  };
+
+  const resetZoomView = () => {
+    setModalZoom(1);
+    setZoomPoint({ x: 50, y: 50 });
+    setModalZoomOrigin("50% 50%");
+  };
+
+  const handleImageDoubleClick = (event) => {
+    const pointer = getPointerPercent(event);
+    setModalZoomOrigin(`${pointer.x}% ${pointer.y}%`);
+    setShowImageModal(true);
+    setModalZoom(2);
+  };
+
+  const handleModalImageDoubleClick = (event) => {
+    updateModalZoomByPointer(event);
+    setModalZoom((prev) => (prev >= 4 ? 1 : prev + 1));
+  };
+
+  const handleModalZoomIn = () => {
+    setModalZoom((prev) => Math.min(prev + 0.5, 5));
+  };
+
+  const handleModalZoomOut = () => {
+    setModalZoom((prev) => Math.max(prev - 0.5, 1));
+  };
+
+  const previewZoom = 3;
+  const canUsePortal = typeof document !== "undefined";
 
   const flyToCart = () => {
     const cartIcon = document.getElementById("cart-icon");
@@ -65,12 +154,12 @@ export default function ProductDetail() {
   };
 
   useEffect(() => {
-    const warmUp = window.setTimeout(() => {
+    const warmUp = globalThis.setTimeout(() => {
       prefetchAllProducts().catch(() => {});
     }, 600);
 
     return () => {
-      window.clearTimeout(warmUp);
+      globalThis.clearTimeout(warmUp);
     };
   }, [prefetchAllProducts]);
 
@@ -116,6 +205,27 @@ export default function ProductDetail() {
     };
   }, [id, allProducts, loadingAll]);
 
+  useEffect(() => {
+    if (!product?.id) return;
+
+    try {
+      const raw = localStorage.getItem(RECENT_VIEWED_PRODUCT_IDS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      const cleaned = Array.isArray(parsed)
+        ? parsed.filter((item) => item !== null && item !== undefined)
+        : [];
+
+      const next = [
+        String(product.id),
+        ...cleaned.filter((item) => String(item) !== String(product.id)),
+      ].slice(0, RECENT_VIEWED_PRODUCT_IDS_LIMIT);
+
+      localStorage.setItem(RECENT_VIEWED_PRODUCT_IDS_KEY, JSON.stringify(next));
+    } catch (error) {
+      console.error("Failed to persist recently viewed product IDs.", error);
+    }
+  }, [product?.id]);
+
   if (loading) {
     return (
       <main className="mx-auto w-full max-w-[1200px] px-4 py-5 sm:px-6 lg:px-8">
@@ -147,17 +257,33 @@ export default function ProductDetail() {
       <BreadcrumbNav product={product} />
       <div className="mb-10 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
         <div className="space-y-4">
-          <div className="card-default mx-auto flex aspect-square w-full max-w-md items-center justify-center overflow-hidden rounded-[1.6rem] p-5">
+          <div className="card-default group relative mx-auto flex aspect-square w-full max-w-md items-center justify-center overflow-hidden rounded-[1.6rem] p-5">
+            <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 w-[calc(100%-2.5rem)] -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-center text-[11px] font-medium text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              Di chuột để xem ô preview zoom, double-click để mở popup ảnh lớn.
+            </div>
+
+            {isHoveringImage ? (
+              <div className="pointer-events-none absolute bottom-4 left-4 z-20 h-32 w-32 overflow-hidden rounded-lg border-2 border-white/90 shadow-lg">
+                <div
+                  className="h-full w-full bg-cover bg-no-repeat"
+                  style={{
+                    backgroundImage: `url(${imageSrc})`,
+                    backgroundSize: `${previewZoom * 100}% ${previewZoom * 100}%`,
+                    backgroundPosition: `${zoomPoint.x}% ${zoomPoint.y}%`,
+                  }}
+                />
+              </div>
+            ) : null}
+
             <img
               ref={imgRef}
-              src={
-                product?.image?.startsWith("http")
-                  ? product.image
-                  // : `http://localhost:8080${product.image || ""}`
-                  : `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image || ""}`
-              }
+              src={imageSrc}
               alt={product.name}
-              className="h-full w-full object-contain"
+              className="h-full w-full cursor-zoom-in object-contain"
+              onMouseEnter={() => setIsHoveringImage(true)}
+              onMouseLeave={() => setIsHoveringImage(false)}
+              onMouseMove={updatePreviewPointByPointer}
+              onDoubleClick={handleImageDoubleClick}
             />
           </div>
         </div>
@@ -166,9 +292,29 @@ export default function ProductDetail() {
             <span className="badge-default badge-info mb-4 inline-flex">
               Mới nhất
             </span>
-            <h1 className="mb-2 text-xl font-bold leading-tight">
-              {product?.name || "Android is the best"}
-            </h1>
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <h1 className="text-xl font-bold leading-tight">
+                {product?.name || "Android is the best"}
+              </h1>
+              <button
+                type="button"
+                onClick={() => toggleFavorite(product?.id)}
+                className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] transition-all duration-220 hover:border-[var(--color-primary)] hover:bg-yellow-50 dark:hover:bg-yellow-900/20 motion-default"
+                aria-label={
+                  isFavorited(product?.id) ? "Bỏ yêu thích" : "Yêu thích"
+                }
+              >
+                <span
+                  className={`material-symbols-outlined text-xl ${
+                    isFavorited(product?.id)
+                      ? "text-yellow-400 filled"
+                      : "text-gray-600"
+                  }`}
+                >
+                  favorite
+                </span>
+              </button>
+            </div>
             <div className="mb-4 flex flex-wrap items-center gap-3">
               <div className="flex items-center text-yellow-500">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -223,18 +369,26 @@ export default function ProductDetail() {
                 <span className="w-8 text-center font-bold">{quantity}</span>
                 <button
                   onClick={() => handleQuantityChange("increase")}
-                  className="icon-btn p-0.5"
+                  className={`icon-btn p-0.5 ${
+                    canIncrease ? "" : "text-[var(--color-text-muted)]"
+                  }`}
                   aria-label="Tăng số lượng"
                 >
                   +
                 </button>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   flyToCart();
                   addToCart(product, quantity);
                 }}
-                className="btn-primary flex flex-1 items-center justify-center gap-1 rounded-xl py-2"
+                disabled={!canAddToCart}
+                className={`flex flex-1 items-center justify-center gap-1 rounded-xl py-2 ${
+                  canAddToCart
+                    ? "btn-primary"
+                    : "cursor-not-allowed bg-gray-600 text-white opacity-85"
+                }`}
               >
                 <span className="material-symbols-outlined">shopping_cart</span>
                 {vi.product.addToCart}
@@ -255,6 +409,18 @@ export default function ProductDetail() {
               }}
             >
               {vi.product.buyNow}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary w-full rounded-xl border-2 py-2 font-bold"
+              onClick={() => setShowCompareModal(true)}
+            >
+              <span className="inline-flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px]">
+                  compare_arrows
+                </span>
+                <span>So sánh sản phẩm</span>
+              </span>
             </button>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-3 border-t border-[var(--color-border)] pt-4 sm:grid-cols-2">
@@ -296,6 +462,86 @@ export default function ProductDetail() {
         open={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
       />
+
+      <Warning
+        open={showStockWarning}
+        onClose={() => setShowStockWarning(false)}
+        title="Thông báo"
+        message="Số lượng sản phẩm trong giỏ vượt quá số lượng tồn kho của sản phẩm, thành thật xin lỗi bạn"
+        buttonText="Đã hiểu"
+      />
+
+      <ProductCompareModal
+        open={showCompareModal}
+        onClose={() => setShowCompareModal(false)}
+        currentProduct={product}
+        allProducts={allProducts || []}
+        loadingProducts={loadingAll}
+      />
+
+      {showImageModal && canUsePortal
+        ? createPortal(
+            <div
+              className="fixed inset-0 m-0 h-screen w-screen bg-transparent p-0"
+              style={{ zIndex: 2147483646 }}
+              aria-label="Xem ảnh sản phẩm phóng to"
+            >
+              <div className="flex h-full w-full items-center justify-center bg-black/75 p-3 sm:p-4">
+                <div className="relative flex h-[68vh] max-h-[700px] w-full max-w-4xl items-center justify-center overflow-hidden rounded-2xl bg-[var(--color-surface)] p-3 sm:h-[72vh] sm:p-4">
+                  <div className="absolute right-3 top-3 z-20 flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="icon-btn h-10 w-10 p-0 text-lg"
+                      onClick={handleModalZoomOut}
+                      aria-label="Thu nhỏ ảnh popup"
+                      disabled={modalZoom <= 1}
+                    >
+                      -
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn h-10 w-10 p-0 text-lg"
+                      onClick={handleModalZoomIn}
+                      aria-label="Phóng to ảnh popup"
+                      disabled={modalZoom >= 5}
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      className="icon-btn h-10 w-10 p-0 text-xl"
+                      onClick={() => {
+                        resetZoomView();
+                        setShowImageModal(false);
+                      }}
+                      aria-label="Đóng popup ảnh"
+                    >
+                      ×
+                    </button>
+                  </div>
+
+                  <div className="pointer-events-none absolute bottom-3 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/60 px-3 py-1 text-[11px] font-medium text-white">
+                    Double-click để zoom vào ảnh trong popup.
+                  </div>
+
+                  <img
+                    src={imageSrc}
+                    alt={product.name}
+                    className="h-full w-full object-contain transition-transform duration-150"
+                    onMouseMove={updateModalZoomByPointer}
+                    onDoubleClick={handleModalImageDoubleClick}
+                    onMouseLeave={resetZoomView}
+                    style={{
+                      transformOrigin: modalZoomOrigin,
+                      transform: `scale(${modalZoom})`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </main>
   );
 }

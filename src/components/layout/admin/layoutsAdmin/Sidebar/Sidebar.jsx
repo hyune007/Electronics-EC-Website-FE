@@ -17,6 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "../../../../../hooks/useAuth";
 import { useCart } from "../../../../../contexts/CartContext";
@@ -25,6 +26,7 @@ import { SECTION_TITLE, SIDEBAR_ITEMS } from "./sidebar.config";
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [isManageOpen, setIsManageOpen] = useState(true);
+  const [isStatsOpen, setIsStatsOpen] = useState(true);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,6 +45,13 @@ export default function Sidebar() {
     imports: ROUTE_MAP.imports,
     vouchers: ROUTE_MAP.vouchers,
     chat: ROUTE_MAP.chat,
+    customer_stats: ROUTE_MAP.customer_stats,
+    order_stats: ROUTE_MAP.order_stats,
+    product_stats: ROUTE_MAP.product_stats,
+    brand_stats: ROUTE_MAP.brand_stats,
+    staff_stats: ROUTE_MAP.staff_stats,
+    import_stats: ROUTE_MAP.import_stats,
+    voucher_stats: ROUTE_MAP.voucher_stats,
   };
 
   const iconByKey = {
@@ -55,6 +64,13 @@ export default function Sidebar() {
     imports: Warehouse,
     vouchers: TicketPercent,
     chat: MessageCircle,
+    customer_stats: Users,
+    order_stats: Package,
+    product_stats: DollarSign,
+    brand_stats: ShoppingBag,
+    staff_stats: UserCog,
+    import_stats: Warehouse,
+    voucher_stats: TicketPercent,
   };
 
   const hasNestedPath = (path, route) => path === route || path.startsWith(`${route}/`);
@@ -66,9 +82,15 @@ export default function Sidebar() {
 
   const topItems = visibleItems.filter((item) => item.section === "overview");
   const managementItems = visibleItems.filter((item) => item.section === "management");
+  const statisticsItems = visibleItems.filter((item) => item.section === "statistics");
   const communicationItems = visibleItems.filter((item) => item.section === "communication");
 
   const isManagementActive = managementItems.some((item) => {
+    const route = routeByKey[item.key];
+    return route ? hasNestedPath(location.pathname, route) : false;
+  });
+
+  const isStatisticsActive = statisticsItems.some((item) => {
     const route = routeByKey[item.key];
     return route ? hasNestedPath(location.pathname, route) : false;
   });
@@ -85,26 +107,32 @@ export default function Sidebar() {
     }
   }, [isManagementActive]);
 
+  useEffect(() => {
+    if (isStatisticsActive) {
+      setIsStatsOpen(true);
+    }
+  }, [isStatisticsActive]);
+
   return (
     <aside
       className={`
         relative z-40 h-full
-        ${isOpen ? "w-72" : "w-24"}
+        ${isOpen ? "w-72" : "w-20"}
         overflow-hidden
         bg-gradient-to-b from-slate-50 via-slate-100 to-slate-100
         border-r border-slate-200
         text-slate-700
-        flex flex-col justify-between
+        flex flex-col
         transition-all duration-400 ease-out
       `}
     >
-      <div className="pointer-events-none absolute -right-14 top-16 h-52 w-52 rounded-full bg-slate-300/35 blur-3xl" />
-      <div className="pointer-events-none absolute -left-24 bottom-4 h-56 w-56 rounded-full bg-white/80 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 top-14 h-48 w-48 rounded-full bg-slate-300/28 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 bottom-4 h-56 w-56 rounded-full bg-white/70 blur-3xl" />
 
-      <div>
+      <div className="flex-1 min-h-0 flex flex-col">
         <div
           className={`
-            h-20 flex items-center px-4 border-b border-slate-200
+            h-20 flex items-center px-3 border-b border-slate-200
             ${isOpen ? "justify-between" : "justify-center"}
             transition-all duration-300
           `}
@@ -120,7 +148,7 @@ export default function Sidebar() {
               }
             `}
           >
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-sm">
               <ShieldCheck size={18} />
             </div>
             <div className="min-w-0">
@@ -142,103 +170,141 @@ export default function Sidebar() {
           </button>
         </div>
 
-        <nav className="relative px-3 py-5 space-y-4">
-          {!isOpen && (
-            <div
-              className="
-                h-9 flex items-center justify-center rounded-lg
-                bg-white border border-slate-200 text-slate-500
-              "
-            >
-              <Menu size={16} />
-            </div>
-          )}
+        <div className="flex-1 min-h-0 overflow-y-auto px-2 py-4">
+          <nav className="relative px-1 py-1 space-y-4">
+            {!isOpen && (
+              <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white/90 text-slate-500 shadow-sm">
+                <Menu size={16} />
+              </div>
+            )}
 
-          <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.overview} />
-          {topItems.map((item) => {
-            const Icon = iconByKey[item.key];
-            return (
-              <SidebarItem
-                key={item.key}
-                icon={Icon}
-                label={item.title}
-                to={routeByKey[item.key]}
-                isOpen={isOpen}
-              />
-            );
-          })}
-
-          <div>
-            <button
-              onClick={() => setIsManageOpen(!isManageOpen)}
-              className="
-                w-full h-11 flex items-center justify-between gap-3 px-3 rounded-xl
-                text-slate-600 hover:text-slate-900 hover:bg-slate-200/70
-                border border-slate-200
-                transition-all duration-300
-              "
-            >
-              <span className="flex items-center gap-3">
-                <Package size={18} />
-                {isOpen && <span className="font-medium">Quản lý</span>}
-              </span>
-              {isOpen && (
-                <ChevronDown
-                  size={16}
-                  className={`transition-transform duration-300 ${isManageOpen ? "rotate-180" : "rotate-0"}`}
+            <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.overview} />
+            {topItems.map((item) => {
+              const Icon = iconByKey[item.key];
+              return (
+                <SidebarItem
+                  key={item.key}
+                  icon={Icon}
+                  label={item.title}
+                  to={routeByKey[item.key]}
+                  isOpen={isOpen}
                 />
-              )}
-            </button>
+              );
+            })}
 
-            <div
-              className={`
-                overflow-hidden transition-all duration-300
-                ${isManageOpen ? "max-h-[500px]" : "max-h-0"}
-              `}
-            >
-              <div className={`mt-2 space-y-2 ${isOpen ? "pl-4" : "pl-0"}`}>
-                {managementItems.map((item) => {
-                  const Icon = iconByKey[item.key];
-                  return (
-                    <SidebarItem
-                      key={item.key}
-                      icon={Icon}
-                      label={item.title}
-                      to={routeByKey[item.key]}
-                      isOpen={isOpen}
-                    />
-                  );
-                })}
+            <div>
+              <button
+                onClick={() => setIsManageOpen(!isManageOpen)}
+                className={`
+                  h-11 flex items-center gap-3 rounded-2xl border transition-all duration-300
+                  ${isOpen ? "w-full justify-between px-3 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 border-slate-200" : "mx-auto w-11 justify-center px-0 bg-white/90 text-slate-600 hover:bg-white hover:text-slate-900 border-slate-200 shadow-sm"}
+                `}
+              >
+                <span className="flex items-center gap-3">
+                  <Package size={18} />
+                  {isOpen && <span className="font-medium">Quản lý</span>}
+                </span>
+                {isOpen && (
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-300 ${isManageOpen ? "rotate-180" : "rotate-0"}`}
+                  />
+                )}
+              </button>
+
+              <div
+                className={`
+                  overflow-hidden transition-all duration-300
+                  ${isManageOpen ? "max-h-[500px]" : "max-h-0"}
+                `}
+              >
+                <div className={`mt-2 space-y-2 ${isOpen ? "pl-4" : "pl-0"}`}>
+                  {managementItems.map((item) => {
+                    const Icon = iconByKey[item.key];
+                    return (
+                      <SidebarItem
+                        key={item.key}
+                        icon={Icon}
+                        label={item.title}
+                        to={routeByKey[item.key]}
+                        isOpen={isOpen}
+                      />
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
 
-          <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.communication} />
-          {communicationItems.map((item) => {
-            const Icon = iconByKey[item.key];
-            return (
-              <SidebarItem
-                key={item.key}
-                icon={Icon}
-                label={item.title}
-                to={routeByKey[item.key]}
-                isOpen={isOpen}
-              />
-            );
-          })}
-        </nav>
+            {statisticsItems.length > 0 && (
+            <div>
+              <button
+                onClick={() => setIsStatsOpen(!isStatsOpen)}
+                className={`
+                  h-11 flex items-center gap-3 rounded-2xl border transition-all duration-300
+                  ${isOpen ? "w-full justify-between px-3 text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 border-slate-200" : "mx-auto w-11 justify-center px-0 bg-white/90 text-slate-600 hover:bg-white hover:text-slate-900 border-slate-200 shadow-sm"}
+                `}
+              >
+                <span className="flex items-center gap-3">
+                  <BarChart3 size={18} />
+                  {isOpen && <span className="font-medium">Thống kê</span>}
+                </span>
+                {isOpen && (
+                  <ChevronDown
+                    size={16}
+                    className={`transition-transform duration-300 ${isStatsOpen ? "rotate-180" : "rotate-0"}`}
+                  />
+                )}
+              </button>
+
+              <div
+                className={`
+                  overflow-hidden transition-all duration-300
+                  ${isStatsOpen ? "max-h-[500px]" : "max-h-0"}
+                `}
+              >
+                <div className={`mt-2 space-y-2 ${isOpen ? "pl-4" : "pl-0"}`}>
+                  {statisticsItems.map((item) => {
+                    const Icon = iconByKey[item.key];
+                    return (
+                      <SidebarItem
+                        key={item.key}
+                        icon={Icon}
+                        label={item.title}
+                        to={routeByKey[item.key]}
+                        isOpen={isOpen}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+            )}
+
+            <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.communication} />
+            {communicationItems.map((item) => {
+              const Icon = iconByKey[item.key];
+              return (
+                <SidebarItem
+                  key={item.key}
+                  icon={Icon}
+                  label={item.title}
+                  to={routeByKey[item.key]}
+                  isOpen={isOpen}
+                  onClick={item.key === "chat" ? () => setIsOpen(false) : undefined}
+                />
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
-      <div className="px-4 pb-5">
+      <div className="px-3 pb-5">
         <button
           onClick={handleLogout}
-          className="
-            w-full h-11 flex items-center gap-3 px-3
-            rounded-xl border border-slate-800/80
-            bg-slate-900 text-white
-            hover:bg-slate-800
-            transition-all duration-300
-          "
+          className={`
+            h-11 flex items-center gap-3 rounded-2xl border transition-all duration-300
+            ${isOpen ? "w-full px-3 border-slate-800/80 bg-slate-900 text-white hover:bg-slate-800" : "mx-auto w-11 justify-center px-0 border-slate-200 bg-white/90 text-slate-700 hover:bg-white hover:text-slate-900 shadow-sm"}
+          `}
           title="Đăng xuất"
         >
           <LogOut size={18} />
@@ -249,7 +315,7 @@ export default function Sidebar() {
               ${
                 isOpen
                   ? "opacity-100 translate-x-0"
-                  : "opacity-0 -translate-x-2 pointer-events-none"
+                  : "opacity-0 -translate-x-2 pointer-events-none w-0 overflow-hidden"
               }
             `}
           >
@@ -269,7 +335,7 @@ function SidebarSectionLabel({ isOpen, label }) {
   return <p className="px-3 text-[11px] uppercase tracking-[0.14em] text-slate-500">{label}</p>;
 }
 
-function SidebarItem({ icon: Icon, label, to, isOpen }) {
+function SidebarItem({ icon: Icon, label, to, isOpen, onClick }) {
   if (!to || !Icon) {
     return null;
   }
@@ -277,15 +343,20 @@ function SidebarItem({ icon: Icon, label, to, isOpen }) {
   return (
     <NavLink
       to={to}
+      onClick={onClick}
       title={label}
       className={({ isActive }) =>
-        `group relative z-10 h-11 flex items-center gap-3 px-3 rounded-xl border transition-all duration-200
+        `group relative z-10 flex items-center border transition-all duration-200
+        ${isOpen ? "h-11 gap-3 px-3 rounded-xl" : "mx-auto h-12 w-12 justify-center rounded-2xl px-0 shadow-sm"}
         ${
           isActive
-            ? "bg-slate-900 text-white border-slate-900 shadow-sm"
-            : "text-slate-600 border-transparent hover:bg-white hover:text-slate-900 hover:border-slate-200"
-        }
-        ${isOpen ? "justify-start" : "justify-center"}`
+            ? isOpen
+              ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+              : "bg-slate-900 text-white border-slate-900 ring-1 ring-slate-900/10"
+            : isOpen
+              ? "text-slate-600 border-transparent hover:bg-white hover:text-slate-900 hover:border-slate-200"
+              : "text-slate-600 border-slate-200 bg-white/90 hover:bg-white hover:text-slate-900"
+        }`
       }
     >
       <span className="w-5 h-5 shrink-0 flex items-center justify-center">
