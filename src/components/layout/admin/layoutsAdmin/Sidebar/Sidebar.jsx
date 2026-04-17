@@ -1,8 +1,9 @@
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { ROUTE_MAP } from "../../../../../routes/routesConfig/admin/routeMap";
 import {
   Menu,
+  ChevronDown,
   Home,
   Users,
   Package,
@@ -12,24 +13,65 @@ import {
   LogOut,
   Warehouse,
   TicketPercent,
+  MessageCircle,
+  PanelLeftClose,
+  PanelLeftOpen,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../../../../../hooks/useAuth";
 import { useCart } from "../../../../../contexts/CartContext";
+import { SECTION_TITLE, SIDEBAR_ITEMS } from "./sidebar.config";
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(true);
-  const [highlight, setHighlight] = useState(null);
+  const [isManageOpen, setIsManageOpen] = useState(true);
+
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
   const { clearCart } = useCart();
-  
-  const isAdmin = user?.roleId === "ROLE_ADMIN";
-  const isEmployee = user?.roleId === "ROLE_EMPLOYEE";
 
-  const handleSelect = (rect) => {
-    setHighlight(rect);
+  const roleId = user?.roleId;
+
+  const routeByKey = {
+    home: ROUTE_MAP.home,
+    customers: ROUTE_MAP.customers,
+    orders: ROUTE_MAP.orders,
+    products: ROUTE_MAP.products,
+    brands: ROUTE_MAP.brands,
+    staff: ROUTE_MAP.staff,
+    imports: ROUTE_MAP.imports,
+    vouchers: ROUTE_MAP.vouchers,
+    chat: ROUTE_MAP.chat,
   };
+
+  const iconByKey = {
+    home: Home,
+    customers: Users,
+    orders: Package,
+    products: DollarSign,
+    brands: ShoppingBag,
+    staff: UserCog,
+    imports: Warehouse,
+    vouchers: TicketPercent,
+    chat: MessageCircle,
+  };
+
+  const hasNestedPath = (path, route) => path === route || path.startsWith(`${route}/`);
+
+  const visibleItems = useMemo(
+    () => SIDEBAR_ITEMS.filter((item) => item.roleAccess.includes(roleId)),
+    [roleId]
+  );
+
+  const topItems = visibleItems.filter((item) => item.section === "overview");
+  const managementItems = visibleItems.filter((item) => item.section === "management");
+  const communicationItems = visibleItems.filter((item) => item.section === "communication");
+
+  const isManagementActive = managementItems.some((item) => {
+    const route = routeByKey[item.key];
+    return route ? hasNestedPath(location.pathname, route) : false;
+  });
 
   const handleLogout = () => {
     clearCart();
@@ -37,199 +79,179 @@ export default function Sidebar() {
     navigate("/login", { replace: true });
   };
 
+  useEffect(() => {
+    if (isManagementActive) {
+      setIsManageOpen(true);
+    }
+  }, [isManagementActive]);
+
   return (
     <aside
       className={`
-    md:static z-40 h-full
-    ${isOpen ? "w-72" : "w-20"}
-    bg-[#C1E7FF]
-    overflow-hidden shadow-lg
-    flex flex-col justify-between
-    transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
-  `}
+        relative z-40 h-full
+        ${isOpen ? "w-72" : "w-24"}
+        overflow-hidden
+        bg-gradient-to-b from-slate-50 via-slate-100 to-slate-100
+        border-r border-slate-200
+        text-slate-700
+        flex flex-col justify-between
+        transition-all duration-400 ease-out
+      `}
     >
-      {/* ================= HEADER ================= */}
+      <div className="pointer-events-none absolute -right-14 top-16 h-52 w-52 rounded-full bg-slate-300/35 blur-3xl" />
+      <div className="pointer-events-none absolute -left-24 bottom-4 h-56 w-56 rounded-full bg-white/80 blur-3xl" />
+
       <div>
         <div
           className={`
-                        h-16 flex items-center px-4 border-b border-black/20
-                        ${isOpen ? "justify-between" : "justify-center"}
-                        transition-all duration-300
-                    `}
+            h-20 flex items-center px-4 border-b border-slate-200
+            ${isOpen ? "justify-between" : "justify-center"}
+            transition-all duration-300
+          `}
         >
-          {/* LOGO */}
           <div
             className={`
-                            flex items-center gap-2 overflow-hidden
-                            transition-all duration-500 ease-out
-                            ${
-                              isOpen
-                                ? "opacity-100 translate-x-0"
-                                : "opacity-0 -translate-x-4 pointer-events-none"
-                            }
-                        `}
+              flex items-center gap-2 overflow-hidden
+              transition-all duration-300 ease-out
+              ${
+                isOpen
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 -translate-x-4 pointer-events-none"
+              }
+            `}
           >
-            <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center font-bold">
-              U
+            <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow-sm">
+              <ShieldCheck size={18} />
             </div>
-            <span className="font-bold text-lg text-black whitespace-nowrap">
-              UBRAINTECH
-            </span>
+            <div className="min-w-0">
+              <p className="font-semibold text-base tracking-wide whitespace-nowrap text-slate-900">UBRAINTECH</p>
+              <p className="text-xs text-slate-500 whitespace-nowrap">Admin control hub</p>
+            </div>
           </div>
 
-          {/* MENU BUTTON */}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="
-                            w-9 h-9
-                            flex items-center justify-center
-                            rounded-lg
-                            hover:bg-black/10
-                            transition-all duration-300
-                        "
+              w-9 h-9 flex items-center justify-center
+              rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200
+              transition-all duration-300
+            "
+            title={isOpen ? "Thu gọn sidebar" : "Mở rộng sidebar"}
           >
-            <Menu />
+            {isOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
           </button>
         </div>
 
-        {/* ================= MENU ================= */}
-        <nav className="relative px-3 py-6 space-y-2">
-          {/* Highlight */}
-          {highlight && (
+        <nav className="relative px-3 py-5 space-y-4">
+          {!isOpen && (
             <div
               className="
-                                absolute left-2 right-2
-                                rounded-xl
-                                bg-white/60
-                                backdrop-blur-md
-                                shadow
-                                transition-all duration-500 ease-out
-                            "
-              style={{
-                top: highlight.top,
-                height: highlight.height,
-              }}
-            />
+                h-9 flex items-center justify-center rounded-lg
+                bg-white border border-slate-200 text-slate-500
+              "
+            >
+              <Menu size={16} />
+            </div>
           )}
 
-          <SidebarItem
-            icon={<Home />}
-            label="Trang chủ"
-            to={ROUTE_MAP.home}
-            onSelect={handleSelect}
-            activePath={location.pathname}
-            isOpen={isOpen}
-          />
+          <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.overview} />
+          {topItems.map((item) => {
+            const Icon = iconByKey[item.key];
+            return (
+              <SidebarItem
+                key={item.key}
+                icon={Icon}
+                label={item.title}
+                to={routeByKey[item.key]}
+                isOpen={isOpen}
+              />
+            );
+          })}
 
-          {/* Khách hàng - ADMIN + EMPLOYEE */}
-          {(isAdmin || isEmployee) && (
-            <SidebarItem
-              icon={<Users />}
-              label="Quản lí khách hàng"
-              to={ROUTE_MAP.customers}
-              onSelect={handleSelect}
-              activePath={location.pathname}
-              isOpen={isOpen}
-            />
-          )}
+          <div>
+            <button
+              onClick={() => setIsManageOpen(!isManageOpen)}
+              className="
+                w-full h-11 flex items-center justify-between gap-3 px-3 rounded-xl
+                text-slate-600 hover:text-slate-900 hover:bg-slate-200/70
+                border border-slate-200
+                transition-all duration-300
+              "
+            >
+              <span className="flex items-center gap-3">
+                <Package size={18} />
+                {isOpen && <span className="font-medium">Quản lý</span>}
+              </span>
+              {isOpen && (
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform duration-300 ${isManageOpen ? "rotate-180" : "rotate-0"}`}
+                />
+              )}
+            </button>
 
-          {/* Đơn hàng - ADMIN + EMPLOYEE */}
-          <SidebarItem
-            icon={<Package />}
-            label="Quản lí đơn hàng"
-            to={ROUTE_MAP.orders}
-            onSelect={handleSelect}
-            activePath={location.pathname}
-            isOpen={isOpen}
-          />
+            <div
+              className={`
+                overflow-hidden transition-all duration-300
+                ${isManageOpen ? "max-h-[500px]" : "max-h-0"}
+              `}
+            >
+              <div className={`mt-2 space-y-2 ${isOpen ? "pl-4" : "pl-0"}`}>
+                {managementItems.map((item) => {
+                  const Icon = iconByKey[item.key];
+                  return (
+                    <SidebarItem
+                      key={item.key}
+                      icon={Icon}
+                      label={item.title}
+                      to={routeByKey[item.key]}
+                      isOpen={isOpen}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
 
-          {/* Sản phẩm - ADMIN + EMPLOYEE */}
-          {(isAdmin || isEmployee) && (
-            <SidebarItem
-              icon={<DollarSign />}
-              label="Quản lí sản phẩm"
-              to={ROUTE_MAP.products}
-              onSelect={handleSelect}
-              activePath={location.pathname}
-              isOpen={isOpen}
-            />
-          )}
-
-          {/* Hãng - ADMIN + EMPLOYEE */}
-          {(isAdmin || isEmployee) && (
-            <SidebarItem
-              icon={<ShoppingBag />}
-              label="Quản lí hãng"
-              to={ROUTE_MAP.brands}
-              onSelect={handleSelect}
-              activePath={location.pathname}
-              isOpen={isOpen}
-            />
-          )}
-
-          {/* Nhân viên - ADMIN ONLY */}
-          {isAdmin && (
-            <SidebarItem
-              icon={<UserCog />}
-              label="Quản lí nhân viên"
-              to={ROUTE_MAP.staff}
-              onSelect={handleSelect}
-              activePath={location.pathname}
-              isOpen={isOpen}
-            />
-          )}
-
-          {/* Nhập kho - ADMIN + EMPLOYEE */}
-          {(isAdmin || isEmployee) && (
-            <SidebarItem
-              icon={<Warehouse />}
-              label="Quản lí nhập kho"
-              to={ROUTE_MAP.imports}
-              onSelect={handleSelect}
-              activePath={location.pathname}
-              isOpen={isOpen}
-            />
-          )}
-
-          {/* Voucher - ADMIN + EMPLOYEE */}
-          {(isAdmin || isEmployee) && (
-            <SidebarItem
-              icon={<TicketPercent />}
-              label="Quản lí voucher"
-              to={ROUTE_MAP.vouchers}
-              onSelect={handleSelect}
-              activePath={location.pathname}
-              isOpen={isOpen}
-            />
-          )}
+          <SidebarSectionLabel isOpen={isOpen} label={SECTION_TITLE.communication} />
+          {communicationItems.map((item) => {
+            const Icon = iconByKey[item.key];
+            return (
+              <SidebarItem
+                key={item.key}
+                icon={Icon}
+                label={item.title}
+                to={routeByKey[item.key]}
+                isOpen={isOpen}
+              />
+            );
+          })}
         </nav>
       </div>
 
-      {/* ================= LOGOUT ================= */}
-      <div className="px-4 pb-6">
+      <div className="px-4 pb-5">
         <button
           onClick={handleLogout}
           className="
-                        w-full h-11
-                        flex items-center gap-3 px-3
-                        rounded-xl
-                        bg-black text-white
-                        hover:bg-black/80
-                        transition-all duration-500 ease-out
-                    "
+            w-full h-11 flex items-center gap-3 px-3
+            rounded-xl border border-slate-800/80
+            bg-slate-900 text-white
+            hover:bg-slate-800
+            transition-all duration-300
+          "
+          title="Đăng xuất"
         >
           <LogOut size={18} />
-
           <span
             className={`
-                            transition-all duration-500 ease-out
-                            delay-200
-                            ${
-                              isOpen
-                                ? "opacity-100 translate-x-0"
-                                : "opacity-0 -translate-x-3 pointer-events-none"
-                            }
-                        `}
+              whitespace-nowrap
+              transition-all duration-300
+              ${
+                isOpen
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 -translate-x-2 pointer-events-none"
+              }
+            `}
           >
             Đăng xuất
           </span>
@@ -239,52 +261,49 @@ export default function Sidebar() {
   );
 }
 
-/* ================= ITEM ================= */
-function SidebarItem({ icon, label, to, onSelect, activePath, isOpen }) {
-  const ref = useRef(null);
+function SidebarSectionLabel({ isOpen, label }) {
+  if (!isOpen) {
+    return null;
+  }
 
-  const rect = () => ({
-    top: ref.current.offsetTop,
-    height: ref.current.offsetHeight,
-  });
+  return <p className="px-3 text-[11px] uppercase tracking-[0.14em] text-slate-500">{label}</p>;
+}
 
-  useEffect(() => {
-    if (activePath === to) {
-      onSelect(rect());
-    }
-  }, [activePath, to]);
+function SidebarItem({ icon: Icon, label, to, isOpen }) {
+  if (!to || !Icon) {
+    return null;
+  }
 
   return (
-    <NavLink to={to} className="no-underline">
-      <div
-        ref={ref}
-        onClick={() => onSelect(rect())}
-        className="
-                    relative z-10 h-11
-                    flex items-center gap-4
-                    px-3 rounded-xl
-                    text-black
-                    hover:bg-white/40
-                    transition-all duration-300
-                "
+    <NavLink
+      to={to}
+      title={label}
+      className={({ isActive }) =>
+        `group relative z-10 h-11 flex items-center gap-3 px-3 rounded-xl border transition-all duration-200
+        ${
+          isActive
+            ? "bg-slate-900 text-white border-slate-900 shadow-sm"
+            : "text-slate-600 border-transparent hover:bg-white hover:text-slate-900 hover:border-slate-200"
+        }
+        ${isOpen ? "justify-start" : "justify-center"}`
+      }
+    >
+      <span className="w-5 h-5 shrink-0 flex items-center justify-center">
+        <Icon size={18} />
+      </span>
+      <span
+        className={`
+          whitespace-nowrap text-sm font-medium
+          transition-all duration-300
+          ${
+            isOpen
+              ? "opacity-100 translate-x-0"
+              : "opacity-0 -translate-x-2 pointer-events-none w-0 overflow-hidden"
+          }
+        `}
       >
-        <span className="w-5 h-5 shrink-0">{icon}</span>
-
-        <span
-          className={`
-                        whitespace-nowrap
-                        transition-all duration-500 ease-out
-                        delay-150
-                        ${
-                          isOpen
-                            ? "opacity-100 translate-x-0"
-                            : "opacity-0 -translate-x-4 pointer-events-none"
-                        }
-                    `}
-        >
-          {label}
-        </span>
-      </div>
+        {label}
+      </span>
     </NavLink>
   );
 }

@@ -134,3 +134,4 @@ export async function deleteCategory(id) {
         throw error;
     }
 }
+
