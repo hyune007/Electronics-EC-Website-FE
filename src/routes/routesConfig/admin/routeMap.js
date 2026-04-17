@@ -7,4 +7,5 @@ export const ROUTE_MAP = {
     staff: "/admin/staff",
     imports: "/admin/imports",
     vouchers: "/admin/vouchers",
+    chat: "/admin/chat",
 };
