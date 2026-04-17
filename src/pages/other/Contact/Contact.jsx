@@ -22,7 +22,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="min-h-screen bg-transparent px-4 py-12 md:px-6 md:py-16">
+    <div className="page-ambient min-h-screen bg-transparent px-4 py-12 md:px-6 md:py-16">
       <div className="mx-auto max-w-6xl space-y-8">
         <div className="card-default rounded-2xl border p-8 text-center md:p-10">
           <h1 className="text-3xl font-bold text-[var(--color-text)] md:text-4xl">
@@ -199,8 +199,9 @@ export default function Contact() {
             <div className="md:col-span-2 flex items-center justify-between gap-3 pt-1">
               {sent ? (
                 <p className="text-sm font-medium text-[var(--color-success)]">
-                  Thông tin đã được ghi nhận. Chúng tôi sẽ liên hệ với bạn sớm.
+                  Thông tin đã được ghi nhận. Chúng tôi sẽ liên hệ với bạn sớm. (Thông tin của bạn chưa được lưu đâu)
                 </p>
+                
               ) : (
                 <p className="text-sm text-[var(--color-text-muted)]">
                   Thông tin của bạn sẽ được bảo mật và chỉ dùng cho mục đích hỗ

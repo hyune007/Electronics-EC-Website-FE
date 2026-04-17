@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import PropTypes from "prop-types";
 
 const formatDate = (value) => {
   if (!value) return "";
@@ -59,3 +60,14 @@ export default function ReviewCard({ review }) {
     </div>
   );
 }
+
+ReviewCard.propTypes = {
+  review: PropTypes.shape({
+    customer: PropTypes.shape({
+      name: PropTypes.string,
+    }),
+    reviewDate: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    content: PropTypes.string,
+  }),
+};

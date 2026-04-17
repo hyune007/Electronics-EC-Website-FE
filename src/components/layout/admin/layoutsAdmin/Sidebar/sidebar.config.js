@@ -48,6 +48,48 @@ export const SIDEBAR_ITEMS = [
     roleAccess: ["ROLE_ADMIN", "ROLE_EMPLOYEE"],
   },
   {
+    key: "customer_stats",
+    title: "Khách hàng",
+    section: "statistics",
+    roleAccess: ["ROLE_ADMIN", "ROLE_EMPLOYEE"],
+  },
+  {
+    key: "order_stats",
+    title: "Đơn hàng",
+    section: "statistics",
+    roleAccess: ["ROLE_ADMIN", "ROLE_EMPLOYEE"],
+  },
+  {
+    key: "product_stats",
+    title: "Sản phẩm",
+    section: "statistics",
+    roleAccess: ["ROLE_ADMIN", "ROLE_EMPLOYEE"],
+  },
+  {
+    key: "brand_stats",
+    title: "Thương hiệu",
+    section: "statistics",
+    roleAccess: ["ROLE_ADMIN", "ROLE_EMPLOYEE"],
+  },
+  {
+    key: "staff_stats",
+    title: "Nhân viên",
+    section: "statistics",
+    roleAccess: ["ROLE_ADMIN"],
+  },
+  {
+    key: "import_stats",
+    title: "Nhập kho",
+    section: "statistics",
+    roleAccess: ["ROLE_ADMIN", "ROLE_EMPLOYEE"],
+  },
+  {
+    key: "voucher_stats",
+    title: "Voucher",
+    section: "statistics",
+    roleAccess: ["ROLE_ADMIN", "ROLE_EMPLOYEE"],
+  },
+  {
     key: "chat",
     title: "Live chat",
     section: "communication",
@@ -58,6 +100,7 @@ export const SIDEBAR_ITEMS = [
 export const SECTION_TITLE = {
   overview: "Tổng quan",
   management: "Vận hành",
+  statistics: "Thống kê",
   communication: "Kết nối",
 };
 

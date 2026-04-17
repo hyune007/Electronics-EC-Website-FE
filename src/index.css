@@ -7,6 +7,21 @@
     font-family: var(--font-sans);
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Smooth scrolling for both vertical and horizontal containers */
+  [class*="overflow-auto"],
+  [class*="overflow-scroll"],
+  [class*="overflow-y-auto"],
+  [class*="overflow-y-scroll"],
+  [class*="overflow-x-auto"],
+  [class*="overflow-x-scroll"],
+  .home-horizontal-scroller {
+    scroll-behavior: smooth;
+  }
+
   html,
   body,
   #root {
@@ -129,6 +144,14 @@
     box-shadow: var(--shadow-md);
   }
 
+  .material-symbols-outlined.filled {
+    font-variation-settings:
+      "FILL" 1,
+      "wght" 400,
+      "GRAD" 0,
+      "opsz" 24;
+  }
+
   .badge-default {
     @apply inline-flex items-center px-2.5 py-1 text-xs font-semibold;
     border-radius: 999px;
@@ -167,10 +190,134 @@
     border-color: color-mix(in oklab, var(--color-info) 42%, white);
   }
 
+  .page-ambient {
+    position: relative;
+    isolation: isolate;
+    background: transparent;
+  }
+
+  .page-ambient::before,
+  .page-ambient::after {
+    content: none;
+  }
+
+  .page-ambient > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .dark .page-ambient {
+    background:
+      radial-gradient(
+        circle at 10% -6%,
+        rgba(56, 189, 248, 0.2),
+        transparent 36%
+      ),
+      radial-gradient(
+        circle at 88% -8%,
+        rgba(14, 165, 233, 0.16),
+        transparent 32%
+      ),
+      linear-gradient(
+        180deg,
+        rgba(2, 18, 34, 0.92),
+        rgba(2, 12, 24, 0.7) 35%,
+        transparent 72%
+      );
+  }
+
+  .dark .page-ambient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(
+        58rem 42rem at 116% -18%,
+        rgba(37, 99, 235, 0.22),
+        transparent 70%
+      ),
+      radial-gradient(
+        52rem 36rem at -20% 20%,
+        rgba(6, 182, 212, 0.2),
+        transparent 72%
+      ),
+      radial-gradient(
+        30rem 22rem at 50% 14%,
+        rgba(59, 130, 246, 0.14),
+        transparent 72%
+      );
+    opacity: 1;
+  }
+
+  .dark .page-ambient::after {
+    content: none;
+  }
+
+  /* Page transition animations */
+  @keyframes page-fade-enter {
+    from {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes page-fade-exit {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+  }
+
+  .page-transition-enter {
+    animation: page-fade-enter 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .page-transition-exit {
+    animation: page-fade-exit 200ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  .dark .page-ambient-home::before {
+    background:
+      radial-gradient(
+        64rem 38rem at 14% -20%,
+        rgba(20, 184, 166, 0.2),
+        transparent 74%
+      ),
+      radial-gradient(
+        66rem 42rem at 105% -14%,
+        rgba(56, 189, 248, 0.2),
+        transparent 74%
+      );
+  }
+
+  .dark .page-ambient-news::before {
+    background:
+      radial-gradient(
+        56rem 36rem at 6% -12%,
+        rgba(71, 85, 105, 0.35),
+        transparent 74%
+      ),
+      radial-gradient(
+        64rem 40rem at 98% -18%,
+        rgba(14, 116, 144, 0.34),
+        transparent 75%
+      );
+  }
+
   .badge-return {
-    background-color: color-mix(in oklab, #5f768d 20%, white);
-    color: #506579;
-    border-color: color-mix(in oklab, #5f768d 42%, white);
+    background-color: color-mix(in oklab, #0f766e 18%, white);
+    color: #0f766e;
+    border-color: color-mix(in oklab, #0f766e 42%, white);
   }
 
   .modal-shell {
@@ -304,6 +451,59 @@ button {
 }
 .dark .no-row-hover tbody tr:hover {
   background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* Mobile-first responsive utilities */
+@media (max-width: 640px) {
+  /* Ensure touch targets are at least 44x44px on mobile */
+  button,
+  a[role="button"] {
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+  }
+
+  /* Better spacing for mobile lists */
+  li {
+    line-height: 1.75;
+  }
+
+  /* Prevent text from being too large on mobile */
+  body {
+    font-size: 14px;
+  }
+
+  /* Limit max-width for better readability on old phones */
+  body {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Tablet-specific optimizations (640px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Optimize spacing for tablet */
+  .container,
+  [role="main"] {
+    max-width: 100%;
+    padding: 0 1.5rem;
+  }
+
+  /* Better grid for tablet */
+  .grid {
+    gap: 1rem;
+  }
+
+  /* Reduce excessive padding on tablet */
+  section {
+    padding: 1.5rem 0;
+  }
+}
+
+/* Desktop overrides (lg: 1024px+) */
+@media (min-width: 1025px) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

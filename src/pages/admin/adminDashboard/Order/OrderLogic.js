@@ -165,6 +165,8 @@ export function useOrderLogic() {
   };
 
   const filteredOrders = useMemo(() => {
+    const RETURN_STATUSES = ["Yêu cầu trả hàng", "Đã trả hàng", "Từ chối trả hàng"];
+
     return orders.filter((o) => {
       const orderId = String(o.order_id || "").toLowerCase();
       const customerName = String(o.customer_name || "").toLowerCase();
@@ -178,7 +180,11 @@ export function useOrderLogic() {
 
       let matchStatus = true;
       if (statusFilter && statusFilter !== "ALL") {
-        matchStatus = o.raw_status === statusFilter;
+        if (statusFilter === "Trả hàng") {
+          matchStatus = RETURN_STATUSES.includes(o.raw_status);
+        } else {
+          matchStatus = o.raw_status === statusFilter;
+        }
       }
 
       let matchPayment = true;
@@ -261,10 +267,10 @@ export function useOrderLogic() {
   const hasActiveFilters = useMemo(() => {
     return Boolean(
       search.trim() ||
-        statusFilter !== "ALL" ||
-        paymentFilter !== "ALL" ||
-        dateFrom ||
-        dateTo,
+      statusFilter !== "ALL" ||
+      paymentFilter !== "ALL" ||
+      dateFrom ||
+      dateTo,
     );
   }, [search, statusFilter, paymentFilter, dateFrom, dateTo]);
 

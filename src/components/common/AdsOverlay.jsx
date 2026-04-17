@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import AdsImg from "../../assets/banner/AdsOverlay.jpg";
 
 export default function AdsOverlay() {
   const [open, setOpen] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
-    let cancelled = false;
+    const isHome = pathname === "/" || pathname === "/home";
+    if (!isHome) return undefined;
+
     try {
       const shown = sessionStorage.getItem("ads_overlay_shown");
       if (shown) return undefined;
@@ -13,23 +17,14 @@ export default function AdsOverlay() {
       void err;
     }
 
-    const show = () => {
-      setTimeout(() => {
-        if (!cancelled) setOpen(true);
-      }, 300);
-    };
+    const timerId = window.setTimeout(() => {
+      setOpen(true);
+    }, 300);
 
-    if (document.readyState === "complete") {
-      show();
-      return undefined;
-    }
-
-    window.addEventListener("load", show);
     return () => {
-      cancelled = true;
-      window.removeEventListener("load", show);
+      window.clearTimeout(timerId);
     };
-  }, []);
+  }, [pathname]);
 
   if (!open) return null;
 

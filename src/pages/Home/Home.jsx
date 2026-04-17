@@ -16,6 +16,12 @@ import WatchAdsBanner from "../../assets/banner/watch_ads.png";
 import LaptopBannerVer from "../../assets/banner/laptopBannerVer.png";
 import PhoneBannerVer from "../../assets/banner/phoneBannerVer.png";
 import MonitorBannerVer from "../../assets/banner/monitorBannerVer.png";
+import AppleBrandLogo from "../../assets/logoBrand/logo-apple.png";
+import SamsungBrandLogo from "../../assets/logoBrand/logo-samsung.png";
+import AsusBrandLogo from "../../assets/logoBrand/logo-asus.png";
+import DellBrandLogo from "../../assets/logoBrand/logo-dell.png";
+import AcerBrandLogo from "../../assets/logoBrand/logo-acer.png";
+import LenovoBrandLogo from "../../assets/logoBrand/logo-lenovo.png";
 import DealHotBackground from "../../assets/background/DealHot.jpg";
 import useDragScroll from "../../hooks/useDragScroll";
 import useRevealOnScroll from "../../hooks/useRevealOnScroll";
@@ -26,8 +32,12 @@ import LoadScreen from "../../components/common/LoadScreen.jsx";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useProductCache } from "../../contexts/ProductCacheContext.jsx";
+import { fetchGearVnNews } from "../../utils/newsSource.js";
 
 const HOME_SLIDE_SIZE = 8;
+const HOME_NEWS_PREVIEW_SIZE = 3;
+const HOME_NEWS_BADGES = ["Bài nổi bật", "Bài cập nhật", "Bài đáng chú ý"];
+const RECENT_VIEWED_PRODUCT_IDS_KEY = "recentViewedProductIds";
 
 const TRUST_BADGES = [
   {
@@ -59,6 +69,45 @@ const CATEGORIES = [
   { id: "tablet", icon: "tablet_mac", cat: "LSP03", label: "Máy tính bảng" },
   { id: "watch", icon: "watch", cat: "LSP04", label: "Đồng hồ thông minh" },
   { id: "headphones", icon: "headphones", cat: "LSP05", label: "Tai nghe" },
+];
+
+const FEATURED_BRANDS = [
+  {
+    id: "apple",
+    name: "Apple",
+    logo: AppleBrandLogo,
+    logoClassName: "max-h-10",
+  },
+  {
+    id: "samsung",
+    name: "Samsung",
+    logo: SamsungBrandLogo,
+    logoClassName: "max-h-10",
+  },
+  {
+    id: "asus",
+    name: "Asus",
+    logo: AsusBrandLogo,
+    logoClassName: "max-h-30",
+  },
+  {
+    id: "dell",
+    name: "Dell",
+    logo: DellBrandLogo,
+    logoClassName: "max-h-14",
+  },
+  {
+    id: "acer",
+    name: "Acer",
+    logo: AcerBrandLogo,
+    logoClassName: "max-h-14",
+  },
+  {
+    id: "lenovo",
+    name: "Lenovo",
+    logo: LenovoBrandLogo,
+    logoClassName: "max-h-10",
+  },
 ];
 
 const PROMO_CARDS = [
@@ -102,9 +151,14 @@ export default function Home() {
   const scroller1 = useDragScroll();
   const scroller2 = useDragScroll();
   const scroller3 = useDragScroll();
+  const viewedScroller = useDragScroll();
   const navigate = useNavigate();
   useRevealOnScroll();
   const [homeHoverPanelStyle, setHomeHoverPanelStyle] = useState(null);
+  const [homeNews, setHomeNews] = useState([]);
+  const [loadingHomeNews, setLoadingHomeNews] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [recentViewedIds, setRecentViewedIds] = useState([]);
 
   const { allProducts, loadingAll, prefetchAllProducts } = useProductCache();
 
@@ -117,6 +171,49 @@ export default function Home() {
       globalThis.clearTimeout(warmUp);
     };
   }, [prefetchAllProducts]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadHomeNews = async () => {
+      try {
+        setLoadingHomeNews(true);
+        const parsed = await fetchGearVnNews({ limit: HOME_NEWS_PREVIEW_SIZE });
+
+        if (active) setHomeNews(parsed);
+      } catch {
+        if (active) setHomeNews([]);
+      } finally {
+        if (active) setLoadingHomeNews(false);
+      }
+    };
+
+    loadHomeNews();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const loadRecentViewedIds = () => {
+      try {
+        const raw = localStorage.getItem(RECENT_VIEWED_PRODUCT_IDS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        const normalized = Array.isArray(parsed) ? parsed.map(String) : [];
+        setRecentViewedIds(normalized);
+      } catch {
+        setRecentViewedIds([]);
+      }
+    };
+
+    loadRecentViewedIds();
+    globalThis.addEventListener("storage", loadRecentViewedIds);
+
+    return () => {
+      globalThis.removeEventListener("storage", loadRecentViewedIds);
+    };
+  }, []);
 
   useEffect(() => {
     const syncHomeHoverPanel = () => {
@@ -195,6 +292,71 @@ export default function Home() {
     [allProducts],
   );
 
+  const recentlyViewedProducts = useMemo(() => {
+    if (!recentViewedIds.length || !allProducts?.length) return [];
+
+    const productById = new Map(
+      allProducts.map((product) => [String(product.id), product]),
+    );
+
+    return recentViewedIds
+      .map((id) => productById.get(String(id)))
+      .filter(Boolean)
+      .slice(0, 12);
+  }, [allProducts, recentViewedIds]);
+
+  const scrollViewedBy = (offset) => {
+    const el = viewedScroller?.current;
+    if (!el) return;
+    el.scrollBy({ left: offset, behavior: "smooth" });
+  };
+
+  const getViewedScrollStep = useCallback(() => {
+    const el = viewedScroller?.current;
+    if (!el) return 0;
+    const first = el.querySelector(":scope > .viewed-item");
+    if (!first) return 0;
+    const itemWidth = first.getBoundingClientRect().width;
+    const computed = getComputedStyle(el);
+    const gap = Number.parseFloat(computed.columnGap || computed.gap) || 0;
+    return Math.round((itemWidth + gap) * 3);
+  }, [viewedScroller]);
+
+  const scrollViewedPrev = () => {
+    const step = getViewedScrollStep();
+    if (!step) return;
+    scrollViewedBy(-step);
+  };
+
+  const scrollViewedNext = () => {
+    const step = getViewedScrollStep();
+    if (!step) return;
+    scrollViewedBy(step);
+  };
+
+  const persistRecentViewedIds = (nextIds) => {
+    setRecentViewedIds(nextIds);
+    try {
+      localStorage.setItem(
+        RECENT_VIEWED_PRODUCT_IDS_KEY,
+        JSON.stringify(nextIds),
+      );
+    } catch (error) {
+      console.error("Failed to update recently viewed product IDs.", error);
+    }
+  };
+
+  const handleClearRecentlyViewed = () => {
+    persistRecentViewedIds([]);
+  };
+
+  const handleRemoveViewedItem = (productId) => {
+    const next = recentViewedIds.filter(
+      (id) => String(id) !== String(productId),
+    );
+    persistRecentViewedIds(next);
+  };
+
   const scrollDealBy = (offset) => {
     const el = dealHotScroller?.current;
     if (!el) return;
@@ -270,7 +432,7 @@ export default function Home() {
     [loadingAll, allProducts],
   );
 
-  const renderProductSectionContent = (products) => {
+  const renderProductSectionContent = (products, scrollerRef = null) => {
     if (loadingHome) {
       return <LoadScreen show={true} className="py-24 w-full" size={12} />;
     }
@@ -283,14 +445,34 @@ export default function Home() {
       );
     }
 
-    return products.map((p) => (
-      <div
-        key={p.id}
-        className="w-[242px] shrink-0 transition-transform duration-500 sm:w-[258px] lg:w-[272px] min-h-[330px] md:min-h-[300px] lg:min-h-[390px]"
-      >
-        <ProductCard product={p} className="h-full" />
-      </div>
-    ));
+    // Render as responsive grid on small/medium screens, horizontal scroller on large screens
+    return (
+      <>
+        {/* Grid layout for mobile/tablet (hidden on lg+) */}
+        <div className="lg:hidden grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+          {products.map((p) => (
+            <div key={p.id} className="min-h-[320px] sm:min-h-[380px]">
+              <ProductCard product={p} className="h-full" />
+            </div>
+          ))}
+        </div>
+
+        {/* Horizontal scroller for desktop (hidden on <lg) */}
+        <div
+          ref={scrollerRef}
+          className="hidden lg:flex home-horizontal-scroller items-stretch gap-6 overflow-x-auto overflow-y-visible no-scrollbar"
+        >
+          {products.map((p) => (
+            <div
+              key={p.id}
+              className="lg:w-[272px] lg:shrink-0 lg:min-h-[390px]"
+            >
+              <ProductCard product={p} className="h-full" />
+            </div>
+          ))}
+        </div>
+      </>
+    );
   };
 
   const renderDealHotContent = (products) => {
@@ -323,11 +505,45 @@ export default function Home() {
     { id: "r4", src: "https://www.youtube.com/embed/Yelu3NsfCNE" },
   ];
 
+  const renderViewedProductCard = (product) => (
+    <div key={product.id} className="relative min-h-[320px] sm:min-h-[380px]">
+      <button
+        type="button"
+        onClick={() => handleRemoveViewedItem(product.id)}
+        className="absolute right-2 top-2 z-20 inline-flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)] shadow-sm transition-colors duration-200 hover:text-[var(--color-danger)]"
+        aria-label={`Xóa ${product.name} khỏi sản phẩm đã xem`}
+      >
+        <span>Xóa sản phẩm</span>
+        <span aria-hidden="true">×</span>
+      </button>
+      <ProductCard product={product} className="h-full" />
+    </div>
+  );
+
   return (
-    <div className="min-h-screen w-full overflow-hidden bg-transparent pb-10 text-[var(--color-text)] transition-colors duration-220 ease-standard">
-      <div className="mx-auto w-full max-w-[1320px] px-4 pb-12 pt-2 sm:px-5 lg:px-6">
+    <div className="page-ambient page-ambient-home min-h-screen w-full overflow-hidden bg-transparent pb-14 text-[var(--color-text)] transition-colors duration-220 ease-standard">
+      <div className="mx-auto w-full max-w-[1320px] px-4 pb-16 pt-4 sm:px-5 lg:px-6">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 top-16 z-[60] bg-black/50 backdrop-blur-sm xl:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Mobile sidebar menu */}
+        <aside
+          className={`fixed left-0 top-16 z-[70] h-[calc(100vh-4rem)] w-56 bg-[var(--color-surface)] shadow-xl transition-transform duration-300 ease-standard xl:hidden ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+        >
+          <div className="overflow-y-auto p-4">
+            <CategoryMenuPanel hoverPanelStyle={homeHoverPanelStyle} />
+          </div>
+        </aside>
+
         <section
-          className="reveal-on-scroll pt-3 relative"
+          className="reveal-on-scroll pt-5 relative"
           data-reveal-delay="0"
         >
           <div className="grid grid-cols-1 gap-1.5 xl:grid-cols-[224px_minmax(0,1fr)_156px]">
@@ -335,7 +551,18 @@ export default function Home() {
               <CategoryMenuPanel hoverPanelStyle={homeHoverPanelStyle} />
             </aside>
 
-            <div className="home-main-banner-shell overflow-hidden rounded-[0.72rem] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-md">
+            <div className="home-main-banner-shell relative overflow-hidden rounded-[0.72rem] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-md">
+              {/* Mobile menu button */}
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="absolute left-4 top-4 z-10 flex items-center justify-center rounded-lg bg-white/90 p-2 text-slate-900 shadow-md transition-all hover:bg-white backdrop-blur xl:hidden"
+                aria-label="Toggle menu"
+              >
+                <span className="material-symbols-outlined text-xl">
+                  {sidebarOpen ? "close" : "menu"}
+                </span>
+              </button>
               <Banner variant="home" />
             </div>
 
@@ -353,7 +580,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-6" data-reveal-delay="60">
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="60">
           <div className="mb-5 flex items-center justify-between px-1">
             <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
               Ưu đãi nổi bật hôm nay
@@ -400,7 +627,7 @@ export default function Home() {
         </section>
 
         <section
-          className="reveal-on-scroll mt-6 grid grid-cols-2 gap-4 border-y border-[var(--color-border)] py-6 lg:grid-cols-4"
+          className="reveal-on-scroll mt-10 grid grid-cols-2 gap-4 border-y border-[var(--color-border)] py-8 lg:grid-cols-4"
           data-reveal-delay="100"
         >
           {TRUST_BADGES.map((badge) => (
@@ -421,7 +648,7 @@ export default function Home() {
           ))}
         </section>
 
-        <section className="reveal-on-scroll mt-6" data-reveal-delay="140">
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="140">
           <div className="mb-7 flex flex-col items-center">
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-text-muted)]">
               Bộ sưu tập mới nhất
@@ -452,7 +679,35 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-6" data-reveal-delay="180">
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="160">
+          <div className="mb-7 flex flex-col items-center">
+            <h3 className="text-3xl font-light tracking-tight md:text-4xl text-center">
+              Thương Hiệu <span className="font-bold">Nổi Bật</span>
+            </h3>
+            <div className="mt-4 h-1 w-14 bg-[var(--color-primary)]"></div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {FEATURED_BRANDS.map((brand) => (
+              <button
+                key={brand.id}
+                type="button"
+                onClick={() => navigate(`/products?p=1&brand=${brand.name}`)}
+                className="group flex flex-col items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-4 text-center shadow-sm motion-default hover:-translate-y-0.5 hover:border-[var(--color-primary)]"
+              >
+                <div className="flex h-14 w-full items-center justify-center">
+                  <img
+                    src={brand.logo}
+                    alt={brand.name}
+                    className={`h-full w-auto object-contain transition-transform duration-220 ease-standard ${brand.id === "asus" ? "max-w-[176px] scale-[1.45] group-hover:scale-[1.48]" : "max-w-[140px] group-hover:scale-[1.03]"}`}
+                  />
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="180">
           <div className="overflow-hidden rounded-[2rem] border border-[var(--color-border)] shadow-md">
             <Swiper
               modules={[Navigation, Pagination, Autoplay]}
@@ -476,7 +731,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="reveal-on-scroll mt-6" data-reveal-delay="220">
+        <section className="reveal-on-scroll mt-10" data-reveal-delay="220">
           <div
             className="dealhot-shell relative overflow-hidden rounded-[1rem] border border-[var(--color-border)] shadow-md"
             style={{
@@ -573,7 +828,7 @@ export default function Home() {
           <section
             key={section.id}
             id={section.id}
-            className="reveal-on-scroll mt-6"
+            className="reveal-on-scroll mt-10"
           >
             <div className="mb-5 flex items-end justify-between px-1 sm:px-2">
               <div className="space-y-3">
@@ -617,22 +872,20 @@ export default function Home() {
                 />
               </button>
 
-              <div
-                ref={section.scroller}
-                className="home-horizontal-scroller -mx-4 -my-7 flex items-stretch gap-6 overflow-x-auto overflow-y-visible px-4 py-7 no-scrollbar lg:gap-7"
-              >
-                {renderProductSectionContent(section.data)}
+              <div className="w-full">
+                {renderProductSectionContent(section.data, section.scroller)}
               </div>
             </div>
           </section>
         ))}
 
-        <section className="reveal-on-scroll mt-8" data-reveal-delay="260">
+        <section className="reveal-on-scroll mt-12" data-reveal-delay="260">
           <div className="mb-5 flex items-center justify-between px-1">
             <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
               REVIEW SẢN PHẨM
             </h3>
-            <a href="https://youtu.be/dQw4w9WgXcQ"
+            <a
+              href="https://youtu.be/dQw4w9WgXcQ"
               target="_blank"
               rel="noopener noreferrer"
               className="motion-default text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-primary)] hover:opacity-80"
@@ -659,6 +912,165 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="reveal-on-scroll mt-12" data-reveal-delay="300">
+          <div className="mb-5 flex items-center justify-between px-1">
+            <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:text-base">
+              Tin tức công nghệ
+            </h3>
+            <button
+              type="button"
+              onClick={() => navigate("/news")}
+              className="motion-default text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-primary)] hover:opacity-80"
+            >
+              Xem thêm tại đây
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {(loadingHomeNews || !homeNews.length) &&
+              Array.from({ length: HOME_NEWS_PREVIEW_SIZE }).map((_, idx) => (
+                <div
+                  key={`news-skeleton-${idx}`}
+                  className="overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)]"
+                >
+                  <div className="skeleton-base h-44 w-full" />
+                  <div className="space-y-3 p-4">
+                    <div className="skeleton-base h-4 w-28 rounded" />
+                    <div className="skeleton-base h-4 w-full rounded" />
+                    <div className="skeleton-base h-4 w-5/6 rounded" />
+                    <div className="skeleton-base h-3 w-24 rounded" />
+                  </div>
+                </div>
+              ))}
+
+            {!loadingHomeNews &&
+              homeNews.map((news, index) => (
+                <a
+                  key={news.href}
+                  href={news.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--color-primary)] hover:shadow-md"
+                >
+                  {news.image ? (
+                    <img
+                      src={news.image}
+                      alt={news.title}
+                      className="h-44 w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-44 items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-xs font-semibold uppercase tracking-[0.08em] text-slate-600">
+                      {HOME_NEWS_BADGES[index] || "Bài tin công nghệ"}
+                    </div>
+                  )}
+
+                  <div className="p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-primary)]">
+                      {HOME_NEWS_BADGES[index] || `Bài tin ${index + 1}`}
+                    </p>
+                    <h4 className="mt-2 line-clamp-3 text-sm font-semibold text-[var(--color-text)] md:text-base">
+                      {news.title}
+                    </h4>
+                    <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-[var(--color-text-muted)] md:text-sm">
+                      {news.summary ||
+                        "Nhấn xem thêm để đọc nội dung chi tiết của bài viết này trên trang GearVN."}
+                    </p>
+                    <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
+                      Nguồn: GearVN
+                    </p>
+                  </div>
+                </a>
+              ))}
+          </div>
+        </section>
+
+        <section className="reveal-on-scroll mt-12" data-reveal-delay="340">
+          <div className="mb-5 flex items-end justify-between px-1 sm:px-2">
+            <div className="space-y-3">
+              <div className="h-[2px] w-14 bg-[var(--color-primary)]"></div>
+              <h2 className="text-2xl font-bold uppercase leading-none tracking-tight sm:text-3xl">
+                Sản phẩm đã xem
+              </h2>
+            </div>
+            <div className="flex items-center gap-3">
+              {recentlyViewedProducts.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={handleClearRecentlyViewed}
+                  className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--color-danger)] hover:opacity-80"
+                >
+                  Xóa tất cả
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => navigate("/products?p=1")}
+                className="group motion-default flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
+              >
+                <span>Xem thêm sản phẩm</span>
+                <span className="material-symbols-outlined !text-xl transition-transform duration-220 ease-standard group-hover:translate-x-1.5">
+                  trending_flat
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {recentlyViewedProducts.length > 0 ? (
+            <div className="lg:hidden grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {recentlyViewedProducts.map((p) => renderViewedProductCard(p))}
+            </div>
+          ) : (
+            <div className="lg:hidden w-full text-center text-slate-400 py-16 border border-dashed border-slate-200 dark:border-white/5 rounded-[2rem] font-light italic tracking-widest text-xs uppercase">
+              Bạn chưa xem sản phẩm nào gần đây.
+            </div>
+          )}
+
+          <div className="relative hidden lg:block">
+            {recentlyViewedProducts.length >= 5 ? (
+              <button
+                type="button"
+                aria-label="Cuon trai san pham da xem"
+                onClick={scrollViewedPrev}
+                className="scroller-nav-button scroller-prev"
+              >
+                <span className="material-symbols-outlined">chevron_left</span>
+              </button>
+            ) : null}
+
+            <div
+              ref={viewedScroller}
+              className="home-horizontal-scroller flex items-stretch gap-6 overflow-x-auto overflow-y-visible no-scrollbar"
+            >
+              {recentlyViewedProducts.length > 0 ? (
+                recentlyViewedProducts.map((p) => (
+                  <div
+                    key={p.id}
+                    className="viewed-item lg:w-[272px] lg:shrink-0"
+                  >
+                    {renderViewedProductCard(p)}
+                  </div>
+                ))
+              ) : (
+                <div className="w-full text-center text-slate-400 py-16 border border-dashed border-slate-200 dark:border-white/5 rounded-[2rem] font-light italic tracking-widest text-xs uppercase">
+                  Bạn chưa xem sản phẩm nào gần đây.
+                </div>
+              )}
+            </div>
+
+            {recentlyViewedProducts.length >= 5 ? (
+              <button
+                type="button"
+                aria-label="Cuon phai san pham da xem"
+                onClick={scrollViewedNext}
+                className="scroller-nav-button scroller-next"
+              >
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+            ) : null}
           </div>
         </section>
       </div>

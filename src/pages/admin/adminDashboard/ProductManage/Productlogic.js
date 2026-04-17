@@ -154,14 +154,14 @@ function toUiProduct(prod) {
 function computeGlobalStats(list) {
     const totalProducts = list.length;
     const totalValue = list.reduce(
-        (s, p) => s + (Number(p.sp_discountedPrice || p.sp_price || 0) * Number(p.sp_stock || 0)),
+        (s, p) => s + (Number(p.sp_discountedPrice ?? p.sp_price ?? 0) * Number(p.sp_stock || 0)),
         0
     );
     const totalStock = list.reduce((s, p) => s + Number(p.sp_stock || 0), 0);
     const lowStock = list.filter((p) => Number(p.sp_stock || 0) > 0 && Number(p.sp_stock || 0) < 10).length;
     const outOfStock = list.filter((p) => Number(p.sp_stock || 0) <= 0).length;
     const averagePrice = totalProducts > 0
-        ? Math.round(list.reduce((s, p) => s + Number(p.sp_price || 0), 0) / totalProducts)
+        ? Math.round(totalValue / totalProducts)
         : 0;
     const inStockRate = totalProducts > 0
         ? Math.round(((totalProducts - outOfStock) / totalProducts) * 100)
