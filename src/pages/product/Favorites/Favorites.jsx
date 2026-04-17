@@ -614,8 +614,6 @@ export default function Favorites() {
   const [loadingAiSpecs, setLoadingAiSpecs] = useState(false);
   const [aiSpecsError, setAiSpecsError] = useState("");
 
-
-
   useEffect(() => {
     if (loading) return;
     try {
@@ -777,7 +775,6 @@ export default function Favorites() {
         );
 
         if (!active) return;
-
 
         // Kiểm tra xem AI có trả về specs đầy đủ không
         const hasEmptySpecs = responses.some(
@@ -1047,15 +1044,13 @@ export default function Favorites() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Sản phẩm yêu thích</h1>
           <div className="flex items-center gap-3">
-            {favoritedProducts.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowComparePanel((prev) => !prev)}
-                className="btn-secondary px-4 py-2 text-sm"
-              >
-                {showComparePanel ? "Ẩn so sánh" : "So sánh sản phẩm"}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setShowComparePanel((prev) => !prev)}
+              className="btn-secondary px-4 py-2 text-sm"
+            >
+              {showComparePanel ? "Ẩn so sánh" : "So sánh sản phẩm"}
+            </button>
             <button
               onClick={handleBackClick}
               className="text-sm text-[var(--color-primary)] hover:underline"
@@ -1085,45 +1080,43 @@ export default function Favorites() {
           </button>
         </div>
       ) : (
-        <>
-          <div className="grid gap-4 mb-7 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-            {favoritedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-
-          {showComparePanel ? (
-            <div ref={comparePanelRef}>
-              <CompareProductsPanel
-                compareScope={compareScope}
-                compareSourceProducts={compareSourceProducts}
-                handleChangeScope={handleChangeScope}
-                compareWarning={compareWarning}
-                leftKeyword={leftKeyword}
-                setLeftKeyword={setLeftKeyword}
-                fixedCategoryKey={fixedCategoryKey}
-                leftSelectedId={leftSelectedId}
-                handleSelectLeft={handleSelectLeft}
-                searchableLeftProducts={searchableLeftProducts}
-                rightKeyword={rightKeyword}
-                setRightKeyword={setRightKeyword}
-                rightSelectedId={rightSelectedId}
-                handleSelectRight={handleSelectRight}
-                searchableRightProducts={searchableRightProducts}
-                leftProduct={leftProduct}
-                rightProduct={rightProduct}
-                allSpecs={allSpecs}
-                hasBothAiSpecs={hasBothAiSpecs}
-                loadingAiSpecs={loadingAiSpecs}
-                aiSpecsError={aiSpecsError}
-                loadingAiSuggestion={loadingAiSuggestion}
-                aiSuggestionError={aiSuggestionError}
-                aiSuggestion={aiSuggestion}
-              />
-            </div>
-          ) : null}
-        </>
+        <div className="grid gap-4 mb-7 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+          {favoritedProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
       )}
+
+      {showComparePanel ? (
+        <div ref={comparePanelRef}>
+          <CompareProductsPanel
+            compareScope={compareScope}
+            compareSourceProducts={compareSourceProducts}
+            handleChangeScope={handleChangeScope}
+            compareWarning={compareWarning}
+            leftKeyword={leftKeyword}
+            setLeftKeyword={setLeftKeyword}
+            fixedCategoryKey={fixedCategoryKey}
+            leftSelectedId={leftSelectedId}
+            handleSelectLeft={handleSelectLeft}
+            searchableLeftProducts={searchableLeftProducts}
+            rightKeyword={rightKeyword}
+            setRightKeyword={setRightKeyword}
+            rightSelectedId={rightSelectedId}
+            handleSelectRight={handleSelectRight}
+            searchableRightProducts={searchableRightProducts}
+            leftProduct={leftProduct}
+            rightProduct={rightProduct}
+            allSpecs={allSpecs}
+            hasBothAiSpecs={hasBothAiSpecs}
+            loadingAiSpecs={loadingAiSpecs}
+            aiSpecsError={aiSpecsError}
+            loadingAiSuggestion={loadingAiSuggestion}
+            aiSuggestionError={aiSuggestionError}
+            aiSuggestion={aiSuggestion}
+          />
+        </div>
+      ) : null}
     </main>
   );
 }

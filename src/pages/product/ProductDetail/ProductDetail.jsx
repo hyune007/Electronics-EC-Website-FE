@@ -11,6 +11,7 @@ import { useFavorites } from "../../../hooks/useFavorites";
 import NotiAuth from "../../../components/common/NotiAuth";
 import Warning from "../../../components/common/Warning";
 import { useProductCache } from "../../../contexts/ProductCacheContext.jsx";
+import ProductCompareModal from "../../../components/customer/product/ProductCompareModal/ProductCompareModal.jsx";
 
 const RECENT_VIEWED_PRODUCT_IDS_KEY = "recentViewedProductIds";
 const RECENT_VIEWED_PRODUCT_IDS_LIMIT = 12;
@@ -29,6 +30,7 @@ export default function ProductDetail() {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [showStockWarning, setShowStockWarning] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showCompareModal, setShowCompareModal] = useState(false);
   const [isHoveringImage, setIsHoveringImage] = useState(false);
   const [zoomPoint, setZoomPoint] = useState({ x: 50, y: 50 });
   const [modalZoom, setModalZoom] = useState(1);
@@ -408,6 +410,18 @@ export default function ProductDetail() {
             >
               {vi.product.buyNow}
             </button>
+            <button
+              type="button"
+              className="btn-secondary w-full rounded-xl border-2 py-2 font-bold"
+              onClick={() => setShowCompareModal(true)}
+            >
+              <span className="inline-flex items-center gap-2">
+                <span className="material-symbols-outlined text-[20px]">
+                  compare_arrows
+                </span>
+                <span>So sánh sản phẩm</span>
+              </span>
+            </button>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-3 border-t border-[var(--color-border)] pt-4 sm:grid-cols-2">
             <div className="flex items-center gap-2">
@@ -455,6 +469,14 @@ export default function ProductDetail() {
         title="Thông báo"
         message="Số lượng sản phẩm trong giỏ vượt quá số lượng tồn kho của sản phẩm, thành thật xin lỗi bạn"
         buttonText="Đã hiểu"
+      />
+
+      <ProductCompareModal
+        open={showCompareModal}
+        onClose={() => setShowCompareModal(false)}
+        currentProduct={product}
+        allProducts={allProducts || []}
+        loadingProducts={loadingAll}
       />
 
       {showImageModal && canUsePortal
