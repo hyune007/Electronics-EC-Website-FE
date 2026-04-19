@@ -1,7 +1,7 @@
 import api from "./api";
 
 export async function requestComparisonSuggestion(message) {
-  const response = await api.get("/api/ai/generate", {
+  const response = await api.get("/api/ai/chat", {
     params: { message },
   });
 
@@ -9,7 +9,22 @@ export async function requestComparisonSuggestion(message) {
 }
 
 export async function requestAiChatPrompt(message) {
-  return requestComparisonSuggestion(message);
+  try {
+    return await requestComparisonSuggestion(message);
+  } catch (error) {
+    const status = error?.response?.status;
+    const data = error?.response?.data || {};
+    const title = String(data?.title || "").trim();
+    const messageText = String(data?.message || "").trim();
+    const normalizedError = new Error(
+      messageText || "Không thể kết nối AI lúc này. Vui lòng thử lại sau."
+    );
+    normalizedError.status = status;
+    normalizedError.title = title;
+    normalizedError.backendMessage = messageText;
+
+    throw normalizedError;
+  }
 }
 
 function extractJsonArray(rawText) {
