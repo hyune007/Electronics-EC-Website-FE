@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useMemo } from "react";
 import PropTypes from "prop-types";
 import { useAuth } from "../hooks/useAuth";
+import { IMAGE_BASE_URL } from "../config/apiConfig";
 import {
   getCartByCustomer,
   createCartItem,
@@ -83,7 +84,7 @@ export function CartProvider({ children }) {
           quantity: row.quantity,
           stock: row.product.stock,
           // image: `http://localhost:8080${row.product.image}`,
-          image: `https://ec-website-be-312564370609.asia-southeast1.run.app${row.product.image}`,
+          image: `${IMAGE_BASE_URL}${row.product.image}`,
         }));
 
         setCart(serverCart);
@@ -127,7 +128,7 @@ export function CartProvider({ children }) {
           quantity,
           stock: product.stock,
           // image: `http://localhost:8080${product.image}`,
-          image: `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}`,
+          image: `${IMAGE_BASE_URL}${product.image}`,
           cartItemId: null,
         },
       ];

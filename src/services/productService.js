@@ -1,10 +1,6 @@
 import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
 import { CACHE_TTL } from "../utils/cachePolicy";
-
-// const API_URL = "http://localhost:8080/api/product";
-// const BASE_URL = "http://localhost:8080";
-const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/product";
-const BASE_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app";
+import { PRODUCT_API_URL as API_URL, IMAGE_BASE_URL as BASE_URL } from "../config/apiConfig";
 // Helper to get auth token
 function getAuthHeaders() {
     const token = localStorage.getItem('authToken');

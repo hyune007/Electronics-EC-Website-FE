@@ -1,9 +1,7 @@
 import axios from 'axios';
 import { CACHE_TTL } from '../utils/cachePolicy';
 import { getCache, removeCacheByPrefix, setCache } from '../utils/localCache';
-
-// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://ec-website-be-312564370609.asia-southeast1.run.app';
+import { API_BASE_URL } from '../config/apiConfig';
 
 const api = axios.create({
     baseURL: API_BASE_URL,

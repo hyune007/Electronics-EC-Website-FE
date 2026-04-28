@@ -1,8 +1,6 @@
 import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
 import { CACHE_TTL } from "../utils/cachePolicy";
-
-// const API_URL = "http://localhost:8080/api/customer";
-const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/customer";
+import { CUSTOMER_API_URL as API_URL } from "../config/apiConfig";
 
 // Helper to get auth token
 function getAuthHeaders() {

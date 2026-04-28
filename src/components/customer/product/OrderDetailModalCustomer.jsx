@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
+import { IMAGE_BASE_URL } from "../../../config/apiConfig";
 import { getBillDetails } from "../../../services/customer/billDetailServiceCustomer";
 import { requestReturnBill } from "../../../services/customer/billServiceCustomer";
 import { formatVND } from "../../../utils/priceFormatter";
@@ -298,7 +299,7 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
       if (imagePath) {
         imageUrl = imagePath.startsWith("http")
           ? imagePath
-          : `https://ec-website-be-312564370609.asia-southeast1.run.app${imagePath}`;
+          : `${IMAGE_BASE_URL}${imagePath}`;
       }
 
       return (

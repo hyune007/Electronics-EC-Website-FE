@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { IMAGE_BASE_URL } from "../../../config/apiConfig";
 import ProductTabs from "../../../components/customer/product/ProductTabs/ProductTabs.jsx";
 import BreadcrumbNav from "../../../components/customer/product/ProductNav/BreadcrumbNav/BreadcrumbNav.jsx";
 import vi from "../../../i18n/vi.js";
@@ -39,7 +40,7 @@ export default function ProductDetail() {
 
   const imageSrc = product?.image?.startsWith("http")
     ? product.image
-    : `http://localhost:8080${product?.image || ""}`;
+    : `${IMAGE_BASE_URL}${product?.image || ""}`;
 
   const stock = Number(product?.stock ?? 0);
   const cartItem = cart.find((item) => String(item.id) === String(product?.id));

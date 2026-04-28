@@ -1,5 +1,4 @@
-// const API_URL = "http://localhost:8080/api/employees";
-const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/employees";
+import { EMPLOYEE_API_URL as API_URL } from "../config/apiConfig";
 
 // Helper to get auth token
 function getAuthHeaders() {

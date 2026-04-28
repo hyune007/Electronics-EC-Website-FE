@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { createPortal } from "react-dom";
+import { IMAGE_BASE_URL } from "../../../../config/apiConfig";
 import {
   requestComparisonSuggestion,
   requestProductTechnicalSpecs,
@@ -249,7 +250,7 @@ function productImageSrc(product) {
   if (!product?.image) return "";
   return product.image.startsWith("http")
     ? product.image
-    : `http://localhost:8080${product.image}`;
+    : `${IMAGE_BASE_URL}${product.image}`;
 }
 
 export default function ProductCompareModal({

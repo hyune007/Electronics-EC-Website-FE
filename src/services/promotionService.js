@@ -1,7 +1,6 @@
 import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
 import { CACHE_TTL } from "../utils/cachePolicy";
-// const API_URL = "http://localhost:8080/api/promotion";
-const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/promotion";
+import { PROMOTION_API_URL as API_URL } from "../config/apiConfig";
 
 function mapPromotion(p) {
     return {

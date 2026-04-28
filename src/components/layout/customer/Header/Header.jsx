@@ -1,6 +1,7 @@
 import "./Header.css";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { IMAGE_BASE_URL } from "../../../../config/apiConfig";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCart } from "../../../../contexts/CartContext";
 import useTheme from "../../../../hooks/useTheme.js";
@@ -156,7 +157,7 @@ export default function Header() {
                 src={
                   product?.image
                     // ? `http://localhost:8080${product.image}`
-                    ? `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}`
+                    ? `${IMAGE_BASE_URL}${product.image}`
                     : demoImg
                 }
                 alt={product?.name || "product"}

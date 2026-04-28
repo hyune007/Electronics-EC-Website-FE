@@ -5,6 +5,7 @@ import { ROUTE_MAP } from "../../../routes/routesConfig/customer/routeMap";
 import { useFavorites } from "../../../hooks/useFavorites";
 import { useProductCache } from "../../../contexts/ProductCacheContext";
 import ProductCard from "../../../components/customer/product/ProductCard/ProductCard.jsx";
+import { IMAGE_BASE_URL } from "../../../config/apiConfig";
 import {
   requestComparisonSuggestion,
   requestProductTechnicalSpecs,
@@ -436,7 +437,7 @@ function CompareProductsPanel({
               <div className="space-y-3">
                 {leftProduct?.image ? (
                   <img
-                    src={`http://localhost:8080${leftProduct.image}`}
+                    src={`${IMAGE_BASE_URL}${leftProduct.image}`}
                     alt={leftProduct?.name || "Sản phẩm 1"}
                     className="h-72 w-full rounded object-contain bg-white p-2 sm:h-80"
                   />
@@ -463,7 +464,7 @@ function CompareProductsPanel({
               <div className="space-y-3">
                 {rightProduct?.image ? (
                   <img
-                    src={`http://localhost:8080${rightProduct.image}`}
+                    src={`${IMAGE_BASE_URL}${rightProduct.image}`}
                     alt={rightProduct?.name || "Sản phẩm 2"}
                     className="h-72 w-full rounded object-contain bg-white p-2 sm:h-80"
                   />
