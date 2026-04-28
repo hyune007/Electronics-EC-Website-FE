@@ -126,6 +126,11 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
     order?.totalAmount ?? order?.total_amount ?? itemsTotal + shippingCost,
   );
 
+  const totalRefundAmount = items.reduce(
+    (sum, it) => sum + Number(it?.totalRefund || 0),
+    0
+  );
+
   const formatAddress = (addr) => {
     if (!addr) return "-";
     if (typeof addr === "string") return addr;
@@ -146,6 +151,11 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
   const isDeliveredOrder =
     normalizedStatus.includes("đã giao") ||
     normalizedStatus.includes("delivered");
+
+
+  const isReturnOrder =
+    normalizedStatus.includes("yêu cầu trả hàng") ||
+    normalizedStatus.includes("đã trả hàng");
 
   const itemKeyOf = (it, idx) => String(it?.id ?? it?.product?.id ?? idx);
   const allItemKeys = items.map((it, idx) => itemKeyOf(it, idx));
@@ -539,6 +549,43 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border)]">
                   {renderItemsBody()}
+                  {isReturnOrder && (
+                    <div className="mt-6 rounded-xl border border-red-100 bg-white p-5 shadow-sm space-y-4">
+                      <div className="flex items-center gap-2 border-b border-red-100 pb-3">
+                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v14l4-2 4 2 4-2 4 2z" />
+                        </svg>
+                        <h3 className="text-sm font-bold uppercase text-red-700 tracking-wider">
+                          Chi tiết trả hàng
+                        </h3>
+                      </div>
+
+                      {/* Danh sách sản phẩm */}
+                      <div className="space-y-3 text-sm text-gray-700">
+                        {items
+                          .filter((it) => it?.returnedQuantity > 0)
+                          .map((it, idx) => (
+                            <div key={idx} className="flex justify-between items-center gap-4 bg-red-50/50 p-3 rounded-lg">
+                              <span className="font-medium text-gray-800 flex-1">
+                                {it?.product.name}
+                                <span className="text-red-500 font-semibold"> x{it?.returnedQuantity}</span>
+                              </span>
+                              <span className="font-semibold text-red-700 tabular-nums">
+                                {formatVND(it?.totalRefund)}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+
+                      {/* Tổng tiền */}
+                      <div className="flex justify-between items-center pt-3 border-t border-gray-100 mt-4">
+                        <span className="font-semibold text-gray-900">Tổng tiền hoàn:</span>
+                        <span className="text-lg font-bold text-red-600 tabular-nums">
+                          {formatVND(totalRefundAmount)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </tbody>
               </table>
             </div>
