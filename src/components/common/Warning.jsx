@@ -7,6 +7,7 @@ export default function Warning({
   title = "Thông báo",
   message,
   buttonText = "Đã hiểu",
+  showIcon = true,
 }) {
   if (!open) return null;
 
@@ -22,11 +23,19 @@ export default function Warning({
       />
 
       <div className="relative z-10 mx-auto w-[92%] max-w-md rounded-2xl border border-border bg-surface p-6 text-center shadow-xl">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
-          <span className="material-symbols-outlined">warning</span>
-        </div>
+        {showIcon ? (
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+            <span className="material-symbols-outlined">warning</span>
+          </div>
+        ) : null}
 
-        <h3 className="mt-4 text-lg font-bold text-foreground">{title}</h3>
+        <h3
+          className={`text-lg font-bold text-foreground ${
+            showIcon ? "mt-4" : "mt-0"
+          }`}
+        >
+          {title}
+        </h3>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           {message}
         </p>
@@ -51,4 +60,5 @@ Warning.propTypes = {
   title: PropTypes.string,
   message: PropTypes.string,
   buttonText: PropTypes.string,
+  showIcon: PropTypes.bool,
 };

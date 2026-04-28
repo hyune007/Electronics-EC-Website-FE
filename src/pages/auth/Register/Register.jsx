@@ -7,7 +7,10 @@ import AuthLeft from "../../../components/layout/auth/AuthLeft/AuthLeft.jsx";
 import ThemeToggleButton from "../../../components/common/ThemeToggleButton.jsx";
 import BrandLogo from "../../../components/common/BrandLogo.jsx";
 import vi from "../../../i18n/vi.js";
-import { register, loginWithGoogle as loginWithGoogleApi } from "../../../services/authService.js";
+import {
+  register,
+  loginWithGoogle as loginWithGoogleApi,
+} from "../../../services/authService.js";
 import { useAuth } from "../../../hooks/useAuth";
 import { decodeJwtPayload } from "../../../utils/jwt.js";
 
@@ -121,7 +124,7 @@ export default function Register() {
             flexDirection: "column",
           }}
         >
-          <div className="max-w-[340px] mx-auto w-full py-8">
+          <div className="max-w-xs sm:max-w-sm md:max-w-md mx-auto w-full px-4 sm:px-6 py-8">
             <div className="lg:hidden text-center mb-6">
               <div className=" flex justify-center ">
                 <a href="/" className="block">

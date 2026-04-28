@@ -387,8 +387,8 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             <AnalyticsCard title="Doanh thu theo thời gian" subtitle="Line chart: doanh thu theo period đã chọn" className="xl:col-span-2">
-              <div className="h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-[320px] min-w-0">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
                   <LineChart data={revenueSeries} margin={{ top: 6, right: 12, left: 0, bottom: 6 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} />
@@ -401,8 +401,8 @@ export default function Dashboard() {
             </AnalyticsCard>
 
             <AnalyticsCard title="Tỷ lệ trạng thái đơn" subtitle="Pie chart: phân bổ xử lý/hoàn thành/hủy" rightSlot={<PieChartIcon size={16} className="text-slate-400" />}>
-              <div className="h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-[320px] min-w-0">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
                   <PieChart>
                     <Pie data={statusSeries} dataKey="value" nameKey="name" innerRadius={56} outerRadius={96}>
                       {statusSeries.map((entry, index) => (
@@ -419,8 +419,8 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
             <AnalyticsCard title="Đơn hàng theo thời gian" subtitle="Bar chart: số đơn theo period" className="xl:col-span-2" rightSlot={<BarChart3 size={16} className="text-slate-400" />}>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-[300px] min-w-0">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
                   <BarChart data={orderSeries} margin={{ top: 6, right: 12, left: 0, bottom: 6 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="label" tick={{ fontSize: 11 }} />

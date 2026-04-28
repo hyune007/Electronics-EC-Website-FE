@@ -37,7 +37,7 @@ export default function ForgotPassword() {
       <div className="auth-container h-screen dark:bg-black">
         <AuthLeft />
         <div className="auth-right dark:bg-background-dark">
-          <div className="max-w-[340px] mx-auto w-full">
+          <div className="max-w-xs sm:max-w-sm md:max-w-md mx-auto w-full px-4 sm:px-6">
             <div className="lg:hidden text-center mb-8">
               <div className="mt-6 flex justify-center ">
                 <a href="/" className="block">
@@ -96,7 +96,9 @@ export default function ForgotPassword() {
                 disabled={isSubmitting}
               >
                 <span>
-                  {isSubmitting ? "Đang gửi..." : vi.auth.forgotPassword.sendRequest}
+                  {isSubmitting
+                    ? "Đang gửi..."
+                    : vi.auth.forgotPassword.sendRequest}
                 </span>
                 <span className="material-symbols-outlined text-base">
                   send

@@ -35,7 +35,7 @@ const sections = [
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-transparent px-4 py-12 md:px-6 md:py-16">
+    <div className="page-ambient min-h-screen bg-transparent px-4 py-12 md:px-6 md:py-16">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
         <div className="card-default rounded-2xl border p-7 md:p-10">
           <h1 className="text-3xl font-bold text-[var(--color-text)] md:text-4xl">

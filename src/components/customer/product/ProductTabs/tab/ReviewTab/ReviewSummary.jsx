@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import PropTypes from "prop-types";
 import vi from "../../../../../../i18n/vi.js";
 
 export default function ReviewSummary({ stats, onWriteReview }) {
@@ -74,3 +75,18 @@ export default function ReviewSummary({ stats, onWriteReview }) {
     </div>
   );
 }
+
+ReviewSummary.propTypes = {
+  stats: PropTypes.shape({
+    average: PropTypes.number,
+    total: PropTypes.number,
+    breakdown: PropTypes.shape({
+      1: PropTypes.number,
+      2: PropTypes.number,
+      3: PropTypes.number,
+      4: PropTypes.number,
+      5: PropTypes.number,
+    }),
+  }),
+  onWriteReview: PropTypes.func,
+};

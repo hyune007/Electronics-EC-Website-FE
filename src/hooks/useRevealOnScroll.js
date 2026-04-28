@@ -1,44 +1,70 @@
 import { useEffect } from "react";
 
-export default function useRevealOnScroll(
-  options = { root: null, rootMargin: "0px 0px -10% 0px", threshold: 0.15 },
-) {
+const DEFAULT_REVEAL_OPTIONS = Object.freeze({
+  root: null,
+  rootMargin: "0px 0px -18% 0px",
+  threshold: 0.22,
+});
+
+function resolveDelay(el, index) {
+  const attrDelay = Number(el.dataset.revealDelay);
+  if (!Number.isNaN(attrDelay) && attrDelay >= 0) {
+    return attrDelay;
+  }
+  return Math.min(index * 60, 260);
+}
+
+function isRevealOnce(el) {
+  return el.dataset.revealOnce === "true";
+}
+
+export default function useRevealOnScroll(options = DEFAULT_REVEAL_OPTIONS) {
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (globalThis.window === undefined) return;
 
     const els = Array.from(document.querySelectorAll(".reveal-on-scroll"));
+    if (els.length === 0) return;
 
-    const resolveDelay = (el, index) => {
-      const attrDelay = Number(el.getAttribute("data-reveal-delay"));
-      if (!Number.isNaN(attrDelay) && attrDelay >= 0) {
-        return attrDelay;
-      }
-      return Math.min(index * 60, 260);
-    };
-
-    // Fallback to prevent blank/transparent sections on route back/navigation.
     els.forEach((el, index) => {
       el.style.setProperty("--reveal-delay", `${resolveDelay(el, index)}ms`);
-      el.classList.add("in-view");
+      el.dataset.revealSeen = "false";
+      el.classList.remove("in-view");
     });
 
-    if (!window.IntersectionObserver) return;
+    const shouldRevealAll =
+      globalThis.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      !("IntersectionObserver" in globalThis);
 
-    const observer = new IntersectionObserver((entries) => {
+    if (shouldRevealAll) {
+      els.forEach((el) => el.classList.add("in-view"));
+      return;
+    }
+
+    const mergedOptions = { ...DEFAULT_REVEAL_OPTIONS, ...options };
+
+    const observer = new globalThis.IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         const target = entry.target;
+        const revealOnce = isRevealOnce(target);
+
         if (entry.isIntersecting) {
+          if (target.dataset.revealSeen === "true") {
+            target.style.setProperty("--reveal-delay", "0ms");
+          }
           target.classList.add("in-view");
-          if (target.hasAttribute("data-reveal-once")) {
+          target.dataset.revealSeen = "true";
+
+          if (revealOnce) {
             observer.unobserve(target);
           }
-        } else {
-          if (!target.hasAttribute("data-reveal-once")) {
-            target.classList.remove("in-view");
-          }
+          return;
+        }
+
+        if (!revealOnce) {
+          target.classList.remove("in-view");
         }
       });
-    }, options);
+    }, mergedOptions);
 
     els.forEach((el) => observer.observe(el));
 
@@ -46,5 +72,5 @@ export default function useRevealOnScroll(
       els.forEach((el) => observer.unobserve(el));
       observer.disconnect();
     };
-  }, [JSON.stringify(options)]);
+  }, [options]);
 }
