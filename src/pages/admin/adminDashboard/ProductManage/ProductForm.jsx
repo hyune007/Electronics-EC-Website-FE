@@ -1,12 +1,31 @@
-﻿import { X, Package, DollarSign, Image as ImageIcon, Tag, Building2, FileText, Loader2, Hash } from "lucide-react";
+﻿import { useEffect, useState } from "react";
+import { X, Package, DollarSign, Image as ImageIcon, Tag, Building2, FileText, Loader2, Hash, Upload } from "lucide-react";
 
 export default function ProductForm({ open, onClose, onSubmit, editing, isSubmitting, brands = [], categories = [], promotions = [] }) {
     if (!open) return null;
 
     const { form, setForm, handleSubmit } = onSubmit;
 
+    const [previewSrc, setPreviewSrc] = useState(form.image || "");
+
+    useEffect(() => {
+        if (form.photoFile) {
+            const objectUrl = URL.createObjectURL(form.photoFile);
+            setPreviewSrc(objectUrl);
+            return () => URL.revokeObjectURL(objectUrl);
+        }
+
+        setPreviewSrc(form.image || "");
+        return undefined;
+    }, [form.image, form.photo]);
+
     const change = e =>
         setForm({ ...form, [e.target.name]: e.target.value });
+
+    const handlePhotoChange = (e) => {
+        const file = e.target.files?.[0] || null;
+        setForm({ ...form, photoFile: file });
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 fade-in">
@@ -268,7 +287,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isSubmit
                     <div className="space-y-4">
                         <h3 className="text-sm font-semibold text-neutral-900 uppercase tracking-wider">Hình ảnh</h3>
 
-                        <div>
+                        <div className="space-y-4">
                             <label className="block text-sm font-medium text-neutral-700 mb-2">
                                 URL hình ảnh <span className="text-red-500">*</span>
                             </label>
@@ -285,13 +304,33 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isSubmit
                                 />
                             </div>
                             <p className="text-xs text-neutral-500 mt-1">
-                                💡 Chấp nhận đường link ảnh (URL) hoặc tên file.
+                                💡 Chấp nhận đường link ảnh (URL), tên file, hoặc chọn file để upload qua field photo.
                             </p>
-                            {form.image && (
+
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Tải file ảnh lên
+                                </label>
+                                <div className="relative">
+                                    <Upload className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 pointer-events-none" size={18} />
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handlePhotoChange}
+                                        className="w-full pl-10 pr-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200"
+                                    />
+                                </div>
+                                {form.photoFile && (
+                                    <p className="text-xs text-neutral-600 mt-1">
+                                        File đã chọn: {form.photoFile.name}
+                                    </p>
+                                )}
+                            </div>
+                            {previewSrc && (
                                 <div className="mt-3">
                                     <p className="text-xs text-neutral-600 mb-2">Xem trước hình ảnh:</p>
                                     <img
-                                        src={form.image}
+                                        src={previewSrc}
                                         alt="Preview"
                                         className="w-24 h-24 object-cover rounded-lg border border-neutral-200"
                                         onError={(e) => {

@@ -101,6 +101,37 @@ function resolveImageUrl(url, categoryId, productId) {
     return `${BASE_URL}/${normalized}`;
 }
 
+function buildProductPayload(productData) {
+    return {
+        id: productData.id,
+        name: productData.name,
+        price: Number(productData.price),
+        stock: Number(productData.stock),
+        description: productData.description || null,
+        image: productData.image || null,
+        brand: { id: productData.brandId },
+        category: { id: productData.categoryId },
+        promotion: productData.promotionId ? { id: productData.promotionId } : null
+    };
+}
+
+function appendProductFormData(formData, payload, photoFile) {
+    formData.append("id", payload.id ?? "");
+    formData.append("name", payload.name ?? "");
+    formData.append("price", String(payload.price ?? 0));
+    formData.append("stock", String(payload.stock ?? 0));
+    formData.append("description", payload.description ?? "");
+    formData.append("image", payload.image ?? "");
+    formData.append("brand.id", payload.brand?.id ?? "");
+    formData.append("category.id", payload.category?.id ?? "");
+    if (payload.promotion?.id) {
+        formData.append("promotion.id", payload.promotion.id);
+    }
+    if (photoFile) {
+        formData.append("photo", photoFile);
+    }
+}
+
 /* ================= GET PRODUCTS BY PAGE (OPTIMIZED) ================= */
 export async function getProductsByPage(pageNum = 0, pageSize = 8, inStockOnly = true) {
     const data = await cachedGetJson(`${API_URL}/all?p=${pageNum}&size=${pageSize}&inStockOnly=${inStockOnly}`, {

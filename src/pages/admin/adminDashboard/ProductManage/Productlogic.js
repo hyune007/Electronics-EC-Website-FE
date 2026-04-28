@@ -289,6 +289,7 @@ export function useProductManageLogic() {
         stock: 0,
         description: "",
         image: "",
+        photoFile: null,
         brandId: "",
         categoryId: "",
         promotionId: ""
@@ -589,6 +590,7 @@ export function useProductManageLogic() {
                 stock: 0,
                 description: "",
                 image: "",
+                photoFile: null,
                 brandId: "",
                 categoryId: "",
                 promotionId: ""
@@ -627,6 +629,7 @@ export function useProductManageLogic() {
             stock: p.sp_stock,
             description: p.sp_desc,
             image: p.sp_raw_image, // Lấy đường dẫn gốc thay vì đường dẫn đã gán localhost
+            photoFile: null,
             brandId: p.sp_brand_id,
             categoryId: p.sp_category_id,
             promotionId: p.sp_promotion_id
@@ -840,8 +843,8 @@ const handleBulkImportFile = async (file) => {
             return;
         }
 
-        if (!form.image || !form.image.trim()) {
-            showToast("Vui lòng nhập URL hình ảnh sản phẩm", "warning");
+        if (!form.photoFile && (!form.image || !form.image.trim())) {
+            showToast("Vui lòng nhập URL hình ảnh hoặc chọn file ảnh sản phẩm", "warning");
             return;
         }
 
@@ -878,11 +881,16 @@ const handleBulkImportFile = async (file) => {
             }
         }
 
+        if (!finalImage && form.photoFile) {
+            finalImage = form.photoFile.name;
+        }
+
         const payload = {
             ...form,
             name: form.name.trim(),
             description: form.description.trim(),
             image: finalImage,
+            photo: form.photoFile || null,
             promotionId: form.promotionId || null
         };
 
