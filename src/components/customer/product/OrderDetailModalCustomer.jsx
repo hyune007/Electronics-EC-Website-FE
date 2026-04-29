@@ -308,8 +308,8 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
       if (imagePath) {
         imageUrl = imagePath.startsWith("http")
           ? imagePath
-          : `http://localhost:8080${imagePath}`;
-          // : `https://ec-website-be-312564370609.asia-southeast1.run.app${imagePath}`;
+          : `https://ec-website-be-312564370609.asia-southeast1.run.app${imagePath}`;
+          // : `http://localhost:8080${imagePath}`;
       }
 
       return (
