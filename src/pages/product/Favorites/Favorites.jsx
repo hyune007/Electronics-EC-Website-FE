@@ -9,6 +9,8 @@ import {
   requestComparisonSuggestion,
   requestProductTechnicalSpecs,
 } from "../../../services/aiService";
+import Warning from "../../../components/common/Warning.jsx";
+
 
 const COMPARE_SCOPE = {
   FAVORITES: "favorites",

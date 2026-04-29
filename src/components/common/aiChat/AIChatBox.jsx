@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { requestAiChatPrompt } from "../../../services/aiService";
 import UBrainTechLogo from "../../../assets/logo/UBrainTech_white_logo.png";
+import Warning from "../Warning";
 
 function nowId(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -53,8 +54,16 @@ export default function AIChatBox({ isOpen, onClose }) {
       };
       setMessages((prev) => [...prev, assistantMessage]);
       queueMicrotask(scrollToBottom);
-    } catch {
-      setError("Không thể kết nối AI lúc này. Vui lòng thử lại sau.");
+    } catch (error) {
+      if (error?.status === 429) {
+        const title = error?.title || "Quá nhiều yêu cầu";
+        const message =
+          error?.backendMessage ||
+          "Đã vượt quá giới hạn yêu cầu. Vui lòng thử lại sau một vài phút.";
+        setError(`${title}: ${message}`);
+      } else {
+        setError("Không thể kết nối AI lúc này. Vui lòng thử lại sau.");
+      }
     } finally {
       setLoading(false);
     }

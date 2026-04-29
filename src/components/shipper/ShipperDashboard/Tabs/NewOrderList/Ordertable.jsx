@@ -35,8 +35,7 @@ export default function OrderTable({ onSelectOrder, selectedOrder }) {
       );
       alert("Đã nhận đơn hàng");
     } catch (err) {
-      console.error(err);
-      alert("Không thể nhận đơn hàng");
+      alert(err.response?.data);
     }
   };
   return (
