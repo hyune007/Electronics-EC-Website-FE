@@ -1,10 +1,10 @@
 import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
 import { CACHE_TTL } from "../utils/cachePolicy";
 
-// const API_URL = "http://localhost:8080/api/product";
-// const BASE_URL = "http://localhost:8080";
-const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/product";
-const BASE_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app";
+const API_URL = "http://localhost:8080/api/product";
+const BASE_URL = "http://localhost:8080";
+// const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/product";
+// const BASE_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app";
 // Helper to get auth token
 function getAuthHeaders() {
     const token = localStorage.getItem('authToken');
@@ -309,6 +309,8 @@ export async function createProduct(productData) {
         promotion: productData.promotionId ? { id: productData.promotionId } : null
     };
 
+    const photoFile = productData.photoFile instanceof File ? productData.photoFile : null;
+
     console.log("=== Creating Product ===");
     console.log("Full productData received:", productData);
     console.log("Payload to send:", JSON.stringify(payload, null, 2));
@@ -326,10 +328,27 @@ export async function createProduct(productData) {
     let workingPayload = { ...payload };
 
     for (let attempt = 0; attempt < 6; attempt += 1) {
+        // Always send FormData with @RequestPart format for BE
+        const formData = new FormData();
+        formData.append("product", new Blob([JSON.stringify(workingPayload)], { type: "application/json" }));
+        
+        // Append photo file or empty file
+        if (photoFile) {
+            formData.append("photo", photoFile);
+        } else {
+            // Send empty file to satisfy BE @RequestPart(required = false)
+            const emptyBlob = new Blob([], { type: "application/octet-stream" });
+            const emptyFile = new File([emptyBlob], "empty.bin", { type: "application/octet-stream" });
+            formData.append("photo", emptyFile);
+        }
+
         let res = await fetch(`${API_URL}/save`, {
             method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(workingPayload)
+            headers: {
+                // Do NOT set Content-Type header - browser will auto set multipart/form-data with boundary
+                ...(rawToken && { "Authorization": `Bearer ${rawToken}` })
+            },
+            body: formData
         });
 
         // Some BE branches do not support product.promotion field yet.
@@ -346,10 +365,24 @@ export async function createProduct(productData) {
             };
 
             console.warn("Create product fallback: retrying without promotion field");
+            
+            const fallbackFormData = new FormData();
+            fallbackFormData.append("product", new Blob([JSON.stringify(fallbackPayload)], { type: "application/json" }));
+            
+            if (photoFile) {
+                fallbackFormData.append("photo", photoFile);
+            } else {
+                const emptyBlob = new Blob([], { type: "application/octet-stream" });
+                const emptyFile = new File([emptyBlob], "empty.bin", { type: "application/octet-stream" });
+                fallbackFormData.append("photo", emptyFile);
+            }
+
             res = await fetch(`${API_URL}/save`, {
                 method: "POST",
-                headers: getAuthHeaders(),
-                body: JSON.stringify(fallbackPayload)
+                headers: {
+                    ...(rawToken && { "Authorization": `Bearer ${rawToken}` })
+                },
+                body: fallbackFormData
             });
         }
 
@@ -377,13 +410,26 @@ export async function createProduct(productData) {
             wwwAuthenticate: res.headers.get("www-authenticate"),
             contentType: res.headers.get("content-type"),
         });
+        
+        const authDebug = {
+            hasToken: Boolean(rawToken),
+            tokenRole: tokenPayload?.roleId || tokenPayload?.role || "NO_ROLE_IN_TOKEN",
+            tokenSub: tokenPayload?.sub || null,
+            tokenExp: tokenPayload?.exp || "NO_EXP_IN_TOKEN",
+            currentTime: Math.floor(Date.now() / 1000),
+            tokenExpired: tokenPayload?.exp ? tokenPayload.exp < Math.floor(Date.now() / 1000) : "UNKNOWN",
+            authUserRole: authUser?.roleId || "NO_ROLE_IN_LOCALSTG",
+        };
+        console.error("Auth Token Info (EXPANDED):", authDebug);
         console.error("Request payload was:", JSON.stringify(workingPayload, null, 2));
 
         if (res.status === 403) {
-            throw new Error("Không tạo được sản phẩm: 403 Forbidden. Kiểm tra quyền tài khoản (ROLE_ADMIN/ROLE_EMPLOYEE) và token đăng nhập.");
+            const tokenInfo = `Token Role: ${authDebug.tokenRole}. Cần ROLE_ADMIN hoặc ROLE_EMPLOYEE.`;
+            const debugInfo = authDebug.tokenExpired === true ? " (Token đã hết hạn)" : "";
+            throw new Error(`Không tạo được sản phẩm: 403 Forbidden. ${tokenInfo}${debugInfo}`);
         }
 
-        throw new Error(`Không tạo được sản phẩm: ${errorText}`);
+        throw new Error(`Không tạo được sản phẩm: ${errorText || `HTTP ${res.status}`}`);
     }
 
     throw new Error("Không tạo được sản phẩm: Hết số lần thử tạo ID tự động");

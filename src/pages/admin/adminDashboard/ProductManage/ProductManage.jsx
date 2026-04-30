@@ -518,7 +518,23 @@ export default function ProductManage() {
             {/* ===== MODAL ===== */}
             <ProductForm
                 open={pm.openForm}
-                onClose={() => pm.setOpenForm(false)}
+                onClose={() => {
+                    pm.setOpenForm(false);
+                    pm.setEditing(null);
+                    // Reset form state when closing modal
+                    pm.setForm({
+                        id: "",
+                        name: "",
+                        price: 0,
+                        stock: 0,
+                        description: "",
+                        image: "",
+                        brandId: "",
+                        categoryId: "",
+                        promotionId: "",
+                        photoFile: null
+                    });
+                }}
                 onSubmit={{
                     form: pm.form,
                     setForm: pm.setForm,

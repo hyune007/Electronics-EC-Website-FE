@@ -39,8 +39,8 @@ export default function ProductDetail() {
 
   const imageSrc = product?.image?.startsWith("http")
     ? product.image
-    // : `http://localhost:8080${product?.image || ""}`;
-    : `https://ec-website-be-312564370609.asia-southeast1.run.app${product?.image || ""}`;
+    : `http://localhost:8080${product?.image || ""}`;
+    // : `https://ec-website-be-312564370609.asia-southeast1.run.app${product?.image || ""}`;
 
   const stock = Number(product?.stock ?? 0);
   const cartItem = cart.find((item) => String(item.id) === String(product?.id));

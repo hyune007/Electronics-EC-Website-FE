@@ -291,7 +291,8 @@ export function useProductManageLogic() {
         image: "",
         brandId: "",
         categoryId: "",
-        promotionId: ""
+        promotionId: "",
+        photoFile: null
     });
 
     const [allProducts, setAllProducts] = useState([]); // To keep all products for stats and search
@@ -591,7 +592,8 @@ export function useProductManageLogic() {
                 image: "",
                 brandId: "",
                 categoryId: "",
-                promotionId: ""
+                promotionId: "",
+                photoFile: null
             });
             setOpenForm(true);
         } catch (err) {
@@ -629,7 +631,8 @@ export function useProductManageLogic() {
             image: p.sp_raw_image, // Lấy đường dẫn gốc thay vì đường dẫn đã gán localhost
             brandId: p.sp_brand_id,
             categoryId: p.sp_category_id,
-            promotionId: p.sp_promotion_id
+            promotionId: p.sp_promotion_id,
+            photoFile: null
         });
         setOpenForm(true);
     };
@@ -845,6 +848,12 @@ const handleBulkImportFile = async (file) => {
             return;
         }
 
+        // Validate photo file for create mode (not editing)
+        if (!editing && (!form.photoFile || !form.photoFile.size)) {
+            showToast("Vui lòng chọn file ảnh sản phẩm", "warning");
+            return;
+        }
+
         let finalImage = form.image;
         if (finalImage) {
             finalImage = String(finalImage).trim().replace(/\\/g, "/");
@@ -897,7 +906,8 @@ const handleBulkImportFile = async (file) => {
                 await updateProduct(editing.sp_id, payload);
                 showToast("Cập nhật sản phẩm thành công", "success");
             } else {
-                await createProduct(payload);
+                // Pass photoFile as part of payload object for create
+                await createProduct({ ...payload, photoFile: form.photoFile });
                 showToast("Thêm sản phẩm thành công", "success");
 
                 const addedPrice = Number(payload.price || 0);
@@ -957,6 +967,7 @@ const handleBulkImportFile = async (file) => {
             }
 
             setOpenForm(false);
+            setEditing(null);
 
             // Clear all cache to ensure correct data and pagination
             cacheRef.current = {};

@@ -1,12 +1,27 @@
 ﻿import { X, Package, DollarSign, Image as ImageIcon, Tag, Building2, FileText, Loader2, Hash } from "lucide-react";
+import { useRef } from "react";
 
 export default function ProductForm({ open, onClose, onSubmit, editing, isSubmitting, brands = [], categories = [], promotions = [] }) {
     if (!open) return null;
 
     const { form, setForm, handleSubmit } = onSubmit;
+    const fileInputRef = useRef(null);
 
     const change = e =>
         setForm({ ...form, [e.target.name]: e.target.value });
+
+    const handleFileChange = e => {
+        const file = e.target.files?.[0] || null;
+        setForm({ ...form, photoFile: file });
+    };
+    
+    const handleCloseForm = () => {
+        // Clear file input on close
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+        onClose();
+    };
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 fade-in">
@@ -27,7 +42,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isSubmit
                         </div>
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={handleCloseForm}
                         className="p-2 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-all duration-200"
                     >
                         <X size={20} />
@@ -301,13 +316,38 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isSubmit
                                 </div>
                             )}
                         </div>
+
+                        {!editing && (
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Upload file ảnh sản phẩm <span className="text-red-500">*</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        className="w-full px-4 py-3 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer"
+                                    />
+                                </div>
+                                <p className="text-xs text-neutral-500 mt-1">
+                                    💡 Cần có file ảnh khi tạo sản phẩm mới. Định dạng: JPG, PNG, GIF, WebP.
+                                </p>
+                                {form.photoFile && (
+                                    <p className="text-xs text-green-600 mt-2">
+                                        ✓ File đã chọn: {form.photoFile.name} ({(form.photoFile.size / 1024).toFixed(2)} KB)
+                                    </p>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex items-center justify-end gap-3 p-6 border-t border-neutral-100 bg-neutral-50 rounded-b-2xl">
                     <button
-                        onClick={onClose}
+                        onClick={handleCloseForm}
                         disabled={isSubmitting}
                         className="px-6 py-2.5 text-neutral-700 bg-white border border-neutral-200 rounded-xl font-medium hover:bg-neutral-50 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
