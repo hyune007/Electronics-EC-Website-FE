@@ -24,7 +24,8 @@ import { useAuth } from "../../hooks/useAuth.js";
 import api from "../../services/api.js";
 import AdminConversationInspector from "./liveChat/AdminConversationInspector.jsx";
 
-const API_BASE = import.meta.env.VITE_CHAT_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+// const API_BASE = import.meta.env.VITE_CHAT_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_CHAT_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "https://ec-website-be-312564370609.asia-southeast1.run.app";
 const SOCKET_URL = `${API_BASE.replace(/\/$/, "")}/chat`;
 const GUEST_ROOM_KEY = "live_chat_guest_room";
 const GUEST_NAME_KEY = "live_chat_guest_name";

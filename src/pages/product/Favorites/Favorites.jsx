@@ -436,7 +436,8 @@ function CompareProductsPanel({
               <div className="space-y-3">
                 {leftProduct?.image ? (
                   <img
-                    src={`http://localhost:8080${leftProduct.image}`}
+                    // src={`http://localhost:8080${leftProduct.image}`}
+                    src={`https://ec-website-be-312564370609.asia-southeast1.run.app${leftProduct.image}`}
                     alt={leftProduct?.name || "Sản phẩm 1"}
                     className="h-72 w-full rounded object-contain bg-white p-2 sm:h-80"
                   />
@@ -463,7 +464,8 @@ function CompareProductsPanel({
               <div className="space-y-3">
                 {rightProduct?.image ? (
                   <img
-                    src={`http://localhost:8080${rightProduct.image}`}
+                    // src={`http://localhost:8080${rightProduct.image}`}
+                    src={`https://ec-website-be-312564370609.asia-southeast1.run.app${rightProduct.image}`}
                     alt={rightProduct?.name || "Sản phẩm 2"}
                     className="h-72 w-full rounded object-contain bg-white p-2 sm:h-80"
                   />
