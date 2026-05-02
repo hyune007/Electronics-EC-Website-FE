@@ -30,11 +30,15 @@ export default function Login() {
     const fromPath = location.state?.from?.pathname;
     const isAdminRole = roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE";
 
+    if (roleId === "ROLE_SHIPPER") {
+      return "/shipper-dashboard";
+    }
+
     if (isAdminRole) {
       return "/admin/dashboard";
     }
 
-    if (fromPath && fromPath.startsWith("/admin")) {
+    if (fromPath && (fromPath.startsWith("/admin") || fromPath.startsWith("/shipper"))) {
       return "/home";
     }
 
