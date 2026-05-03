@@ -1,17 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getAllBills } from "../../../../../services/billService";
+import { jwtDecode } from "jwt-decode";
+import { getBillsByEmployee } from "../../../../../services/billService";
 
 export default function TransitOrderTable({ onSelectOrder, selectedOrder }) {
   const [ordersList, setOrdersList] = useState([]);
+  const [employeeId, setEmployeeId] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+    const decoded = jwtDecode(token);
+    setEmployeeId(decoded.sub);
+  }, []);
 
   useEffect(() => {
     const fetchBills = async () => {
-      const res = await getAllBills();
-      setOrdersList(res.data.filter(b => b.status === "Đang giao"));
+      if (employeeId) {
+        try {
+          const res = await getBillsByEmployee(employeeId);
+          setOrdersList(res.data.filter(b => b.status === "Đang giao"));
+        } catch (error) {
+          console.error("Lỗi khi lấy hóa đơn:", error);
+        }
+      }
     };
+
     fetchBills();
-  }, []);
+  }, [employeeId]);
   const formatCurrency = (value) =>
     new Intl.NumberFormat("vi-VN", {
       style: "currency",

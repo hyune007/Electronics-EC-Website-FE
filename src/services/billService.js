@@ -10,6 +10,20 @@ export const getAllBills = async () => {
   return { data };
 };
 
+export const getBillsByEmployee = async (employeeId) => {
+  const data = await apiGetCached(
+    `${API}/by-employee`,
+    {
+      params: { employeeId: employeeId },
+    },
+    {
+      cacheKey: `cache:api:bill:employee:${employeeId}`,
+      ttlMs: 10000,
+    }
+  );
+  return { data };
+};
+
 export const getBillsByCustomer = async (customerId) => {
   const data = await apiGetCached(`${API}/customer/${customerId}`, {}, {
     cacheKey: `cache:api:bill:customer:${customerId}`,
