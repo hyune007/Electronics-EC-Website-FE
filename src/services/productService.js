@@ -317,6 +317,7 @@ export async function getProductById(id) {
 /* ================= CREATE ================= */
 
 export async function createProduct(productData) {
+    const formData = new FormData();
 
     const rawToken = localStorage.getItem("authToken");
     const tokenPayload = decodeJwtPayload(rawToken);
@@ -328,21 +329,38 @@ export async function createProduct(productData) {
         authUser = null;
     }
 
-    const payload = {
-        id: productData.id, // Luôn gửi ID
+    const productJson = {
+        id: productData.id,
         name: productData.name,
         price: Number(productData.price),
         stock: Number(productData.stock),
-        description: productData.description || null, // Gửi null thay vì empty string
-        image: productData.image || null, // Gửi null thay vì empty string
+        description: productData.description,
+        image: productData.image,
         brand: { id: productData.brandId },
         category: { id: productData.categoryId },
         promotion: productData.promotionId ? { id: productData.promotionId } : null
     };
+    formData.append("product", new Blob([JSON.stringify(productJson)], { type: "application/json" }));
+
+    if (productData.photoFile) {
+        formData.append("photo", productData.photoFile);
+    }
+
+    // const payload = {
+    //     id: productData.id, // Luôn gửi ID
+    //     name: productData.name,
+    //     price: Number(productData.price),
+    //     stock: Number(productData.stock),
+    //     description: productData.description || null, // Gửi null thay vì empty string
+    //     image: productData.image || null, // Gửi null thay vì empty string
+    //     brand: { id: productData.brandId },
+    //     category: { id: productData.categoryId },
+    //     promotion: productData.promotionId ? { id: productData.promotionId } : null
+    // };
 
     console.log("=== Creating Product ===");
     console.log("Full productData received:", productData);
-    console.log("Payload to send:", JSON.stringify(payload, null, 2));
+    console.log("Payload to send:", JSON.stringify(productJson, null, 2));
     console.log("Brand ID:", productData.brandId, "Type:", typeof productData.brandId);
     console.log("Category ID:", productData.categoryId, "Type:", typeof productData.categoryId);
     console.log("Auth debug:", {
@@ -354,13 +372,13 @@ export async function createProduct(productData) {
         authUserRole: authUser?.roleId || null,
     });
 
-    let workingPayload = { ...payload };
+    let workingPayload = { ...productJson };
 
     for (let attempt = 0; attempt < 6; attempt += 1) {
         let res = await fetch(`${API_URL}/save`, {
             method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(workingPayload)
+            headers: { "Authorization": `Bearer ${localStorage.getItem('authToken')}` },
+            body: formData
         });
 
         // Some BE branches do not support product.promotion field yet.
@@ -379,15 +397,16 @@ export async function createProduct(productData) {
             console.warn("Create product fallback: retrying without promotion field");
             res = await fetch(`${API_URL}/save`, {
                 method: "POST",
-                headers: getAuthHeaders(),
+                headers: { "Authorization": `Bearer ${localStorage.getItem('authToken')}` },
                 body: JSON.stringify(fallbackPayload)
             });
         }
 
-        if (res.ok) {
-            invalidateCacheByPrefix("cache:product:");
-            return res.json();
+        if (!res.ok) {
+            throw new Error("Không tạo được sản phẩm");
         }
+        invalidateCacheByPrefix("cache:product:");
+        return res.json();
 
         const errorText = await res.text();
 

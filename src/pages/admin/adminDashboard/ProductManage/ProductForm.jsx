@@ -17,7 +17,7 @@ export default function ProductForm({ open, onClose, onSubmit, editing, isSubmit
 
         setPreviewSrc(form.image || "");
         return undefined;
-    }, [form.image, form.photo]);
+    }, [form.image, form.photoFile]);
 
     const change = e =>
         setForm({ ...form, [e.target.name]: e.target.value });
