@@ -90,7 +90,9 @@ export default function Register() {
 
       const payload = decodeJwtPayload(response.token);
       const roleId = payload?.roleId;
-      if (roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE") {
+      if (roleId === "ROLE_SHIPPER") {
+        navigate("/shipper-dashboard", { replace: true });
+      } else if (roleId === "ROLE_ADMIN" || roleId === "ROLE_EMPLOYEE") {
         navigate("/admin/dashboard", { replace: true });
       } else {
         navigate("/", { replace: true });

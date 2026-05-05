@@ -330,25 +330,25 @@ export default function Header() {
 
               <AnimatePresence>
                 {searchOpen && normalizedKeyword && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.985 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.985 }}
-                    transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                    className="modal-shell search-bar-suggestion z-50 w-[320px] p-3 sm:w-[360px]"
-                  >
-                    <div className="overflow-hidden rounded-lg border border-[var(--color-border)]">
-                      {renderSuggestionContent()}
+                    <motion.div
+                        initial={{ opacity: 0, y: -10, scale: 0.985 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.985 }}
+                        transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                        className="modal-shell search-bar-suggestion z-50 w-[320px] p-3 sm:w-[360px]"
+                    >
+                      <div className="overflow-hidden rounded-lg border border-[var(--color-border)]">
+                        {renderSuggestionContent()}
 
-                      <button
-                        type="button"
-                        onClick={handleSeeMore}
-                        className="w-full px-3 py-2 text-left text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-muted)] motion-default"
-                      >
-                        Xem thêm
-                      </button>
-                    </div>
-                  </motion.div>
+                        <button
+                            type="button"
+                            onClick={handleSeeMore}
+                            className="w-full px-3 py-2 text-left text-sm font-semibold text-[var(--color-primary)] hover:bg-[var(--color-muted)] motion-default"
+                        >
+                          Xem thêm
+                        </button>
+                      </div>
+                    </motion.div>
                 )}
               </AnimatePresence>
             </div>

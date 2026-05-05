@@ -190,6 +190,7 @@ export default function EmployeeForm({ open, onClose, onSubmit }) {
                                     >
                                         <option value="ROLE_ADMIN">ADMIN</option>
                                         <option value="ROLE_EMPLOYEE">Nhân viên</option>
+                                        <option value="ROLE_SHIPPER">Shipper</option>
                                     </select>
                                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
                                         <svg className="w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

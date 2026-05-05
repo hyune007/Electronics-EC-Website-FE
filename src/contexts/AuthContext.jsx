@@ -138,6 +138,7 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = user?.roleId === "ROLE_ADMIN";
   const isEmployee = user?.roleId === "ROLE_EMPLOYEE";
   const isCustomer = user?.roleId === "ROLE_CUSTOMER";
+  const isShipper = user?.roleId === "ROLE_SHIPPER";
 
   const hasRole = useCallback(
     (roles) => {
@@ -158,6 +159,7 @@ export const AuthProvider = ({ children }) => {
     isAdmin,
     isEmployee,
     isCustomer,
+    isShipper,
     hasRole,
     login,
     logout,

@@ -97,6 +97,7 @@ const ROLES = {
   ADMIN: "ROLE_ADMIN",
   EMPLOYEE: "ROLE_EMPLOYEE",
   CUSTOMER: "ROLE_CUSTOMER",
+  SHIPPER: "ROLE_SHIPPER",
 };
 
 export default function AppRoutes({ location }) {
@@ -121,8 +122,22 @@ export default function AppRoutes({ location }) {
         {/* <Route path="/terms" element={<Terms />} /> */}
         <Route path="/product-filter" element={<ProductFilter />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        <Route path="/shipper-dashboard" element={<ShipperDashboard />} />
-        <Route path="/active-task/:orderId" element={<ActiveTaskPage />} />
+        <Route
+          path="/shipper-dashboard"
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.SHIPPER]}>
+              <ShipperDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/active-task/:orderId"
+          element={
+            <ProtectedRoute allowedRoles={[ROLES.SHIPPER]}>
+              <ActiveTaskPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Customer layout routes */}
         <Route element={<CustomerLayout />}>

@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import { getBillDetails } from "../../../services/customer/billDetailServiceCustomer";
 import { requestReturnBill } from "../../../services/customer/billServiceCustomer";
 import { formatVND } from "../../../utils/priceFormatter";
-import Warning from "../../common/warning";
+import Warning from "../../common/Warning";
 
 export default function OrderDetailModal({ open, onClose, orderId, order }) {
   const [loading, setLoading] = useState(false);
@@ -308,8 +308,8 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
       if (imagePath) {
         imageUrl = imagePath.startsWith("http")
           ? imagePath
-          : `http://localhost:8080${imagePath}`;
-          // : `https://ec-website-be-312564370609.asia-southeast1.run.app${imagePath}`;
+          : `https://ec-website-be-312564370609.asia-southeast1.run.app${imagePath}`;
+          // : `http://localhost:8080${imagePath}`;
       }
 
       return (

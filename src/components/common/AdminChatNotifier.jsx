@@ -4,7 +4,8 @@ import SockJS from "sockjs-client";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ROUTE_MAP } from "../../routes/routesConfig/admin/routeMap.js";
 
-const API_BASE = import.meta.env.VITE_CHAT_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+// const API_BASE = import.meta.env.VITE_CHAT_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const API_BASE = import.meta.env.VITE_CHAT_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "https://ec-website-be-312564370609.asia-southeast1.run.app";
 const SOCKET_URL = `${API_BASE.replace(/\/$/, "")}/chat`;
 const ADMIN_NOTIFY_SETTING_KEY = "admin_live_chat_notify_enabled";
 const ADMIN_SOUND_SETTING_KEY = "admin_live_chat_sound_enabled";
