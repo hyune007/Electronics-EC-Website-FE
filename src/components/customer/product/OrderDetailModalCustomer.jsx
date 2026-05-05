@@ -308,7 +308,7 @@ export default function OrderDetailModal({ open, onClose, orderId, order }) {
       if (imagePath) {
         imageUrl = imagePath.startsWith("http")
           ? imagePath
-          : `https://ec-website-be-312564370609.asia-southeast1.run.app${imagePath}`;
+          : `${import.meta.env.VITE_API_BASE_URL}${imagePath}`;
           // : `http://localhost:8080${imagePath}`;
       }
 
