@@ -155,7 +155,7 @@ export default function Header() {
               <img
                 src={
                   product?.image
-                    ? `http://localhost:8080${product.image}`
+                    ? `${import.meta.env.VITE_API_BASE_URL}${product.image}`
                     : // ? `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}`
                       demoImg
                 }

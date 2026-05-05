@@ -1,7 +1,7 @@
 import { cachedGetJson, invalidateCacheByPrefix } from "../utils/requestCache";
 import { CACHE_TTL } from "../utils/cachePolicy";
 
-const API_URL = "http://localhost:8080/api/customer";
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/customer`;
 // const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/customer";
 
 // Helper to get auth token

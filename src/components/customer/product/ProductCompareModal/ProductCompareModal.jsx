@@ -249,7 +249,7 @@ function productImageSrc(product) {
   if (!product?.image) return "";
   return product.image.startsWith("http")
     ? product.image
-    : `http://localhost:8080${product.image}`;
+    : `${import.meta.env.VITE_API_BASE_URL}${product.image}`;
 }
 
 export default function ProductCompareModal({

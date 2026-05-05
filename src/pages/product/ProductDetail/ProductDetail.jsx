@@ -39,7 +39,7 @@ export default function ProductDetail() {
 
   const imageSrc = product?.image?.startsWith("http")
     ? product.image
-    : `http://localhost:8080${product?.image || ""}`;
+    : `${import.meta.env.VITE_API_BASE_URL}${product?.image || ""}`;
 
   const stock = Number(product?.stock ?? 0);
   const cartItem = cart.find((item) => String(item.id) === String(product?.id));

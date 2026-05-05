@@ -131,7 +131,7 @@ export default function ProductCard({ product, className = "" }) {
             className="h-full w-full object-contain py-2 transition-transform duration-220 ease-standard group-hover:scale-[1.02]"
             src={
               // product?.image ? `https://ec-website-be-312564370609.asia-southeast1.run.app${product.image}` : demoImg
-              product?.image ? `http://localhost:8080${product.image}` : demoImg
+              product?.image ? `${import.meta.env.VITE_API_BASE_URL}${product.image}` : demoImg
             }
           />
         </div>

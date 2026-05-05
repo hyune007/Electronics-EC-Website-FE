@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8080/api/employees";
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/api/employees`;
 // const API_URL = "https://ec-website-be-312564370609.asia-southeast1.run.app/api/employees";
 
 // Helper to get auth token
