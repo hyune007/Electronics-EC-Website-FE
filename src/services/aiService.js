@@ -142,7 +142,7 @@ function normalizeSpecs(specs) {
 }
 
 export async function requestProductTechnicalSpecs(prompt) {
-  const response = await api.get("/api/ai/compare", {
+  const response = await api.get("/api/ai/chat", {
     params: { message: prompt },
   });
 
